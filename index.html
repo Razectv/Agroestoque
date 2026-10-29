@@ -9,6 +9,24 @@
 <meta name="apple-mobile-web-app-title" content="Fazenda Karoline">
 <title>Fazenda Karoline | Gestão de Estoque</title>
 
+<!-- Manifesto Web Embutido para o PWABuilder -->
+<link rel="manifest" href="data:application/manifest+json;charset=utf-8,{
+  %22name%22: %22Fazenda Karoline%22,
+  %22short_name%22: %22Karoline%22,
+  %22start_url%22: %22./%22,
+  %22display%22: %22standalone%22,
+  %22background_color%22: %22%23102b46%22,
+  %22theme_color%22: %22%23102b46%22,
+  %22icons%22: [
+    {
+      %22src%22: %22logo.png%22,
+      %22sizes%22: %22512x512%22,
+      %22type%22: %22image/png%22,
+      %22purpose%22: %22any maskable%22
+    }
+  ]
+}">
+
 <!-- Firebase SDKs -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -518,7 +536,6 @@ let role = localStorage.getItem("agroestoque_role") || "Operador";
 let currentView = "dashboard";
 let stockSearch = "", historySearch = "", orderFilter = "Todos", recipeDraft = [], withdrawalDraft = [];
 let lastPendingCount = 0;
-
 let importedPdfDraft = [];
 
 const units = {
@@ -928,7 +945,6 @@ function viewOrder(id) {
   openModal("Pedido #" + o.no, `<p>${statusBadge(o.status)}</p><p><strong>Solicitante:</strong> ${esc(o.requester)}<br><strong>Destino:</strong> ${esc(o.farm)}<br><strong>Área Total:</strong> ${o.hectares ? o.hectares + " ha" : "Não informada"}</p>${o.note ? `<p><strong>Obs:</strong> ${esc(o.note)}</p>`:""}<div class="tablewrap"><table><thead><tr><th>Produto (Para Separar)</th><th>Quantidade Otimizada</th></tr></thead><tbody>${o.items.map(it => `<tr><td>${esc(it.name)}</td><td><strong>${num(it.q)}</strong> ${esc(unitLabel(it.u))}</td></tr>`).join("")}</tbody></table></div><h3 style="margin-top:15px">Andamento</h3>${eventsHtml}`, buttons);
 }
 
-// --- CONFIGURAÇÃO DE EVENTOS GLOBAIS ---
 document.addEventListener("DOMContentLoaded", () => {
   document.querySelectorAll("[data-target]").forEach(btn => {
     btn.onclick = () => navigateTo(btn.dataset.target);
@@ -974,7 +990,6 @@ document.addEventListener("DOMContentLoaded", () => {
   $("historySearchInput").oninput = e => { historySearch = e.target.value; renderHistory(); };
   $("orderFilterSelect").onchange = e => { orderFilter = e.target.value; renderOrders(); };
 
-  // Solicitação por Hectare
   $("btnPreviewRecipe").onclick = () => {
     const hectares = Number($("reqHectares").value);
     const text = $("reqBulkText").value.trim();
@@ -1086,7 +1101,6 @@ document.addEventListener("DOMContentLoaded", () => {
     };
   };
 
-  // Retirada Avulsa
   $("btnPreviewWithdrawal").onclick = () => {
     const text = $("outBulkText").value.trim();
     if (!text) return toast("Insira a lista de produtos para retirada.");
@@ -1178,7 +1192,6 @@ document.addEventListener("DOMContentLoaded", () => {
     };
   };
 
-  // Entrada de produtos
   $("btnConfirmEntry").onclick = async () => {
     if (role === "Operador") return toast("Acesso negado.");
     const p = getProduct($("entryProductSelect").value);
@@ -1194,7 +1207,6 @@ document.addEventListener("DOMContentLoaded", () => {
     toast("Entrada registrada na nuvem!");
   };
 
-  // LEITOR INTELIGENTE DE ARQUIVO PDF (SEPARADOR DE BLOCOS)
   $("pdfFileInput").onchange = async e => {
     const file = e.target.files[0];
     if (!file) return;
@@ -1208,13 +1220,10 @@ document.addEventListener("DOMContentLoaded", () => {
       for (let i = 1; i <= pdf.numPages; i++) {
         const page = await pdf.getPage(i);
         const textContent = await page.getTextContent();
-        // Preserva os espaços para ajudar na separação inteligente
         const pageText = textContent.items.map(item => item.str).join(" ");
         fullText += " " + pageText;
       }
 
-      // Expressão regular inteligente que acha padrões de Nome + Número + Unidade mesmo se o texto estiver grudado
-      // Ex: "Adjust Herb 500 L ZappQi 500 L" -> quebra em itens separados
       const regex = /([A-Za-zÀ-ÿ0-9\s.,\-\(\)]+?)\s+(\d+(?:[.,]\d+)?)\s*(L|mL|kg|g|un|Litros|Litro|Quilos|Quilo|Grama|Gramas|Mililitros|Unidade|Unidades)\b/gi;
       
       importedPdfDraft = [];
@@ -1224,17 +1233,12 @@ document.addEventListener("DOMContentLoaded", () => {
         const q = Number(match[2].replace(",", "."));
         const u = unitLabel(match[3]);
 
-        // Se o nome capturado ficou gigante porque juntou vários produtos, limpamos pegando a última palavra lógica ou limpando ruídos
-        // Aqui garantimos que pegamos apenas o nome do produto imediatamente antes da quantidade
         let words = rawName.split(/\s+/);
-        // Se houver mais de 4 palavras no nome, geralmente pegamos as últimas para isolar o produto correto do bloco corrido
         if (words.length > 4) {
-          // Tenta pegar o trecho mais provável do nome do produto atual
           rawName = words.slice(-3).join(" ");
         }
 
         if (rawName.length > 1 && q >= 0) {
-          // Evita duplicatas exatas no rascunho da importação
           if (!importedPdfDraft.some(item => norm(item.name) === norm(rawName) && item.q === q)) {
             importedPdfDraft.push({ name: rawName, q, u });
           }
@@ -1295,7 +1299,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   };
 
-  // Cadastro em Massa (Manual por texto)
   $("bulkClearBtn").onclick = () => {
     $("bulkTextArea").value = "";
     $("bulkPreviewContainer").innerHTML = "";
