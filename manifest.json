@@ -1,7 +1,8 @@
 {
-  "name": "Fazenda Karoline",
-  "short_name": "Karoline",
-  "start_url": "./",
+  "name": "Fazenda Karoline Gestão Agrícola",
+  "short_name": "Fazenda Karoline",
+  "description": "Sistema de controle operacional de estoque e pedidos para a Fazenda Karoline",
+  "start_url": "/",
   "display": "standalone",
   "background_color": "#102b46",
   "theme_color": "#102b46",
