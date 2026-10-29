@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Fazenda Karoline">
-<title>Fazenda Karoline | Gestão de Estoque</title>
+<title>Fazenda Karoline | Gestão de Estoque e Combustível</title>
 
 <!-- Firebase SDKs -->
 <script type="module">
@@ -102,23 +102,24 @@ button:disabled{opacity:.45;cursor:not-allowed}
 .whatsapp{background:var(--wa);color:white}
 .smallbtn{padding:7px 10px;min-height:32px;font-size:11px}
 
-.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px;margin-bottom:17px}
+/* Grade organizada em 3 colunas para os cards estatísticos */
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-bottom:20px}
 .stat,.panel{background:white;border:1px solid var(--line);border-radius:13px;min-width:0}
-.stat{padding:16px}.stat-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
-.stat-label{font-size:11px;color:var(--muted);font-weight:650}
-.stat-icon{width:33px;height:33px;display:grid;place-items:center;border-radius:9px;background:#e9f0ff;font-size:17px}
-.stat strong{display:block;font-size:26px;margin:11px 0 5px;letter-spacing:-.5px}
-.stat small{font-size:10px;color:var(--muted)}
+.stat{padding:18px}.stat-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.stat-label{font-size:12px;color:var(--muted);font-weight:650}
+.stat-icon{width:35px;height:35px;display:grid;place-items:center;border-radius:9px;background:#e9f0ff;font-size:17px}
+.stat strong{display:block;font-size:24px;margin:11px 0 5px;letter-spacing:-.5px;word-break:break-word}
+.stat small{font-size:11px;color:var(--muted)}
 
-.panel{padding:19px;margin-bottom:16px}
-.panel-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:15px}
-.panel-head h2{font-size:15px;margin:0}.panel-head p{font-size:11px;color:var(--muted);margin:5px 0 0}
+.panel{padding:20px;margin-bottom:18px}
+.panel-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+.panel-head h2{font-size:16px;margin:0}.panel-head p{font-size:11px;color:var(--muted);margin:5px 0 0}
 
-.grid2{display:grid;grid-template-columns:1.2fr 1fr;gap:16px}
-.quick{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}
-.quick button{background:white;border:1px solid var(--line);border-radius:10px;text-align:left;padding:13px;width:100%}
+.grid2{display:grid;grid-template-columns:1.2fr 1fr;gap:18px}
+.quick{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.quick button{background:white;border:1px solid var(--line);border-radius:11px;text-align:left;padding:15px;width:100%}
 .quick button:hover{background:#f7faff;border-color:#b5c8f5}
-.quick span{display:block;font-size:21px;margin-bottom:9px}.quick strong{display:block;font-size:12px}
+.quick span{display:block;font-size:22px;margin-bottom:9px}.quick strong{display:block;font-size:13px}
 .quick small{display:block;font-size:10px;color:var(--muted);margin-top:5px;line-height:1.5}
 
 .notice{padding:13px 14px;background:#edf5ff;color:#355b87;border-radius:10px;font-size:12px;line-height:1.6;margin-bottom:15px}
@@ -165,7 +166,7 @@ tbody tr:last-child td{border-bottom:0}
 .overlay{display:none;position:fixed;inset:0;background:#0c1e367a;z-index:30}
 .overlay.show{display:block}
 
-@media(max-width:1050px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.grid2{grid-template-columns:1fr}}
+@media(max-width:1150px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.grid2{grid-template-columns:1fr}}
 @media(max-width:700px){
  .sidebar{transform:translateX(-105%)}
  .sidebar.open{transform:translateX(0)}
@@ -174,10 +175,10 @@ tbody tr:last-child td{border-bottom:0}
  .menu-btn{display:block;flex-shrink:0}.top-title{font-size:13px}.top-sub{font-size:10px}
  .topright{gap:5px}.avatar{display:none}.role-select{min-width:0;max-width:130px;font-size:14px;padding:10px 5px}
  .content{padding:16px 10px 28px}.pagehead h1{font-size:22px}.pagehead p{font-size:12px}
- .stats{gap:8px}.stat{padding:11px}.stat-label{font-size:10px}.stat-icon{width:28px;height:28px}
- .stat strong{font-size:22px;margin:9px 0 4px}.stat small{font-size:9px}
- .panel{padding:13px;margin-bottom:12px}.quick{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
- .quick button{padding:11px}.formgrid{grid-template-columns:1fr;gap:12px}.full{grid-column:auto}
+ .stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.stat{padding:14px}.stat-label{font-size:11px}.stat-icon{width:32px;height:32px}
+ .stat strong{font-size:22px;margin:9px 0 4px}.stat small{font-size:10px}
+ .panel{padding:15px;margin-bottom:14px}.quick{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+ .quick button{padding:13px}.formgrid{grid-template-columns:1fr;gap:12px}.full{grid-column:auto}
  .filters input,.filters select{width:100%;flex:1 1 100%;font-size:16px}table{min-width:560px}
  .formactions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
  .formactions .btn{width:100%}.modalback{padding:8px;align-items:flex-end}
@@ -196,6 +197,7 @@ tbody tr:last-child td{border-bottom:0}
  <nav class="nav">
   <button class="nav-btn active" data-target="dashboard"><span class="nav-icon">▦</span>Visão geral</button>
   <button class="nav-btn" data-target="estoque"><span class="nav-icon">▤</span>Estoque</button>
+  <button class="nav-btn menu-admin-only" data-target="combustivel" id="navCombustivel"><span class="nav-icon">⛽</span>Combustível (Diesel)</button>
   <button class="nav-btn" data-target="solicitar"><span class="nav-icon">＋</span>Solicitar por Hectare</button>
   <button class="nav-btn" data-target="pedidos"><span class="nav-icon">☷</span>Pedidos e entregas</button>
  </nav>
@@ -246,16 +248,24 @@ tbody tr:last-child td{border-bottom:0}
    </div>
    <div id="dashAlertContainer"></div>
    <div class="notice"><strong>Perfil atual: <span id="lblRole">Escritório</span></strong>Dados sincronizados em tempo real na nuvem com alerta sonoro ativado para o depósito.</div>
-   <div class="stats">
+   
+   <!-- Grade de estatísticas -->
+   <div class="stats" id="dashboardStatsGrid">
     <div class="stat"><div class="stat-top"><span class="stat-label">Produtos ativos</span><span class="stat-icon">▤</span></div><strong id="stProdCount">0</strong><small>Em uso</small></div>
+    <div class="stat" id="cardStatDiesel"><div class="stat-top"><span class="stat-label">Diesel Atual</span><span class="stat-icon">⛽</span></div><strong id="stDieselCount">0 L</strong><small id="stDieselSub">Volume no tanque</small></div>
     <div class="stat"><div class="stat-top"><span class="stat-label">Estoque baixo</span><span class="stat-icon">⚠</span></div><strong id="stLowCount">0</strong><small>No mínimo ou abaixo</small></div>
     <div class="stat"><div class="stat-top"><span class="stat-label">Estoque zerado</span><span class="stat-icon">⊘</span></div><strong id="stZeroCount">0</strong><small>Sem saldo disponível</small></div>
     <div class="stat"><div class="stat-top"><span class="stat-label">Pedidos abertos</span><span class="stat-icon">☷</span></div><strong id="stOpenOrders">0</strong><small>Não finalizados</small></div>
    </div>
+
    <div class="panel">
-    <div class="panel-head"><div><h2>Acesso rápido</h2><p>Atalhos para as tarefas mais utilizadas</p></div></div>
+    <div class="panel-head">
+     <div><h2>Acesso rápido</h2><p>Atalhos personalizados para suas tarefas</p></div>
+     <button class="btn outline smallbtn" id="btnCustomizeQuick">⚙️ Customizar Atalhos</button>
+    </div>
     <div class="quick" id="quickButtons"></div>
    </div>
+
    <div class="grid2">
     <div class="panel"><div class="panel-head"><div><h2>Pedidos recentes</h2><p>Solicitações mais recentes</p></div><button class="btn outline smallbtn" data-goto="pedidos">Ver todos</button></div><div id="dashRecentOrders"></div></div>
     <div class="panel"><div class="panel-head"><div><h2>Últimas movimentações</h2><p>Atividade do estoque</p></div><button class="btn outline smallbtn" data-goto="historico">Histórico</button></div><div id="dashRecentActivity"></div></div>
@@ -281,6 +291,56 @@ tbody tr:last-child td{border-bottom:0}
     <div class="panel-head"><div><h2>Saldos atuais no barracão</h2><p>Listagem de produtos</p></div><button class="btn outline smallbtn" id="btnExportProd">Exportar CSV</button></div>
     <div class="filters"><input id="stockSearchInput" placeholder="Buscar produto..."></div>
     <div id="stockTableContainer"></div>
+   </div>
+  </section>
+
+  <!-- COMBUSTÍVEL (DIESEL) -->
+  <section id="view-combustivel" class="view-section">
+   <div class="pagehead">
+    <div><div class="eyebrow">CONTROLE DE TANQUE</div><h1>Combustível (Diesel)</h1><p>Registre entradas de novos carregamentos e saídas para o abastecimento do maquinário da fazenda.</p></div>
+   </div>
+   
+   <div class="stats" style="grid-template-columns:repeat(3,minmax(0,1fr));">
+    <div class="stat"><div class="stat-top"><span class="stat-label">Volume Atual</span><span class="stat-icon">⛽</span></div><strong id="fuelTotalVol">0 L</strong><small>Total no tanque</small></div>
+    <div class="stat"><div class="stat-top"><span class="stat-label">Volume Mínimo de Alerta</span><span class="stat-icon">⚠</span></div><strong id="fuelMinVol">1000 L</strong><small>Limite de segurança</small></div>
+    <div class="stat"><div class="stat-top"><span class="stat-label">Status do Tanque</span><span class="stat-icon">📊</span></div><strong id="fuelStatusBadge"><span class="badge delivered">Normal</span></strong><small>Condição atual</small></div>
+   </div>
+
+   <div class="panel">
+    <div class="panel-head"><h2>Registrar Movimentação de Diesel</h2></div>
+    <div class="formgrid">
+     <div class="field">
+      <label>Tipo de Movimentação *</label>
+      <select id="fuelOpType">
+        <option value="Entrada">Entrada (Chegada de Combustível / Nota Fiscal)</option>
+        <option value="Saída">Saída (Abastecimento de Maquinário / Trator)</option>
+      </select>
+     </div>
+     <div class="field">
+      <label>Quantidade (Litros) *</label>
+      <input id="fuelQtyInput" type="number" min="0.1" step="any" placeholder="Ex: 2500">
+     </div>
+     <div class="field">
+      <label>Origem / Destino (Máquina, Talhão ou Fornecedor) *</label>
+      <input id="fuelDestInput" placeholder="Ex: Trator John Deere / Posto Distribuidor">
+     </div>
+     <div class="field">
+      <label>Responsável / Operador *</label>
+      <input id="fuelRespInput" placeholder="Ex: João Depósito">
+     </div>
+     <div class="field full">
+      <label>Observação (Opcional)</label>
+      <input id="fuelNoteInput" placeholder="Número da Nota Fiscal ou horímetro da máquina">
+     </div>
+    </div>
+    <div class="formactions">
+     <button class="btn green" id="btnConfirmFuel">Registrar Operação de Diesel</button>
+    </div>
+   </div>
+
+   <div class="panel">
+    <div class="panel-head"><h2>Histórico de Movimentações de Combustível</h2></div>
+    <div id="fuelHistoryContainer"></div>
    </div>
   </section>
 
@@ -494,6 +554,7 @@ const ROLES = ["Escritório", "Depósito", "Operador"];
 const TITLES = {
   dashboard: "Visão geral",
   estoque: "Estoque (Barracão)",
+  combustivel: "Combustível (Diesel)",
   importar: "Importar PDF de Estoque",
   solicitar: "Solicitação em Massa",
   pedidos: "Pedidos e entregas",
@@ -505,6 +566,17 @@ const TITLES = {
   usuarios: "Usuários e perfis"
 };
 
+const ALL_QUICK_OPTIONS = [
+  { id: "combustivel", icon: "⛽", title: "Combustível", desc: "Gerenciar Diesel" },
+  { id: "entrada", icon: "↓", title: "Entrada", desc: "Recebimentos" },
+  { id: "retirada", icon: "↑", title: "Retirada", desc: "Empréstimos / Avulso" },
+  { id: "pedidos", icon: "☷", title: "Pedidos", desc: "Autorizações / Separação" },
+  { id: "estoque", icon: "▤", title: "Consultar estoque", desc: "Ver saldos do barracão" },
+  { id: "historico", icon: "◷", title: "Histórico", desc: "Auditoria de movimentações" },
+  { id: "solicitar", icon: "＋", title: "Pedido por Hectare", desc: "Receita em massa" },
+  { id: "relatorios", icon: "▥", title: "Relatórios", desc: "Resumo de saldos" }
+];
+
 const $ = id => document.getElementById(id);
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[c]));
@@ -512,14 +584,25 @@ const norm = s => String(s ?? "").trim().toLocaleLowerCase("pt-BR").replace(/[\s
 const num = n => Number(n || 0).toLocaleString("pt-BR", {maximumFractionDigits: 3});
 const fmtDate = s => { const d = new Date(s); return isNaN(d) ? "—" : d.toLocaleString("pt-BR", {dateStyle: "short", timeStyle: "short"}); };
 
-const freshDB = () => ({ products: [], orders: [], history: [], farms: ["Fazenda principal"] });
+const freshDB = () => ({ products: [], orders: [], history: [], fuelHistory: [], fuelStock: 5000, fuelMin: 1000, farms: ["Fazenda principal"] });
 let db = freshDB();
 let role = localStorage.getItem("agroestoque_role") || "Operador";
 let currentView = "dashboard";
 let stockSearch = "", historySearch = "", orderFilter = "Todos", recipeDraft = [], withdrawalDraft = [];
 let lastPendingCount = 0;
-
 let importedPdfDraft = [];
+
+// Atalhos rápidos salvos no localStorage por perfil
+function getCustomQuickLinks() {
+  const saved = localStorage.getItem("agroestoque_quick_" + role);
+  if (saved) {
+    try { return JSON.parse(saved); } catch(e) {}
+  }
+  // Padrão por perfil se não houver personalizado
+  if (role === "Escritório") return ["combustivel", "entrada", "retirada", "pedidos"];
+  if (role === "Depósito") return ["combustivel", "pedidos", "estoque", "historico"];
+  return ["solicitar", "pedidos", "estoque", "historico"];
+}
 
 const units = {
   l:{base:"ml",factor:1000,label:"L"}, litro:{base:"ml",factor:1000,label:"L"}, litros:{base:"ml",factor:1000,label:"L"},
@@ -581,6 +664,9 @@ async function initCloudSync() {
     const cloudData = await window.cloudLoad();
     if (cloudData && Array.isArray(cloudData.products)) {
       db = cloudData;
+      if (db.fuelStock === undefined) db.fuelStock = 5000;
+      if (db.fuelMin === undefined) db.fuelMin = 1000;
+      if (!Array.isArray(db.fuelHistory)) db.fuelHistory = [];
       
       const currentPending = db.orders.filter(o => o.status === "Pendente").length;
       if (role === "Depósito" && currentPending > lastPendingCount) {
@@ -624,7 +710,7 @@ function closeMenu() {
 }
 
 function navigateTo(target) {
-  if (role === "Operador" && ["cadastro", "importar", "entrada", "retirada", "relatorios"].includes(target)) {
+  if (role === "Operador" && ["cadastro", "importar", "entrada", "retirada", "relatorios", "combustivel"].includes(target)) {
     toast("Acesso restrito para operadores.");
     target = "dashboard";
   }
@@ -661,10 +747,13 @@ function openModal(title, html, buttons = []) {
 function closeModal() { $("modalback").classList.remove("show"); }
 
 function applyRolePermissions() {
-  const adminOnlyElements = document.querySelectorAll(".menu-admin-only");
-  adminOnlyElements.forEach(el => {
-    el.style.display = (role === "Operador") ? "none" : "flex";
+  const isOp = (role === "Operador");
+  document.querySelectorAll(".menu-admin-only").forEach(el => {
+    el.style.display = isOp ? "none" : "flex";
   });
+  
+  const navComb = $("navCombustivel");
+  if (navComb) navComb.style.display = isOp ? "none" : "flex";
 }
 
 function renderActiveView() {
@@ -675,6 +764,10 @@ function renderActiveView() {
 
   if (currentView === "dashboard") renderDashboard();
   else if (currentView === "estoque") renderStock();
+  else if (currentView === "combustivel") {
+    if (role === "Operador") { navigateTo("dashboard"); return; }
+    renderCombustivel();
+  }
   else if (currentView === "importar") {}
   else if (currentView === "solicitar") renderRequest();
   else if (currentView === "pedidos") renderOrders();
@@ -696,11 +789,40 @@ function renderDashboard() {
   $("stLowCount").textContent = low;
   $("stZeroCount").textContent = zero;
   $("stOpenOrders").textContent = open;
+  
+  const isOperator = (role === "Operador");
+  const cardDiesel = $("cardStatDiesel");
+
+  if (isOperator) {
+    if (cardDiesel) cardDiesel.style.display = "none";
+  } else {
+    if (cardDiesel) cardDiesel.style.display = "block";
+    const fuelVol = db.fuelStock || 0;
+    const fuelMin = db.fuelMin || 1000;
+    $("stDieselCount").textContent = num(fuelVol) + " L";
+    $("stDieselSub").textContent = fuelVol <= 0 ? "Tanque zerado!" : fuelVol <= fuelMin ? "⚠️ Nível crítico!" : "Volume normal";
+  }
 
   const alertContainer = $("dashAlertContainer");
+  let alertsHtml = [];
+
   const critical = activeProducts.filter(p => p.q <= 0 || (p.min > 0 && p.q <= p.min));
   if (critical.length > 0) {
-    alertContainer.innerHTML = `<div class="alert-box"><strong>⚠ Atenção: Produtos precisando de reposição!</strong> Existem ${critical.length} produto(s) com estoque zerado ou abaixo do mínimo. <a href="#" id="alertGoStock" style="color:inherit;font-weight:bold;text-decoration:underline;">Ver estoque</a></div>`;
+    alertsHtml.push(`<strong>⚠ Atenção: Produtos precisando de reposição!</strong> Existem ${critical.length} produto(s) com estoque zerado ou abaixo do mínimo. <a href="#" id="alertGoStock" style="color:inherit;font-weight:bold;text-decoration:underline;">Ver estoque</a>`);
+  }
+
+  if (!isOperator) {
+    const fuelVol = db.fuelStock || 0;
+    const fuelMin = db.fuelMin || 1000;
+    if (fuelVol <= 0) {
+      alertsHtml.push(`<strong>🚨 ALERTA CRÍTICO: Tanque de Diesel ZERADO!</strong> É necessário solicitar carga de combustível urgente.`);
+    } else if (fuelVol <= fuelMin) {
+      alertsHtml.push(`<strong>⚠️ ATENÇÃO: Nível de Diesel Abaixo do Mínimo!</strong> O tanque possui apenas ${num(fuelVol)} L. Faça um pedido de diesel.`);
+    }
+  }
+
+  if (alertsHtml.length > 0) {
+    alertContainer.innerHTML = `<div class="alert-box">${alertsHtml.join("<br><br>")}</div>`;
     const ags = $("alertGoStock");
     if (ags) ags.onclick = e => { e.preventDefault(); navigateTo("estoque"); };
   } else {
@@ -711,24 +833,41 @@ function renderDashboard() {
   dashBtn.textContent = role === "Depósito" ? "＋ Ver pedidos" : "＋ Solicitar por Hectare";
   dashBtn.onclick = () => navigateTo(role === "Depósito" ? "pedidos" : "solicitar");
 
-  const quick = role === "Escritório" ? [
-    ["📁", "Importar PDF", "Enviar arquivo PDF", "importar"],
-    ["↓", "Entrada", "Recebimentos", "entrada"],
-    ["↑", "Retirada", "Empréstimos / Avulso", "retirada"],
-    ["☷", "Pedidos", "Autorizações", "pedidos"]
-  ] : role === "Depósito" ? [
-    ["☷", "Separar pedidos", "Baixar estoque", "pedidos"],
-    ["↑", "Retirada", "Empréstimos / Avulso", "retirada"],
-    ["▤", "Consultar estoque", "Ver saldos", "estoque"],
-    ["◷", "Histórico", "Movimentações", "historico"]
-  ] : [
-    ["＋", "Pedido por Hectare", "Receita em massa", "solicitar"],
-    ["☷", "Meus pedidos", "Acompanhar status", "pedidos"],
-    ["▤", "Barracão", "Consultar estoque", "estoque"]
-  ];
+  // Renderiza botões de acesso rápido personalizados
+  const activeQuickIds = getCustomQuickLinks();
+  const quickBtnsHtml = activeQuickIds.map(id => {
+    const item = ALL_QUICK_OPTIONS.find(x => x.id === id);
+    if (!item) return "";
+    if (role === "Operador" && ["combustivel", "entrada", "retirada", "relatorios"].includes(item.id)) return "";
+    return `<button class="quick-btn" data-goto="${item.id}"><span>${item.icon}</span><strong>${item.title}</strong><small>${item.desc}</small></button>`;
+  }).filter(Boolean).join("");
 
-  $("quickButtons").innerHTML = quick.map(q => `<button class="quick-btn" data-goto="${q[3]}"><span>${q[0]}</span><strong>${q[1]}</strong><small>${q[2]}</small></button>`).join("");
+  $("quickButtons").innerHTML = quickBtnsHtml || `<div class="empty">Nenhum atalho selecionado. Clique em "Customizar Atalhos" acima.</div>`;
   document.querySelectorAll(".quick-btn").forEach(b => b.onclick = () => navigateTo(b.dataset.goto));
+
+  $("btnCustomizeQuick").onclick = () => {
+    const current = getCustomQuickLinks();
+    let checkboxesHtml = ALL_QUICK_OPTIONS.map(opt => {
+      if (role === "Operador" && ["combustivel", "entrada", "retirada", "relatorios"].includes(opt.id)) return "";
+      const checked = current.includes(opt.id) ? "checked" : "";
+      return `<label style="display:flex;align-items:center;gap:10px;padding:8px 0;font-size:13px;border-bottom:1px solid var(--line);cursor:pointer;"><input type="checkbox" value="${opt.id}" class="quick-check" ${checked} style="width:18px;height:18px;"> <span>${opt.icon} <strong>${opt.title}</strong> (${opt.desc})</span></label>`;
+    }).join("");
+
+    openModal("Customizar Acesso Rápido", `
+      <p class="hint" style="margin-bottom:12px;">Selecione os atalhos que deseja exibir no painel de Acesso Rápido para o perfil <strong>${role}</strong>:</p>
+      <div style="max-height:300px;overflow-y:auto;">${checkboxesHtml}</div>
+    `, [
+      { text: "Cancelar", fn: closeModal },
+      { text: "Salvar Atalhos", cls: "primary", fn: () => {
+        const selected = [];
+        document.querySelectorAll(".quick-check:checked").forEach(cb => selected.push(cb.value));
+        localStorage.setItem("agroestoque_quick_" + role, JSON.stringify(selected));
+        closeModal();
+        renderDashboard();
+        toast("Atalhos personalizados com sucesso!");
+      }}
+    ]);
+  };
 
   const recOrders = db.orders.slice().sort((a, b) => b.created - a.created).slice(0, 5);
   $("dashRecentOrders").innerHTML = recOrders.length ? `<div class="tablewrap"><table><thead><tr><th>Pedido</th><th>Destino</th><th>Status</th><th></th></tr></thead><tbody>${recOrders.map(o => `<tr><td><strong>#${esc(o.no)}</strong></td><td>${esc(o.farm)}</td><td>${statusBadge(o.status)}</td><td><button class="btn light smallbtn view-ord-btn" data-id="${o.id}">Ver</button></td></tr>`).join("")}</tbody></table></div>` : `<div class="empty">Nenhum pedido registrado.</div>`;
@@ -737,6 +876,90 @@ function renderDashboard() {
   $("dashRecentActivity").innerHTML = recHist.length ? recHist.map(h => `<div class="activity-row"><div class="activity-icon">${h.type === "Entrada" ? "↓" : h.type === "Saída" ? "↑" : "◷"}</div><div style="flex:1;min-width:0"><strong>${esc(h.type)} · ${esc(h.name)}</strong><small>${fmtDate(h.date)} · ${esc(h.role)}</small></div><span class="tag">${num(h.q)} ${esc(unitLabel(h.u))}</span></div>`).join("") : `<div class="empty">Nenhuma movimentação.</div>`;
 
   bindOrderButtons();
+}
+
+function renderCombustivel() {
+  const vol = db.fuelStock || 0;
+  const min = db.fuelMin || 1000;
+
+  $("fuelTotalVol").textContent = num(vol) + " L";
+  $("fuelMinVol").textContent = num(min) + " L";
+
+  let badgeHtml = '<span class="badge delivered">Normal</span>';
+  if (vol <= 0) badgeHtml = '<span class="badge refused">Zerado</span>';
+  else if (vol <= min) badgeHtml = '<span class="badge pending">Nível Baixo</span>';
+  $("fuelStatusBadge").innerHTML = badgeHtml;
+
+  const fHist = db.fuelHistory || [];
+  $("fuelHistoryContainer").innerHTML = fHist.length ? `<div class="tablewrap"><table><thead><tr><th>Data</th><th>Tipo</th><th>Litros</th><th>Destino / Fornecedor</th><th>Resp.</th><th>Ações</th></tr></thead><tbody>${fHist.map(h => `<tr><td>${fmtDate(h.date)}</td><td><span class="badge ${h.type === 'Entrada' ? 'delivered' : 'refused'}">${esc(h.type)}</span></td><td><strong>${num(h.q)} L</strong></td><td>${esc(h.dest)}</td><td>${esc(h.role)}</td><td><button class="btn danger smallbtn" onclick="deleteFuelItem('${h.id}')">🗑️ Apagar</button></td></tr>`).join("")}</tbody></table></div>` : `<div class="empty">Nenhuma movimentação de combustível registrada.</div>`;
+
+  const btnConfirm = $("btnConfirmFuel");
+  btnConfirm.onclick = async () => {
+    const type = $("fuelOpType").value;
+    const q = Number($("fuelQtyInput").value);
+    const dest = $("fuelDestInput").value.trim();
+    const resp = $("fuelRespInput").value.trim() || role;
+    const note = $("fuelNoteInput").value.trim();
+
+    if (!q || q <= 0) return toast("Informe uma quantidade válida em litros.");
+    if (!dest) return toast("Informe o destino ou fornecedor do combustível.");
+
+    if (type === "Saída" && q > db.fuelStock) {
+      return toast("A quantidade de saída é maior que o saldo atual do tanque!");
+    }
+
+    if (type === "Entrada") {
+      db.fuelStock += q;
+    } else {
+      db.fuelStock -= q;
+    }
+
+    db.fuelHistory.unshift({
+      id: uid(),
+      type,
+      q,
+      dest,
+      resp,
+      note,
+      role,
+      date: new Date().toISOString()
+    });
+
+    addHistory("Combustível", "Diesel", q, "L", dest, `${type} de combustível por ${resp} (${note})`);
+
+    $("fuelQtyInput").value = "";
+    $("fuelDestInput").value = "";
+    $("fuelNoteInput").value = "";
+
+    await save();
+    renderCombustivel();
+    toast(`Operação de ${type.toLowerCase()} de diesel registrada com sucesso!`);
+  };
+}
+
+async function deleteFuelItem(id) {
+  const pin = prompt("🔒 Área protegida!\nDigite a senha PIN de segurança (1111) para apagar e estornar o combustível:");
+  if (pin !== "1111") {
+    if (pin !== null) alert("Senha PIN incorreta!");
+    return;
+  }
+
+  const index = db.fuelHistory.findIndex(h => h.id === id);
+  if (index === -1) return;
+
+  const item = db.fuelHistory[index];
+  if (!confirm(`Deseja apagar o registro de ${item.type} de ${num(item.q)} L e estornar no tanque?`)) return;
+
+  if (item.type === "Entrada") {
+    db.fuelStock -= item.q;
+  } else {
+    db.fuelStock += item.q;
+  }
+
+  db.fuelHistory.splice(index, 1);
+  await save();
+  renderCombustivel();
+  toast("Registro de combustível apagado e tanque estornado!");
 }
 
 function renderStock() {
@@ -793,7 +1016,6 @@ function renderHistory() {
   $("historyTableContainer").innerHTML = rows.length ? `<div class="tablewrap"><table><thead><tr><th>Data</th><th>Tipo</th><th>Produto</th><th>Qtd</th><th>Origem</th><th>Resp.</th><th>Ações</th></tr></thead><tbody>${rows.map(h => `<tr><td>${fmtDate(h.date)}</td><td>${esc(h.type)}</td><td>${esc(h.name)}</td><td>${num(h.q)} ${esc(unitLabel(h.u))}</td><td>${esc(h.origin)}</td><td>${esc(h.role)}</td><td><button class="btn danger smallbtn" onclick="deleteHistoryItem('${h.id}')">🗑️ Apagar</button></td></tr>`).join("")}</tbody></table></div>` : `<div class="empty">Nenhuma movimentação registrada.</div>`;
 }
 
-// Função para apagar registro do histórico e estornar/devolver o estoque
 async function deleteHistoryItem(id) {
   const pin = prompt("🔒 Área protegida!\nDigite a senha PIN de segurança (1111) para apagar e estornar o estoque:");
   if (pin !== "1111") {
@@ -937,16 +1159,34 @@ function viewOrder(id) {
 
   buttons.push({ text: "💬 Enviar no WhatsApp", cls: "whatsapp", fn: () => sendOrderWhatsApp(o) });
 
+  if (o.status === "Pendente") {
+    buttons.push({
+      text: "❌ Cancelar Pedido",
+      cls: "danger",
+      fn: async () => {
+        if (!confirm(`Deseja realmente cancelar o pedido #${o.no}?`)) return;
+        o.status = "Cancelado";
+        o.events = o.events || [];
+        o.events.push({ status: "Cancelado", date: Date.now(), role, desc: "Cancelado pelo usuário" });
+        addHistory("Cancelamento", `Pedido #${o.no}`, o.items.length, "itens", o.farm, `Cancelado por ${role}`);
+        await save();
+        closeModal();
+        renderActiveView();
+        toast("Pedido cancelado com sucesso!");
+      }
+    });
+  }
+
   if (role === "Depósito" && o.status === "Pendente") {
     buttons.push({ 
       text: "✓ Confirmar Separação e Dar Baixa", 
       cls: "green", 
       fn: async (e) => {
-        // Desativa o botão imediatamente para evitar múltiplos cliques duplicados
         const btnElement = e.target || document.querySelector('.modal-foot .green');
         if (btnElement) {
+          if (btnElement.disabled) return;
           btnElement.disabled = true;
-          btnElement.textContent = "Processando...";
+          btnElement.textContent = "Processando baixa...";
         }
 
         for (const it of o.items) {
@@ -965,7 +1205,7 @@ function viewOrder(id) {
         await save(); 
         closeModal(); 
         renderActiveView(); 
-        toast("Pedido separado e estoque baixado na nuvem!");
+        toast("Pedido separado e estoque baixado com sucesso!");
       } 
     });
   }
@@ -1242,7 +1482,7 @@ document.addEventListener("DOMContentLoaded", () => {
     toast("Entrada registrada na nuvem!");
   };
 
-  // LEITOR INTELIGENTE DE ARQUIVO PDF (SEPARADOR DE BLOCOS)
+  // LEITOR INTELIGENTE DE ARQUIVO PDF
   $("pdfFileInput").onchange = async e => {
     const file = e.target.files[0];
     if (!file) return;
@@ -1335,7 +1575,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   };
 
-  // Cadastro em Massa (Manual por texto)
   $("bulkClearBtn").onclick = () => {
     $("bulkTextArea").value = "";
     $("bulkPreviewContainer").innerHTML = "";
