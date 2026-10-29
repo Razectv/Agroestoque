@@ -1,0 +1,16 @@
+{
+  "name": "Fazenda Karoline",
+  "short_name": "Karoline",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#102b46",
+  "theme_color": "#102b46",
+  "icons": [
+    {
+      "src": "logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
