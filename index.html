@@ -54,6 +54,9 @@
   pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 </script>
 
+<!-- Tesseract.js para OCR Gratuito de Imagens -->
+<script src="https://unpkg.com/tesseract.js@v5.0.5/dist/tesseract.min.js"></script>
+
 <style>
 :root{--navy:#102b46;--blue:#2864e8;--green:#159568;--bg:#f3f6fa;--text:#1e293b;--muted:#758195;--line:#e3e9f0;--red:#d94343;--orange:#b86b08;--wa:#25d366}
 *{box-sizing:border-box}
@@ -102,7 +105,6 @@ button:disabled{opacity:.45;cursor:not-allowed}
 .whatsapp{background:var(--wa);color:white}
 .smallbtn{padding:7px 10px;min-height:32px;font-size:11px}
 
-/* Grade organizada em 3 colunas para os cards estatísticos */
 .stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-bottom:20px}
 .stat,.panel{background:white;border:1px solid var(--line);border-radius:13px;min-width:0}
 .stat{padding:18px}.stat-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
@@ -214,7 +216,7 @@ tbody tr:last-child td{border-bottom:0}
   <button class="nav-btn menu-admin-only" data-target="relatorios"><span class="nav-icon">▥</span>Relatórios</button>
   <button class="nav-btn" data-target="usuarios"><span class="nav-icon">♙</span>Usuários e perfis</button>
  </nav>
- <div class="sidefoot"><strong>Fazenda Karoline</strong><br>Sincronizado na Nuvem<br>Acesso Protegido por PIN</div>
+ <div class="sidefoot"><strong>Fazenda Karoline</strong><br>Acesso Protegido por PIN</div>
 </aside>
 
 <div class="overlay" id="overlay"></div>
@@ -225,7 +227,7 @@ tbody tr:last-child td{border-bottom:0}
    <button class="menu-btn" id="menuBtn">☰</button>
    <div>
     <div class="top-title" id="topTitle">Visão geral</div>
-    <div class="top-sub">Controle operacional de estoque</div>
+    <div class="top-sub">Controle operacional de estoque e lotes</div>
    </div>
   </div>
   <div class="topright">
@@ -243,13 +245,15 @@ tbody tr:last-child td{border-bottom:0}
   <!-- DASHBOARD -->
   <section id="view-dashboard" class="view-section active">
    <div class="pagehead">
-    <div><div class="eyebrow">PAINEL OPERACIONAL</div><h1>Bom trabalho!</h1><p>Acompanhe o estoque e as operações da Fazenda Karoline.</p></div>
+    <div>
+      <div class="eyebrow">PAINEL OPERACIONAL</div>
+      <h1>Bom trabalho!</h1>
+      <p style="margin-top:4px; font-weight:bold; color:var(--blue);">Perfil atual: <span id="lblRole">Escritório</span></p>
+    </div>
     <button class="id-btn btn primary" data-goto="solicitar" id="dashTopBtn">＋ Solicitar por Hectare</button>
    </div>
    <div id="dashAlertContainer"></div>
-   <div class="notice"><strong>Perfil atual: <span id="lblRole">Escritório</span></strong>Dados sincronizados em tempo real na nuvem com alerta sonoro ativado para o depósito.</div>
    
-   <!-- Grade de estatísticas -->
    <div class="stats" id="dashboardStatsGrid">
     <div class="stat"><div class="stat-top"><span class="stat-label">Produtos ativos</span><span class="stat-icon">▤</span></div><strong id="stProdCount">0</strong><small>Em uso</small></div>
     <div class="stat" id="cardStatDiesel"><div class="stat-top"><span class="stat-label">Diesel Atual</span><span class="stat-icon">⛽</span></div><strong id="stDieselCount">0 L</strong><small id="stDieselSub">Volume no tanque</small></div>
@@ -275,7 +279,7 @@ tbody tr:last-child td{border-bottom:0}
   <!-- ESTOQUE (Barracão) -->
   <section id="view-estoque" class="view-section">
    <div class="pagehead" id="stockPageHead">
-    <div><div class="eyebrow">CONTROLE DE PRODUTOS</div><h1>Estoque (Barracão)</h1><p>Consulta de saldos disponíveis no armazém.</p></div>
+    <div><div class="eyebrow">CONTROLE DE PRODUTOS & LOTES</div><h1>Estoque (Barracão)</h1><p>Consulte saldos, princípios ativos e lotes disponíveis no armazém.</p></div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;">
      <button class="btn primary" id="btnNewProductModal">＋ Novo produto</button>
      <button class="btn green" data-goto="importar">📁 Enviar PDF de Estoque</button>
@@ -288,8 +292,8 @@ tbody tr:last-child td{border-bottom:0}
     <div class="stat"><div class="stat-top"><span class="stat-label">Zerados</span><span class="stat-icon">⊘</span></div><strong id="stStockZero">0</strong><small>Sem saldo</small></div>
    </div>
    <div class="panel">
-    <div class="panel-head"><div><h2>Saldos atuais no barracão</h2><p>Listagem de produtos</p></div><button class="btn outline smallbtn" id="btnExportProd">Exportar CSV</button></div>
-    <div class="filters"><input id="stockSearchInput" placeholder="Buscar produto..."></div>
+    <div class="panel-head"><div><h2>Saldos atuais e Princípios Ativos</h2><p>Busque por nome comercial ou princípio ativo (ex: Glifosato)</p></div><button class="btn outline smallbtn" id="btnExportProd">Exportar CSV</button></div>
+    <div class="filters"><input id="stockSearchInput" placeholder="🔍 Buscar por nome do produto ou princípio ativo..."></div>
     <div id="stockTableContainer"></div>
    </div>
   </section>
@@ -297,7 +301,8 @@ tbody tr:last-child td{border-bottom:0}
   <!-- COMBUSTÍVEL (DIESEL) -->
   <section id="view-combustivel" class="view-section">
    <div class="pagehead">
-    <div><div class="eyebrow">CONTROLE DE TANQUE</div><h1>Combustível (Diesel)</h1><p>Registre entradas de novos carregamentos e saídas para o abastecimento do maquinário da fazenda.</p></div>
+    <div><div class="eyebrow">CONTROLE DE TANQUE</div><h1>Combustível (Diesel)</h1><p>Registre entradas de novos carregamentos, saídas para o maquinário ou ajuste o saldo inicial real do tanque.</p></div>
+    <button class="btn outline" id="btnCalibrateFuel">⚙️ Calibrar / Ajustar Saldo do Tanque</button>
    </div>
    
    <div class="stats" style="grid-template-columns:repeat(3,minmax(0,1fr));">
@@ -318,7 +323,12 @@ tbody tr:last-child td{border-bottom:0}
      </div>
      <div class="field">
       <label>Quantidade (Litros) *</label>
-      <input id="fuelQtyInput" type="number" min="0.1" step="any" placeholder="Ex: 2500">
+      <div style="display:flex; gap:6px; align-items:center;">
+        <input id="fuelQtyInput" type="number" min="0.1" step="any" placeholder="Ex: 2500" style="flex:1;">
+        <input type="file" id="fuelOcrInput" accept="image/*" capture="environment" style="display:none;">
+        <button type="button" class="btn outline" id="btnFuelOcr" title="Tirar foto ou enviar imagem do visor" style="padding:10px 12px; font-size:18px;">📷</button>
+      </div>
+      <small id="ocrStatusMsg">Digite ou clique na câmera para ler da foto.</small>
      </div>
      <div class="field">
       <label>Origem / Destino (Máquina, Talhão ou Fornecedor) *</label>
@@ -351,13 +361,13 @@ tbody tr:last-child td{border-bottom:0}
     <button class="btn outline" data-goto="estoque">Ver estoque</button>
    </div>
    <div class="notice">
-    <strong>Como fazer:</strong> Clique no botão abaixo para escolher o arquivo <strong>.pdf</strong> do seu estoque. O sistema vai reconhecer cada produto individualmente, mesmo que o PDF venha com o texto colado!
+    <strong>Como fazer:</strong> Clique no botão abaixo para escolher o arquivo <strong>.pdf</strong> do seu estoque.
    </div>
    <div class="panel">
     <div class="field">
       <label>Selecione o arquivo PDF do estoque *</label>
       <input type="file" id="pdfFileInput" accept=".pdf">
-      <small>O sistema analisa inteligentemente os nomes, quantidades e unidades (ex: L, kg, mL, un).</small>
+      <small>O sistema analisa inteligentemente os dados do documento.</small>
     </div>
 
     <div class="formgrid" style="margin-top:15px">
@@ -377,8 +387,8 @@ tbody tr:last-child td{border-bottom:0}
    <div class="notice">
     <strong>Formato da receita (uma linha por produto):</strong><br>
     Basta digitar o <strong>Nome</strong>, um <strong>espaço</strong>, a <strong>quantidade por hectare</strong> e a <strong>unidade</strong>.<br>
-    <em>Exemplo:</em> <code>2,4D 1l</code> ou <code>Cypress 0.5 L</code> ou <code>Cloranta 500 ml</code>.<br>
-    <small style="color:var(--blue); font-weight:bold;">💡 Inteligência ativa: O sistema ignora espaços extras, pontos, vírgulas e maiúsculas/minúsculas ao buscar o produto no estoque!</small>
+    <em>Exemplo:</em> <code>2,4D 1l</code> ou <code>Cypress 0.5 L</code>.<br>
+    <small style="color:var(--blue); font-weight:bold;">💡 Inteligência ativa: O sistema busca pelo nome comercial ou princípio ativo no estoque!</small>
    </div>
    <div class="panel">
     <div class="formgrid">
@@ -391,7 +401,6 @@ tbody tr:last-child td{border-bottom:0}
     <div class="field full" style="margin-top:15px">
      <label>Lista de Produtos e Doses por Hectare</label>
      <textarea id="reqBulkText" placeholder="2,4D 1l&#10;Cypress 0.5 L&#10;Cloranta 500 ml"></textarea>
-     <small>O sistema fará o cálculo total e converterá automaticamente 60.000 mL em 60 L para o depósito.</small>
     </div>
 
     <div class="formactions">
@@ -429,9 +438,13 @@ tbody tr:last-child td{border-bottom:0}
     <div><div class="eyebrow">GESTÃO DO ESTOQUE</div><h1>Cadastro em massa</h1><p>Cadastre vários produtos de uma só vez.</p></div>
     <button class="btn outline" data-goto="estoque">Ver estoque</button>
    </div>
-   <div class="notice"><strong>Formato aceito</strong>Uma linha por produto: <code>Cypress 45 L</code>, <code>Cloranta 10 kg</code>.</div>
+   <div class="notice">
+    <strong>Formato aceito (uma linha por produto):</strong><br>
+    <code>NomeProduto QuantidadeUnidade LOTE-Numero DD-MM-AAAA PrincipioAtivo</code><br>
+    <em>Exemplo:</em> <code>Cypress 45L LOTE-98 31-12-2028 Glifosato</code>
+   </div>
    <div class="panel">
-    <div class="field"><label>Lista de produtos</label><textarea id="bulkTextArea" placeholder="Cypress 45 L&#10;Cloranta 10 kg"></textarea><small>Unidades: L, mL, kg, g e un.</small></div>
+    <div class="field"><label>Lista de produtos</label><textarea id="bulkTextArea" placeholder="Cypress 45L LOTE-98 31-12-2028 Glifosato&#10;Cloranta 10kg LOTE-02 30-06-2027 Clorantraniliprole"></textarea></div>
     <div class="formgrid" style="margin-top:15px">
      <div class="field"><label>Estoque mínimo padrão</label><input id="bulkMinInput" type="number" min="0" step="any" value="0"></div>
      <div class="field"><label>Origem / observação</label><input id="bulkOriginInput" placeholder="Ex.: inventário inicial"></div>
@@ -447,18 +460,33 @@ tbody tr:last-child td{border-bottom:0}
   <!-- ENTRADA DE PRODUTOS -->
   <section id="view-entrada" class="view-section">
    <div class="pagehead">
-    <div><div class="eyebrow">MOVIMENTAÇÃO DE ESTOQUE</div><h1>Entrada de produtos</h1><p>Registre os recebimentos no depósito com conversão automática de unidades.</p></div>
+    <div><div class="eyebrow">MOVIMENTAÇÃO DE ESTOQUE</div><h1>Entrada de produtos (por Áudio ou Manual)</h1><p>Registre os recebimentos no depósito ditando por voz ou preenchendo os campos.</p></div>
    </div>
+   
+   <div class="panel" style="background:#eef2ff; border:2px solid var(--blue);">
+    <div class="panel-head"><h2>🎙️ Entrada Inteligente por Voz (Gratuito)</h2><p>Clique no microfone e dite as informações</p></div>
+    <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+     <button class="btn primary" id="btnStartVoice" style="font-size:15px; padding:12px 20px;">🎤 Iniciar Gravação por Voz</button>
+     <span id="voiceStatus" style="font-size:13px; font-weight:bold; color:var(--muted);">Microfone pronto para uso</span>
+    </div>
+    <div class="field" style="margin-top:12px;">
+     <label>Texto Transcrito pelo Microfone:</label>
+     <textarea id="voiceTranscriptBox" placeholder="O texto falado aparecerá aqui..." style="min-height:70px;"></textarea>
+    </div>
+   </div>
+
    <div class="panel">
     <div class="formgrid">
-     <div class="field full"><label>Produto</label><select id="entryProductSelect"><option value="">Selecione um produto</option></select></div>
-     <div class="field"><label>Quantidade recebida</label><input id="entryQtyInput" type="number" min="0.001" step="any" placeholder="Ex.: 250"></div>
-     <div class="field"><label>Unidade recebida</label><select id="entryUnitSelect"><option>L</option><option>mL</option><option>kg</option><option>g</option><option>un</option></select></div>
-     <div class="field"><label>Fornecedor / documento</label><input id="entryOriginInput" placeholder="Nota fiscal ou fornecedor"></div>
-     <div class="field"><label>Observação</label><input id="entryNoteInput" placeholder="Opcional"></div>
+     <div class="field full"><label>Produto *</label><select id="entryProductSelect"><option value="">Selecione um produto</option></select></div>
+     <div class="field"><label>Quantidade recebida *</label><input id="entryQtyInput" type="number" min="0.001" step="any" placeholder="Ex.: 250"></div>
+     <div class="field"><label>Unidade recebida *</label><select id="entryUnitSelect"><option>L</option><option>mL</option><option>kg</option><option>g</option><option>un</option></select></div>
+     <div class="field"><label>Número do Lote *</label><input id="entryLotInput" placeholder="Ex: LOTE-2026A"></div>
+     <div class="field"><label>Data de Validade *</label><input id="entryExpInput" type="date"></div>
+     <div class="field"><label>Princípio Ativo (Molécula)</label><input id="entryActiveIngredientInput" placeholder="Ex: Glifosato 480g/L"></div>
+     <div class="field"><label>Fornecedor / Nota Fiscal</label><input id="entryOriginInput" placeholder="Nota fiscal ou fornecedor"></div>
+     <div class="field full"><label>Observação</label><input id="entryNoteInput" placeholder="Opcional"></div>
     </div>
-    <p class="hint" id="entryProductInfo" style="margin-top:10px"></p>
-    <div class="formactions"><button class="btn green" id="btnConfirmEntry">Confirmar entrada</button></div>
+    <div class="formactions"><button class="btn green" id="btnConfirmEntry">Confirmar Entrada com Lote</button></div>
    </div>
   </section>
 
@@ -491,7 +519,7 @@ tbody tr:last-child td{border-bottom:0}
   <!-- HISTÓRICO -->
   <section id="view-historico" class="view-section">
    <div class="pagehead">
-    <div><div class="eyebrow">AUDITORIA</div><h1>Histórico de movimentações</h1><p>Consulte entradas, saídas, cadastros e ajustes para repasse ao escritório.</p></div>
+    <div><div class="eyebrow">AUDITORIA</div><h1>Histórico de movimentações</h1><p>Consulte entradas, saídas, cadastros e lotes para repasse ao escritório.</p></div>
     <button class="btn outline smallbtn" id="btnExportHist">Exportar CSV</button>
    </div>
    <div class="panel">
@@ -503,7 +531,7 @@ tbody tr:last-child td{border-bottom:0}
   <!-- RELATÓRIOS -->
   <section id="view-relatorios" class="view-section">
    <div class="pagehead">
-    <div><div class="eyebrow">ANÁLISE OPERACIONAL</div><h1>Relatórios</h1><p>Resumo dos saldos para acompanhamento do estoque.</p></div>
+    <div><div class="eyebrow">ANÁLISE OPERACIONAL</div><h1>Relatórios</h1><p>Resumo dos saldos e lotes para acompanhamento do estoque.</p></div>
    </div>
    <div class="stats">
     <div class="stat"><div class="stat-top"><span class="stat-label">Produtos</span><span class="stat-icon">▤</span></div><strong id="repProdCount">0</strong><small>Cadastrados</small></div>
@@ -511,7 +539,7 @@ tbody tr:last-child td{border-bottom:0}
     <div class="stat"><div class="stat-top"><span class="stat-label">Saídas</span><span class="stat-icon">↑</span></div><strong id="repOutCount">0</strong><small>Registros</small></div>
     <div class="stat"><div class="stat-top"><span class="stat-label">Pedidos</span><span class="stat-icon">☷</span></div><strong id="repOrdCount">0</strong><small>Solicitações</small></div>
    </div>
-   <div class="panel"><div class="panel-head"><h2>Saldo por produto</h2><button class="btn outline smallbtn" id="btnExportProdRep">Exportar CSV</button></div><div id="repProductsContainer"></div></div>
+   <div class="panel"><div class="panel-head"><h2>Saldo por produto e lotes</h2><button class="btn outline smallbtn" id="btnExportProdRep">Exportar CSV</button></div><div id="repProductsContainer"></div></div>
   </section>
 
   <!-- USUÁRIOS E PERFIS -->
@@ -519,7 +547,6 @@ tbody tr:last-child td{border-bottom:0}
    <div class="pagehead">
     <div><div class="eyebrow">CONFIGURAÇÃO</div><h1>Usuários e perfis</h1><p>Alterne o perfil de teste ou reinicie os dados.</p></div>
    </div>
-   <div class="notice warning"><strong>Conexão em nuvem ativa</strong>Os dados estão salvos no Firebase em tempo real.</div>
    <div class="panel">
     <div class="panel-head"><h2>Perfis disponíveis</h2></div>
     <div class="tablewrap">
@@ -568,10 +595,10 @@ const TITLES = {
 
 const ALL_QUICK_OPTIONS = [
   { id: "combustivel", icon: "⛽", title: "Combustível", desc: "Gerenciar Diesel" },
-  { id: "entrada", icon: "↓", title: "Entrada", desc: "Recebimentos" },
+  { id: "entrada", icon: "↓", title: "Entrada", desc: "Recebimentos & Lotes" },
   { id: "retirada", icon: "↑", title: "Retirada", desc: "Empréstimos / Avulso" },
   { id: "pedidos", icon: "☷", title: "Pedidos", desc: "Autorizações / Separação" },
-  { id: "estoque", icon: "▤", title: "Consultar estoque", desc: "Ver saldos do barracão" },
+  { id: "estoque", icon: "▤", title: "Consultar estoque", desc: "Ver saldos e princípios ativos" },
   { id: "historico", icon: "◷", title: "Histórico", desc: "Auditoria de movimentações" },
   { id: "solicitar", icon: "＋", title: "Pedido por Hectare", desc: "Receita em massa" },
   { id: "relatorios", icon: "▥", title: "Relatórios", desc: "Resumo de saldos" }
@@ -592,13 +619,11 @@ let stockSearch = "", historySearch = "", orderFilter = "Todos", recipeDraft = [
 let lastPendingCount = 0;
 let importedPdfDraft = [];
 
-// Atalhos rápidos salvos no localStorage por perfil
 function getCustomQuickLinks() {
   const saved = localStorage.getItem("agroestoque_quick_" + role);
   if (saved) {
     try { return JSON.parse(saved); } catch(e) {}
   }
-  // Padrão por perfil se não houver personalizado
   if (role === "Escritório") return ["combustivel", "entrada", "retirada", "pedidos"];
   if (role === "Depósito") return ["combustivel", "pedidos", "estoque", "historico"];
   return ["solicitar", "pedidos", "estoque", "historico"];
@@ -668,6 +693,11 @@ async function initCloudSync() {
       if (db.fuelMin === undefined) db.fuelMin = 1000;
       if (!Array.isArray(db.fuelHistory)) db.fuelHistory = [];
       
+      db.products.forEach(p => {
+        if (!p.activeIngredient) p.activeIngredient = "";
+        if (!Array.isArray(p.lots)) p.lots = [];
+      });
+
       const currentPending = db.orders.filter(o => o.status === "Pendente").length;
       if (role === "Depósito" && currentPending > lastPendingCount) {
         playAlertSound();
@@ -692,7 +722,7 @@ function toast(s) {
 function getProduct(id) { return db.products.find(p => p.id === id); }
 function findProduct(name) {
   const cleanInput = norm(name);
-  return db.products.find(p => norm(p.name) === cleanInput);
+  return db.products.find(p => norm(p.name) === cleanInput || norm(p.activeIngredient) === cleanInput);
 }
 
 function addHistory(type, name, q, u, origin, details = "") {
@@ -803,12 +833,44 @@ function renderDashboard() {
     $("stDieselSub").textContent = fuelVol <= 0 ? "Tanque zerado!" : fuelVol <= fuelMin ? "⚠️ Nível crítico!" : "Volume normal";
   }
 
+  // Verificação de Validade de Lotes (Regra dos 4 meses / 120 dias)
+  const today = new Date();
+  let expiredLotsCount = 0;
+  let warningLotsCount = 0;
+
+  activeProducts.forEach(p => {
+    if (Array.isArray(p.lots)) {
+      p.lots.forEach(l => {
+        if (l.exp) {
+          const expDate = new Date(l.exp);
+          if (!isNaN(expDate)) {
+            const diffTime = expDate - today;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            if (diffDays < 0) {
+              expiredLotsCount++;
+            } else if (diffDays <= 120) {
+              warningLotsCount++;
+            }
+          }
+        }
+      });
+    }
+  });
+
   const alertContainer = $("dashAlertContainer");
   let alertsHtml = [];
 
   const critical = activeProducts.filter(p => p.q <= 0 || (p.min > 0 && p.q <= p.min));
   if (critical.length > 0) {
     alertsHtml.push(`<strong>⚠ Atenção: Produtos precisando de reposição!</strong> Existem ${critical.length} produto(s) com estoque zerado ou abaixo do mínimo. <a href="#" id="alertGoStock" style="color:inherit;font-weight:bold;text-decoration:underline;">Ver estoque</a>`);
+  }
+
+  if (expiredLotsCount > 0) {
+    alertsHtml.push(`<strong>🔴 ALERTA VERMELHO: Lotes Vencidos Detectados!</strong> Existem ${expiredLotsCount} lote(s) com data de validade vencida no barracão. <a href="#" id="alertGoStockExp" style="color:inherit;font-weight:bold;text-decoration:underline;">Verificar no estoque</a>`);
+  }
+
+  if (warningLotsCount > 0) {
+    alertsHtml.push(`<strong>⚠️ ALERTA AMARELO: Lotes Próximos do Vencimento (Carência de 4 Meses)!</strong> Existem ${warningLotsCount} lote(s) vencendo nos próximos 120 dias.`);
   }
 
   if (!isOperator) {
@@ -823,7 +885,7 @@ function renderDashboard() {
 
   if (alertsHtml.length > 0) {
     alertContainer.innerHTML = `<div class="alert-box">${alertsHtml.join("<br><br>")}</div>`;
-    const ags = $("alertGoStock");
+    const ags = $("alertGoStock") || $("alertGoStockExp");
     if (ags) ags.onclick = e => { e.preventDefault(); navigateTo("estoque"); };
   } else {
     alertContainer.innerHTML = "";
@@ -833,7 +895,6 @@ function renderDashboard() {
   dashBtn.textContent = role === "Depósito" ? "＋ Ver pedidos" : "＋ Solicitar por Hectare";
   dashBtn.onclick = () => navigateTo(role === "Depósito" ? "pedidos" : "solicitar");
 
-  // Renderiza botões de acesso rápido personalizados
   const activeQuickIds = getCustomQuickLinks();
   const quickBtnsHtml = activeQuickIds.map(id => {
     const item = ALL_QUICK_OPTIONS.find(x => x.id === id);
@@ -893,6 +954,85 @@ function renderCombustivel() {
   const fHist = db.fuelHistory || [];
   $("fuelHistoryContainer").innerHTML = fHist.length ? `<div class="tablewrap"><table><thead><tr><th>Data</th><th>Tipo</th><th>Litros</th><th>Destino / Fornecedor</th><th>Resp.</th><th>Ações</th></tr></thead><tbody>${fHist.map(h => `<tr><td>${fmtDate(h.date)}</td><td><span class="badge ${h.type === 'Entrada' ? 'delivered' : 'refused'}">${esc(h.type)}</span></td><td><strong>${num(h.q)} L</strong></td><td>${esc(h.dest)}</td><td>${esc(h.role)}</td><td><button class="btn danger smallbtn" onclick="deleteFuelItem('${h.id}')">🗑️ Apagar</button></td></tr>`).join("")}</tbody></table></div>` : `<div class="empty">Nenhuma movimentação de combustível registrada.</div>`;
 
+  const btnFuelOcr = $("btnFuelOcr");
+  const fuelOcrInput = $("fuelOcrInput");
+  const ocrStatusMsg = $("ocrStatusMsg");
+
+  btnFuelOcr.onclick = () => fuelOcrInput.click();
+
+  fuelOcrInput.onchange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    ocrStatusMsg.textContent = "🔍 Lendo números da imagem (OCR)... Aguarde.";
+    btnFuelOcr.disabled = true;
+
+    try {
+      const result = await Tesseract.recognize(file, 'eng', {
+        logger: m => {
+          if (m.status === 'recognizing text') {
+            ocrStatusMsg.textContent = `Lendo imagem: ${Math.round(m.progress * 100)}%`;
+          }
+        }
+      });
+
+      const text = result.data.text;
+      const numbers = text.match(/\d+([.,]\d+)?/g);
+
+      if (numbers && numbers.length > 0) {
+        const foundVal = numbers[0].replace(",", ".");
+        $("fuelQtyInput").value = foundVal;
+        ocrStatusMsg.textContent = `✅ Número detectado: ${foundVal} L! Confira se está correto.`;
+        toast(`Leitura concluída: ${foundVal} L`);
+      } else {
+        ocrStatusMsg.textContent = "⚠️ Nenhum número claro encontrado. Digite manualmente.";
+        toast("Não foi possível identificar números na foto.");
+      }
+    } catch (err) {
+      console.error(err);
+      ocrStatusMsg.textContent = "❌ Erro ao processar a imagem.";
+      toast("Erro ao processar imagem.");
+    } finally {
+      btnFuelOcr.disabled = false;
+      fuelOcrInput.value = "";
+    }
+  };
+
+  $("btnCalibrateFuel").onclick = () => {
+    openModal("Calibrar / Ajustar Saldo do Tanque", `
+      <div class="field">
+        <label>Volume Atual Real no Tanque (Litros) *</label>
+        <input id="calibFuelInput" type="number" min="0" step="any" value="${db.fuelStock || 0}" placeholder="Ex: 2300">
+        <small>Informe o volume exato que está medido no tanque neste momento.</small>
+      </div>
+    `, [
+      { text: "Cancelar", fn: closeModal },
+      { text: "Salvar Novo Saldo", cls: "primary", fn: async () => {
+        const novoValor = Number($("calibFuelInput").value);
+        if (isNaN(novoValor) || novoValor < 0) return toast("Informe um valor válido em litros.");
+        
+        const anterior = db.fuelStock;
+        db.fuelStock = novoValor;
+        
+        db.fuelHistory.unshift({
+          id: uid(),
+          type: "Ajuste",
+          q: novoValor,
+          dest: "Calibração de Tanque",
+          resp: role,
+          note: `Ajuste manual de ${num(anterior)} L para ${num(novoValor)} L`,
+          role,
+          date: new Date().toISOString()
+        });
+
+        await save();
+        closeModal();
+        renderCombustivel();
+        toast("Saldo do tanque calibrado com sucesso!");
+      }}
+    ]);
+  };
+
   const btnConfirm = $("btnConfirmFuel");
   btnConfirm.onclick = async () => {
     const type = $("fuelOpType").value;
@@ -930,6 +1070,7 @@ function renderCombustivel() {
     $("fuelQtyInput").value = "";
     $("fuelDestInput").value = "";
     $("fuelNoteInput").value = "";
+    if (ocrStatusMsg) ocrStatusMsg.textContent = "Digite ou clique na câmera para ler da foto.";
 
     await save();
     renderCombustivel();
@@ -952,7 +1093,7 @@ async function deleteFuelItem(id) {
 
   if (item.type === "Entrada") {
     db.fuelStock -= item.q;
-  } else {
+  } else if (item.type === "Saída") {
     db.fuelStock += item.q;
   }
 
@@ -963,7 +1104,13 @@ async function deleteFuelItem(id) {
 }
 
 function renderStock() {
-  const rows = db.products.filter(p => norm(p.name).includes(norm(stockSearch))).sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
+  const query = norm(stockSearch);
+  const rows = db.products.filter(p => {
+    const matchName = norm(p.name).includes(query);
+    const matchActive = norm(p.activeIngredient || "").includes(query);
+    return matchName || matchActive;
+  }).sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
+
   const activeCount = db.products.filter(p => !p.inactive).length;
   const lowCount = db.products.filter(p => !p.inactive && p.q > 0 && p.min > 0 && p.q <= p.min).length;
   const zeroCount = db.products.filter(p => !p.inactive && p.q <= 0).length;
@@ -980,7 +1127,35 @@ function renderStock() {
     btnNewProd.style.display = "inline-flex";
   }
 
-  $("stockTableContainer").innerHTML = rows.length ? `<div class="tablewrap"><table><thead><tr><th>Produto</th><th>Saldo Atual</th><th>Situação</th><th>Ações</th></tr></thead><tbody>${rows.map(p => `<tr><td><strong>${esc(p.name)}</strong> ${p.inactive ? '<span class="badge neutral">Inativo</span>' : ''}<div class="hint">${esc(unitLabel(p.unit))}</div></td><td><strong>${num(p.q)}</strong> ${esc(unitLabel(p.unit))}</td><td>${p.inactive ? '<span class="badge neutral">Fora de linha</span>' : p.q <= 0 ? '<span class="badge refused">Zerado</span>' : p.min > 0 && p.q <= p.min ? '<span class="badge pending">Estoque baixo</span>' : '<span class="badge delivered">Normal</span>'}</td><td><div class="row-actions">${role !== "Operador" ? `<button class="btn light smallbtn stock-edit" data-id="${p.id}">Editar</button>` : ""}<button class="btn outline smallbtn stock-det" data-id="${p.id}">Detalhes</button></div></td></tr>`).join("")}</tbody></table></div>` : `<div class="empty">Nenhum produto cadastrado no barracão.</div>`;
+  const today = new Date();
+
+  $("stockTableContainer").innerHTML = rows.length ? `<div class="tablewrap"><table><thead><tr><th>Produto & Princípio Ativo</th><th>Saldo Atual</th><th>Lotes e Validades (Regra 4 meses)</th><th>Situação</th><th>Ações</th></tr></thead><tbody>${rows.map(p => {
+    let lotsHtml = '<span class="hint">Nenhum lote registrado</span>';
+    if (p.lots && p.lots.length > 0) {
+      lotsHtml = p.lots.map(l => {
+        let badgeColor = "delivered"; // Verde normal
+        let statusText = "Validade OK";
+        if (l.exp) {
+          const expDate = new Date(l.exp);
+          if (!isNaN(expDate)) {
+            const diffDays = Math.ceil((expDate - today) / (1000 * 60 * 60 * 24));
+            if (diffDays < 0) {
+              badgeColor = "refused"; // Vermelho
+              statusText = "VENCIDO";
+            } else if (diffDays <= 30) {
+              badgeColor = "refused"; // Vermelho
+              statusText = `Vence em ${diffDays}d (Crítico)`;
+            } else if (diffDays <= 120) {
+              badgeColor = "pending"; // Amarelo (Carência de 4 meses)
+              statusText = `Vence em ${diffDays}d (Atenção)`;
+            }
+          }
+        }
+        return `<div style="font-size:11px; margin-bottom:3px;">📦 Lote: <strong>${esc(l.lot)}</strong> | Val: <strong>${esc(l.exp)}</strong> <span class="badge ${badgeColor}" style="font-size:9px; padding:2px 6px;">${statusText}</span> (${num(l.q)} ${esc(unitLabel(p.unit))})</div>`;
+      }).join("");
+    }
+    return `<tr><td><strong>${esc(p.name)}</strong> ${p.inactive ? '<span class="badge neutral">Inativo</span>' : ''}<div class="hint" style="color:var(--blue); font-weight:bold;">🧬 Princípio: ${esc(p.activeIngredient || 'Não informado')}</div></td><td><strong>${num(p.q)}</strong> ${esc(unitLabel(p.unit))}</td><td>${lotsHtml}</td><td>${p.inactive ? '<span class="badge neutral">Fora de linha</span>' : p.q <= 0 ? '<span class="badge refused">Zerado</span>' : p.min > 0 && p.q <= p.min ? '<span class="badge pending">Estoque baixo</span>' : '<span class="badge delivered">Normal</span>'}</td><td><div class="row-actions">${role !== "Operador" ? `<button class="btn light smallbtn stock-edit" data-id="${p.id}">Editar</button>` : ""}<button class="btn outline smallbtn stock-det" data-id="${p.id}">Detalhes</button></div></td></tr>`;
+  }).join("")}</tbody></table></div>` : `<div class="empty">Nenhum produto encontrado para "${esc(stockSearch)}". Tente buscar pelo princípio ativo (ex: Glifosato).</div>`;
 
   if (role !== "Operador") {
     document.querySelectorAll(".stock-edit").forEach(b => b.onclick = () => editProduct(b.dataset.id));
@@ -1008,7 +1183,78 @@ function bindOrderButtons() {
 
 function renderEntry() {
   const active = db.products.filter(p => !p.inactive);
-  $("entryProductSelect").innerHTML = `<option value="">Selecione um produto</option>` + active.map(p => `<option value="${p.id}">${esc(p.name)} — saldo ${num(p.q)} ${esc(unitLabel(p.unit))}</option>`).join("");
+  $("entryProductSelect").innerHTML = `<option value="">Selecione um produto</option>` + active.map(p => `<option value="${p.id}">${esc(p.name)} (${esc(p.activeIngredient || 'Sem princípio ativo')}) — saldo ${num(p.q)} ${esc(unitLabel(p.unit))}</option>`).join("");
+  
+  $("entryProductSelect").onchange = () => {
+    const p = getProduct($("entryProductSelect").value);
+    if (p && p.activeIngredient) {
+      $("entryActiveIngredientInput").value = p.activeIngredient;
+    }
+  };
+
+  const btnVoice = $("btnStartVoice");
+  const statusEl = $("voiceStatus");
+  const transcriptBox = $("voiceTranscriptBox");
+
+  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+    btnVoice.disabled = true;
+    statusEl.textContent = "Reconhecimento de voz não suportado neste navegador.";
+  } else {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'pt-BR';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    btnVoice.onclick = () => {
+      try {
+        recognition.start();
+        statusEl.textContent = "🎙️ Ouvindo... Fale agora os dados da entrada!";
+        btnVoice.style.background = "var(--red)";
+      } catch(e) {
+        console.error(e);
+      }
+    };
+
+    recognition.onresult = (event) => {
+      const speechText = event.results[0][0].transcript;
+      transcriptBox.value = speechText;
+      statusEl.textContent = "✅ Áudio transcrito com sucesso!";
+      btnVoice.style.background = "var(--blue)";
+      parseVoiceInput(speechText);
+    };
+
+    recognition.onerror = () => {
+      statusEl.textContent = "❌ Erro no reconhecimento de voz. Tente novamente.";
+      btnVoice.style.background = "var(--blue)";
+    };
+
+    recognition.onend = () => {
+      btnVoice.style.background = "var(--blue)";
+    };
+  }
+}
+
+function parseVoiceInput(text) {
+  const lower = text.toLowerCase();
+  db.products.forEach(p => {
+    if (lower.includes(norm(p.name))) {
+      $("entryProductSelect").value = p.id;
+      if (p.activeIngredient) $("entryActiveIngredientInput").value = p.activeIngredient;
+    }
+  });
+
+  const numbers = text.match(/\d+([.,]\d+)?/g);
+  if (numbers && numbers.length > 0) {
+    $("entryQtyInput").value = numbers[0].replace(",", ".");
+  }
+
+  if (lower.includes("litro") || lower.includes("l")) $("entryUnitSelect").value = "L";
+  else if (lower.includes("quilo") || lower.includes("kg")) $("entryUnitSelect").value = "kg";
+  else if (lower.includes("grama") || lower.includes("g")) $("entryUnitSelect").value = "g";
+  else if (lower.includes("mililitro") || lower.includes("ml")) $("entryUnitSelect").value = "mL";
+
+  toast("Dados preenchidos automaticamente pelo áudio! Confira antes de confirmar.");
 }
 
 function renderHistory() {
@@ -1055,23 +1301,24 @@ function renderReports() {
   $("repOutCount").textContent = db.history.filter(h => h.type === "Saída").length;
   $("repOrdCount").textContent = db.orders.length;
 
-  $("repProductsContainer").innerHTML = db.products.length ? `<div class="tablewrap"><table><thead><tr><th>Produto</th><th>Saldo</th><th>Mínimo</th></tr></thead><tbody>${db.products.map(p => `<tr><td>${esc(p.name)}</td><td>${num(p.q)} ${esc(unitLabel(p.unit))}</td><td>${num(p.min)} ${esc(unitLabel(p.unit))}</td></tr>`).join("")}</tbody></table></div>` : `<div class="empty">Nenhum produto cadastrado.</div>`;
+  $("repProductsContainer").innerHTML = db.products.length ? `<div class="tablewrap"><table><thead><tr><th>Produto</th><th>Princípio Ativo</th><th>Saldo</th><th>Mínimo</th></tr></thead><tbody>${db.products.map(p => `<tr><td>${esc(p.name)}</td><td>${esc(p.activeIngredient || '—')}</td><td>${num(p.q)} ${esc(unitLabel(p.unit))}</td><td>${num(p.min)} ${esc(unitLabel(p.unit))}</td></tr>`).join("")}</tbody></table></div>` : `<div class="empty">Nenhum produto cadastrado.</div>`;
 }
 
 function renderUsers() {}
 
 function newProductModal() {
   if (role === "Operador") return toast("Acesso negado.");
-  openModal("Novo produto", `<div class="formgrid"><div class="field full"><label>Nome do produto *</label><input id="modalPName"></div><div class="field"><label>Saldo inicial *</label><input id="modalPQty" type="number" min="0" value="0"></div><div class="field"><label>Unidade *</label><select id="modalPUnit"><option>L</option><option>mL</option><option>kg</option><option>g</option><option>un</option></select></div><div class="field"><label>Estoque mínimo</label><input id="modalPMin" type="number" min="0" value="0"></div></div>`, [
+  openModal("Novo produto", `<div class="formgrid"><div class="field full"><label>Nome do produto *</label><input id="modalPName"></div><div class="field full"><label>Princípio Ativo (Molécula)</label><input id="modalPActive" placeholder="Ex: Glifosato, Atrazina..."></div><div class="field"><label>Saldo inicial *</label><input id="modalPQty" type="number" min="0" value="0"></div><div class="field"><label>Unidade *</label><select id="modalPUnit"><option>L</option><option>mL</option><option>kg</option><option>g</option><option>un</option></select></div><div class="field"><label>Estoque mínimo</label><input id="modalPMin" type="number" min="0" value="0"></div></div>`, [
     { text: "Cancelar", fn: closeModal },
     { text: "Salvar", cls: "primary", fn: async () => {
       const name = $("modalPName").value.trim();
+      const activeIngredient = $("modalPActive").value.trim();
       const q = Number($("modalPQty").value);
       const u = $("modalPUnit").value;
       const min = Number($("modalPMin").value);
       if (!name) return toast("Informe o nome.");
       if (findProduct(name)) return toast("Já existe um produto com esse nome.");
-      const p = { id: uid(), name, q, unit: u, min, inactive: false };
+      const p = { id: uid(), name, activeIngredient, q, unit: u, min, lots: q > 0 ? [{ lot: "INICIAL", exp: "2028-12-31", q }] : [], inactive: false };
       db.products.push(p);
       addHistory("Cadastro", p, q, u, "Manual");
       await save(); closeModal(); navigateTo("estoque"); toast("Cadastrado na nuvem com sucesso!");
@@ -1083,10 +1330,11 @@ function editProduct(id) {
   if (role === "Operador") return;
   const p = getProduct(id);
   if (!p) return;
-  openModal("Editar produto", `<div class="formgrid"><div class="field full"><label>Nome</label><input id="editNameInput" value="${esc(p.name)}"></div><div class="field"><label>Estoque mínimo</label><input id="editMinInput" type="number" value="${p.min}"></div><div class="field full"><label><input type="checkbox" id="editInactiveCheck" ${p.inactive ? "checked":""}> Descontinuar / Produto de teste (oculta alertas)</label></div></div>`, [
+  openModal("Editar produto", `<div class="formgrid"><div class="field full"><label>Nome</label><input id="editNameInput" value="${esc(p.name)}"></div><div class="field full"><label>Princípio Ativo</label><input id="editActiveInput" value="${esc(p.activeIngredient || '')}"></div><div class="field"><label>Estoque mínimo</label><input id="editMinInput" type="number" value="${p.min}"></div><div class="field full"><label><input type="checkbox" id="editInactiveCheck" ${p.inactive ? "checked":""}> Descontinuar / Produto de teste (oculta alertas)</label></div></div>`, [
     { text: "Cancelar", fn: closeModal },
     { text: "Salvar", cls: "primary", fn: async () => {
       p.name = $("editNameInput").value.trim();
+      p.activeIngredient = $("editActiveInput").value.trim();
       p.min = Number($("editMinInput").value);
       p.inactive = $("editInactiveCheck").checked;
       await save(); closeModal(); renderStock(); toast("Atualizado na nuvem!");
@@ -1097,6 +1345,29 @@ function editProduct(id) {
 function productDetails(id) {
   const p = getProduct(id);
   if (!p) return;
+
+  const today = new Date();
+  const lotsList = (p.lots && p.lots.length > 0) ? p.lots.map(l => {
+    let statusText = "Validade OK";
+    let badgeClass = "delivered";
+    if (l.exp) {
+      const expDate = new Date(l.exp);
+      if (!isNaN(expDate)) {
+        const diffDays = Math.ceil((expDate - today) / (1000 * 60 * 60 * 24));
+        if (diffDays < 0) {
+          badgeClass = "refused";
+          statusText = "VENCIDO";
+        } else if (diffDays <= 30) {
+          badgeClass = "refused";
+          statusText = `Vence em ${diffDays} dias`;
+        } else if (diffDays <= 120) {
+          badgeClass = "pending";
+          statusText = `Vence em ${diffDays} dias (Atenção 4 meses)`;
+        }
+      }
+    }
+    return `<li>📦 Lote: <strong>${esc(l.lot)}</strong> | Validade: <strong>${esc(l.exp)}</strong> <span class="badge ${badgeClass}">${statusText}</span> | Quantidade: <strong>${num(l.q)} ${esc(unitLabel(p.unit))}</strong></li>`;
+  }).join("") : "<li>Nenhum lote registrado.</li>";
 
   const productHistory = db.history.filter(h => norm(h.name) === norm(p.name));
   let historyHtml = "";
@@ -1128,9 +1399,12 @@ function productDetails(id) {
 
   openModal("Detalhes do Produto", `
     <p><strong>Produto:</strong> ${esc(p.name)}</p>
-    <p><strong>Saldo Atual no Barracão:</strong> ${num(p.q)} ${esc(unitLabel(p.unit))}</p>
+    <p><strong>Princípio Ativo:</strong> <span style="color:var(--blue); font-weight:bold;">${esc(p.activeIngredient || 'Não informado')}</span></p>
+    <p><strong>Saldo Total no Barracão:</strong> ${num(p.q)} ${esc(unitLabel(p.unit))}</p>
     <p><strong>Estoque Mínimo:</strong> ${num(p.min)} ${esc(unitLabel(p.unit))}</p>
     <p><strong>Status:</strong> ${p.inactive ? "Inativo / Fora de linha" : "Ativo"}</p>
+    <h4 style="margin-top:15px;">Controle por Lotes:</h4>
+    <ul style="padding-left:20px; font-size:13px; line-height:1.6; list-style-type:none;">${lotsList}</ul>
     ${historyHtml}
   `, [
     { text: "Fechar", fn: closeModal }
@@ -1216,7 +1490,6 @@ function viewOrder(id) {
   openModal("Pedido #" + o.no, `<p>${statusBadge(o.status)}</p><p><strong>Solicitante:</strong> ${esc(o.requester)}<br><strong>Destino:</strong> ${esc(o.farm)}<br><strong>Área Total:</strong> ${o.hectares ? o.hectares + " ha" : "Não informada"}</p>${o.note ? `<p><strong>Obs:</strong> ${esc(o.note)}</p>`:""}<div class="tablewrap"><table><thead><tr><th>Produto (Para Separar)</th><th>Quantidade Otimizada</th></tr></thead><tbody>${o.items.map(it => `<tr><td>${esc(it.name)}</td><td><strong>${num(it.q)}</strong> ${esc(unitLabel(it.u))}</td></tr>`).join("")}</tbody></table></div><h3 style="margin-top:15px">Andamento</h3>${eventsHtml}`, buttons);
 }
 
-// --- CONFIGURAÇÃO DE EVENTOS GLOBAIS ---
 document.addEventListener("DOMContentLoaded", () => {
   document.querySelectorAll("[data-target]").forEach(btn => {
     btn.onclick = () => navigateTo(btn.dataset.target);
@@ -1262,7 +1535,6 @@ document.addEventListener("DOMContentLoaded", () => {
   $("historySearchInput").oninput = e => { historySearch = e.target.value; renderHistory(); };
   $("orderFilterSelect").onchange = e => { orderFilter = e.target.value; renderOrders(); };
 
-  // Solicitação por Hectare
   $("btnPreviewRecipe").onclick = () => {
     const hectares = Number($("reqHectares").value);
     const text = $("reqBulkText").value.trim();
@@ -1286,7 +1558,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const product = findProduct(prodName);
       if (!product) {
-        errors.push(`Linha ${idx + 1}: Produto "${prodName}" não está cadastrado.`);
+        errors.push(`Linha ${idx + 1}: Produto ou Princípio Ativo "${prodName}" não foi encontrado no estoque.`);
         return;
       }
       if (!Number.isFinite(dosePerHa) || dosePerHa < 0) {
@@ -1374,7 +1646,6 @@ document.addEventListener("DOMContentLoaded", () => {
     };
   };
 
-  // Retirada Avulsa
   $("btnPreviewWithdrawal").onclick = () => {
     const text = $("outBulkText").value.trim();
     if (!text) return toast("Insira a lista de produtos para retirada.");
@@ -1466,23 +1737,35 @@ document.addEventListener("DOMContentLoaded", () => {
     };
   };
 
-  // Entrada de produtos
   $("btnConfirmEntry").onclick = async () => {
     if (role === "Operador") return toast("Acesso negado.");
     const p = getProduct($("entryProductSelect").value);
     const q = Number($("entryQtyInput").value);
     const u = $("entryUnitSelect").value;
+    const lot = $("entryLotInput").value.trim();
+    const exp = $("entryExpInput").value;
+    const activeIngredient = $("entryActiveIngredientInput").value.trim();
+
     if (!p || q <= 0) return toast("Selecione o produto e informe uma quantidade.");
+    if (!lot) return toast("Informe o número do lote.");
+    if (!exp) return toast("Informe a data de validade.");
+
     const cv = convert(q, u, p.unit);
     if (cv === null) return toast("Unidade incompatível.");
+
     p.q += cv;
-    addHistory("Entrada", p.name, q, u, $("entryOriginInput").value || "Depósito", $("entryNoteInput").value);
+    if (activeIngredient) p.activeIngredient = activeIngredient;
+
+    if (!Array.isArray(p.lots)) p.lots = [];
+    p.lots.push({ lot, exp, q: cv });
+
+    addHistory("Entrada", p.name, q, u, $("entryOriginInput").value || "Depósito", `Lote: ${lot} | Val: ${exp} | ${$("entryNoteInput").value}`);
+    
     await save();
     navigateTo("estoque");
-    toast("Entrada registrada na nuvem!");
+    toast("Entrada com lote e validade registrada na nuvem!");
   };
 
-  // LEITOR INTELIGENTE DE ARQUIVO PDF
   $("pdfFileInput").onchange = async e => {
     const file = e.target.files[0];
     if (!file) return;
@@ -1523,7 +1806,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const container = $("importPreviewContainer");
       if (importedPdfDraft.length === 0) {
-        container.innerHTML = `<div class="notice warning">O leitor não conseguiu extrair itens automaticamente. Certifique-se de que o PDF possui os produtos seguidos de quantidade (ex: Produto 500 L).</div>`;
+        container.innerHTML = `<div class="notice warning">O leitor não conseguiu extrair itens automaticamente. Certifique-se de que o PDF possui os produtos seguidos de quantidade (ex: Cypress 45 L).</div>`;
         return;
       }
 
@@ -1555,10 +1838,12 @@ document.addEventListener("DOMContentLoaded", () => {
           const existing = findProduct(x.name);
           if (existing) {
             existing.q += x.q;
+            existing.lots = existing.lots || [];
+            existing.lots.push({ lot: "PDF-IMPORT", exp: "2028-12-31", q: x.q });
             addHistory("Entrada", existing.name, x.q, x.u, origin, "Atualizado via upload de PDF");
             updated++;
           } else {
-            db.products.push({ id: uid(), name: x.name, q: x.q, unit: x.u, min, inactive: false });
+            db.products.push({ id: uid(), name: x.name, activeIngredient: "", q: x.q, unit: x.u, min, lots: [{ lot: "PDF-IMPORT", exp: "2028-12-31", q: x.q }], inactive: false });
             addHistory("Cadastro", x.name, x.q, x.u, origin);
             count++;
           }
@@ -1584,23 +1869,63 @@ document.addEventListener("DOMContentLoaded", () => {
     if (role === "Operador") return toast("Acesso negado.");
     const lines = $("bulkTextArea").value.split(/\r?\n/).filter(x => x.trim());
     const items = [];
-    lines.forEach(line => {
-      const m = line.trim().match(/^(.+?)\s+(\d+(?:[.,]\d+)?)\s*(ml|mililitros?|litros?|l|kg|quilos?|gramas?|g|unidades?|un|und)?$/i);
-      if (m) items.push({ name: m[1].trim(), q: Number(m[2].replace(",", ".")), u: unitLabel(m[3] || "un") });
+    let parseErrors = [];
+
+    lines.forEach((line, lineIdx) => {
+      const parts = line.trim().split(/\s+/);
+      if (parts.length >= 4) {
+        const name = parts[0];
+        const qtyUnitStr = parts[1];
+        const lotPart = parts[2];
+        const datePart = parts[3];
+        const active = parts.slice(4).join(" ") || "";
+
+        const qtyMatch = qtyUnitStr.match(/^(\d+(?:[.,]\d+)?)\s*([a-zA-ZÀ-ÿ]+)$/);
+        if (!qtyMatch) {
+          parseErrors.push(`Linha ${lineIdx + 1}: Quantidade/unidade inválida (${qtyUnitStr}). Use formato como 45L ou 10kg.`);
+          return;
+        }
+
+        const q = Number(qtyMatch[1].replace(",", "."));
+        const u = unitLabel(qtyMatch[2]);
+
+        const dateMatch = datePart.match(/^(\d{2})-(\d{2})-(\d{4})$/);
+        let formattedExp = "2028-12-31";
+        if (dateMatch) {
+          const dd = dateMatch[1];
+          const mm = dateMatch[2];
+          const yyyy = dateMatch[3];
+          formattedExp = `${yyyy}-${mm}-${dd}`;
+        } else {
+          parseErrors.push(`Linha ${lineIdx + 1}: Data inválida (${datePart}). Use o formato DD-MM-AAAA (ex: 31-12-2028).`);
+          return;
+        }
+
+        items.push({ name, q, u, lot: lotPart, exp: formattedExp, active });
+      } else {
+        parseErrors.push(`Linha ${lineIdx + 1}: Formato incompleto.`);
+      }
     });
+
     const min = Number($("bulkMinInput").value || 0);
-    let bulkDraft = items.map(p => ({ ...p, min }));
-    $("bulkPreviewContainer").innerHTML = items.length ? `<hr><h3>Conferência: ${items.length} produto(s)</h3><div class="tablewrap"><table><thead><tr><th>Produto</th><th>Saldo inicial</th><th>Mínimo</th></tr></thead><tbody>${items.map(p => `<tr><td>${esc(p.name)}</td><td>${num(p.q)} ${esc(p.u)}</td><td>${num(p.min)} ${esc(p.u)}</td></tr>`).join("")}</tbody></table></div><div class="formactions"><button class="btn green" id="bulkConfirmBtn">Confirmar cadastro</button></div>` : `<div class="empty">Nenhum produto válido encontrado. Siga o formato: Nome Quantidade Unidade</div>`;
+    const container = $("bulkPreviewContainer");
+
+    if (parseErrors.length > 0) {
+      container.innerHTML = `<div class="notice warning"><strong>Atenção aos erros no formato:</strong><br>${parseErrors.join("<br>")}</div>`;
+      return;
+    }
+
+    container.innerHTML = items.length ? `<hr><h3>Conferência: ${items.length} produto(s)</h3><div class="tablewrap"><table><thead><tr><th>Produto</th><th>Qtd</th><th>Lote</th><th>Validade</th><th>Princípio Ativo</th></tr></thead><tbody>${items.map(p => `<tr><td><strong>${esc(p.name)}</strong></td><td>${num(p.q)} ${esc(p.u)}</td><td>${esc(p.lot)}</td><td>${esc(p.exp.split('-').reverse().join('/'))}</td><td>${esc(p.active || '—')}</td></tr>`).join("")}</tbody></table></div><div class="formactions"><button class="btn green" id="bulkConfirmBtn">Confirmar cadastro</button></div>` : `<div class="empty">Nenhum produto válido encontrado. Siga o formato: Nome QtdUnidade LOTE-Numero DD-MM-AAAA PrincípioAtivo</div>`;
     
     const bcf = $("bulkConfirmBtn");
     if (bcf) {
       bcf.onclick = async () => {
-        if (!bulkDraft.length) return;
+        if (!items.length) return;
         const origin = $("bulkOriginInput").value.trim() || "Cadastro em massa";
         let count = 0;
-        bulkDraft.forEach(x => {
+        items.forEach(x => {
           if (findProduct(x.name)) return;
-          db.products.push({ id: uid(), name: x.name, q: x.q, unit: x.u, min: x.min, inactive: false });
+          db.products.push({ id: uid(), name: x.name, activeIngredient: x.active, q: x.q, unit: x.u, min, lots: [{ lot: x.lot, exp: x.exp, q: x.q }], inactive: false });
           addHistory("Cadastro", x.name, x.q, x.u, origin);
           count++;
         });
@@ -1609,8 +1934,8 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   };
 
-  $("btnExportProd").onclick = () => exportCSV("produtos.csv", [["Produto", "Saldo", "Min"], ...db.products.map(p => [p.name, p.q, p.min])]);
-  $("btnExportProdRep").onclick = () => exportCSV("produtos.csv", [["Produto", "Saldo", "Min"], ...db.products.map(p => [p.name, p.q, p.min])]);
+  $("btnExportProd").onclick = () => exportCSV("produtos.csv", [["Produto", "Principio Ativo", "Saldo", "Min"], ...db.products.map(p => [p.name, p.activeIngredient || "", p.q, p.min])]);
+  $("btnExportProdRep").onclick = () => exportCSV("produtos.csv", [["Produto", "Principio Ativo", "Saldo", "Min"], ...db.products.map(p => [p.name, p.activeIngredient || "", p.q, p.min])]);
   $("btnExportHist").onclick = () => exportCSV("historico.csv", [["Data", "Tipo", "Produto", "Qtd"], ...db.history.map(h => [fmtDate(h.date), h.type, h.name, h.q])]);
 
   $("btnResetDB").onclick = async () => {
