@@ -200,6 +200,7 @@ tbody tr:last-child td{border-bottom:0}
   <button class="nav-btn active" data-target="dashboard"><span class="nav-icon">▦</span>Visão geral</button>
   <button class="nav-btn" data-target="estoque"><span class="nav-icon">▤</span>Estoque</button>
   <button class="nav-btn menu-admin-only" data-target="combustivel" id="navCombustivel"><span class="nav-icon">⛽</span>Combustível (Diesel)</button>
+  <button class="nav-btn menu-admin-only" data-target="maquinas" id="navMaquinas"><span class="nav-icon">🚜</span>Máquinas e Frota</button>
   <button class="nav-btn" data-target="solicitar"><span class="nav-icon">＋</span>Solicitar por Hectare</button>
   <button class="nav-btn" data-target="pedidos"><span class="nav-icon">☷</span>Pedidos e entregas</button>
  </nav>
@@ -307,7 +308,7 @@ tbody tr:last-child td{border-bottom:0}
    
    <div class="stats" style="grid-template-columns:repeat(3,minmax(0,1fr));">
     <div class="stat"><div class="stat-top"><span class="stat-label">Volume Atual</span><span class="stat-icon">⛽</span></div><strong id="fuelTotalVol">0 L</strong><small>Total no tanque</small></div>
-    <div class="stat"><div class="stat-top"><span class="stat-label">Volume Mínimo de Alerta</span><span class="stat-icon">⚠</span></div><strong id="fuelMinVol">1500 L</strong><small>Limite de segurança</small></div>
+    <div class="stat"><div class="stat-top"><span class="stat-label">Volume Mínimo de Alerta</span><span class="stat-icon">⚠</span></div><strong id="fuelMinVol">1000 L</strong><small>Limite de segurança</small></div>
     <div class="stat"><div class="stat-top"><span class="stat-label">Status do Tanque</span><span class="stat-icon">📊</span></div><strong id="fuelStatusBadge"><span class="badge delivered">Normal</span></strong><small>Condição atual</small></div>
    </div>
 
@@ -317,8 +318,8 @@ tbody tr:last-child td{border-bottom:0}
      <div class="field">
       <label>Tipo de Movimentação *</label>
       <select id="fuelOpType">
-        <option value="Entrada">Entrada (Chegada de Combustível / Nota Fiscal)</option>
-        <option value="Saída">Saída (Abastecimento de Maquinário / Trator)</option>
+        <option value="Entrada">Entrada</option>
+        <option value="Saída">Saída</option>
       </select>
      </div>
      <div class="field">
@@ -328,11 +329,14 @@ tbody tr:last-child td{border-bottom:0}
         <input type="file" id="fuelOcrInput" accept="image/*" capture="environment" style="display:none;">
         <button type="button" class="btn outline" id="btnFuelOcr" title="Tirar foto ou enviar imagem do visor" style="padding:10px 12px; font-size:18px;">📷</button>
       </div>
-      <small id="ocrStatusMsg">Digite ou clique na câmera para ler da foto.</small>
+      <small id="ocrStatusMsg">Tire foto nítida e de perto do visor do tanque.</small>
      </div>
      <div class="field">
-      <label>Origem / Destino (Máquina, Talhão ou Fornecedor) *</label>
-      <input id="fuelDestInput" placeholder="Ex: Trator John Deere / Posto Distribuidor">
+      <label>Origem / Destino (Máquina ou Fornecedor) *</label>
+      <select id="fuelDestSelect" style="margin-bottom:6px;">
+        <option value="">Selecione uma máquina cadastrada...</option>
+      </select>
+      <input id="fuelDestInput" placeholder="Ou digite o fornecedor/outro destino">
      </div>
      <div class="field">
       <label>Responsável / Operador *</label>
@@ -351,6 +355,18 @@ tbody tr:last-child td{border-bottom:0}
    <div class="panel">
     <div class="panel-head"><h2>Histórico de Movimentações de Combustível</h2></div>
     <div id="fuelHistoryContainer"></div>
+   </div>
+  </section>
+
+  <!-- MÁQUINAS E FROTA -->
+  <section id="view-maquinas" class="view-section">
+   <div class="pagehead">
+    <div><div class="eyebrow">CADASTRO DE FROTA</div><h1>Máquinas e Equipamentos</h1><p>Cadastre tratores, colheitadeiras, caminhões e pulverizadores para facilitar o abastecimento.</p></div>
+    <button class="btn primary" id="btnNewMachine">＋ Nova Máquina</button>
+   </div>
+   <div class="panel">
+    <div class="panel-head"><h2>Frota Cadastrada</h2></div>
+    <div id="machinesTableContainer"></div>
    </div>
   </section>
 
@@ -387,7 +403,7 @@ tbody tr:last-child td{border-bottom:0}
    <div class="notice">
     <strong>Formato da receita (uma linha por produto):</strong><br>
     Basta digitar o <strong>Nome</strong>, um <strong>espaço</strong>, a <strong>quantidade por hectare</strong> e a <strong>unidade</strong>.<br>
-    <em>Exemplo:</em> <code>2,4D 1l</code> ou <code>Cypress 0.5 L</code>.<br>
+    <em>Exemplo:</em> <code>2,4D 1l</code>[span_0](start_span)[span_0](end_span) ou <code>Cypress 0.5 L</code>[span_1](start_span)[span_1](end_span).<br>
     <small style="color:var(--blue); font-weight:bold;">💡 Inteligência ativa: O sistema busca pelo nome comercial ou princípio ativo no estoque!</small>
    </div>
    <div class="panel">
@@ -441,7 +457,7 @@ tbody tr:last-child td{border-bottom:0}
    <div class="notice">
     <strong>Formato aceito (uma linha por produto):</strong><br>
     <code>NomeProduto QuantidadeUnidade LOTE-Numero DD-MM-AAAA PrincipioAtivo</code><br>
-    <em>Exemplo:</em> <code>Cypress 45L LOTE-98 31-12-2028 Glifosato</code>
+    <em>Exemplo:</em> <code>Cypress 45L LOTE-98 31-12-2028 Glifosato</code>[span_2](start_span)[span_2](end_span)
    </div>
    <div class="panel">
     <div class="field"><label>Lista de produtos</label><textarea id="bulkTextArea" placeholder="Cypress 45L LOTE-98 31-12-2028 Glifosato&#10;Cloranta 10kg LOTE-02 30-06-2027 Clorantraniliprole"></textarea></div>
@@ -498,7 +514,7 @@ tbody tr:last-child td{border-bottom:0}
    <div class="notice">
     <strong>Formato da lista (uma linha por produto):</strong><br>
     Digite o <strong>Nome</strong>, um <strong>espaço</strong>, a <strong>quantidade total</strong> e a <strong>unidade</strong>.<br>
-    <em>Exemplo:</em> <code>2,4D 20 L</code> ou <code>Cypress 5 L</code>.
+    <em>Exemplo:</em> <code>2,4D 20 L</code> ou <code>Cypress 5 L</code>[span_3](start_span)[span_3](end_span).
    </div>
    <div class="panel">
     <div class="formgrid">
@@ -582,6 +598,7 @@ const TITLES = {
   dashboard: "Visão geral",
   estoque: "Estoque (Barracão)",
   combustivel: "Combustível (Diesel)",
+  maquinas: "Máquinas e Frota",
   importar: "Importar PDF de Estoque",
   solicitar: "Solicitação em Massa",
   pedidos: "Pedidos e entregas",
@@ -595,6 +612,7 @@ const TITLES = {
 
 const ALL_QUICK_OPTIONS = [
   { id: "combustivel", icon: "⛽", title: "Combustível", desc: "Gerenciar Diesel" },
+  { id: "maquinas", icon: "🚜", title: "Máquinas", desc: "Frota de tratores" },
   { id: "entrada", icon: "↓", title: "Entrada", desc: "Recebimentos & Lotes" },
   { id: "retirada", icon: "↑", title: "Retirada", desc: "Empréstimos / Avulso" },
   { id: "pedidos", icon: "☷", title: "Pedidos", desc: "Autorizações / Separação" },
@@ -611,7 +629,7 @@ const norm = s => String(s ?? "").trim().toLocaleLowerCase("pt-BR").replace(/[\s
 const num = n => Number(n || 0).toLocaleString("pt-BR", {maximumFractionDigits: 3});
 const fmtDate = s => { const d = new Date(s); return isNaN(d) ? "—" : d.toLocaleString("pt-BR", {dateStyle: "short", timeStyle: "short"}); };
 
-const freshDB = () => ({ products: [], orders: [], history: [], fuelHistory: [], fuelStock: 5000, fuelMin: 1000, farms: ["Fazenda principal"] });
+const freshDB = () => ({ products: [], orders: [], history: [], fuelHistory: [], machines: [], fuelStock: 5000, fuelMin: 1000, farms: ["Fazenda principal"] });
 let db = freshDB();
 let role = localStorage.getItem("agroestoque_role") || "Operador";
 let currentView = "dashboard";
@@ -624,8 +642,8 @@ function getCustomQuickLinks() {
   if (saved) {
     try { return JSON.parse(saved); } catch(e) {}
   }
-  if (role === "Escritório") return ["combustivel", "entrada", "retirada", "pedidos"];
-  if (role === "Depósito") return ["combustivel", "pedidos", "estoque", "historico"];
+  if (role === "Escritório") return ["combustivel", "maquinas", "entrada", "retirada", "pedidos"];
+  if (role === "Depósito") return ["combustivel", "maquinas", "pedidos", "estoque", "historico"];
   return ["solicitar", "pedidos", "estoque", "historico"];
 }
 
@@ -692,6 +710,7 @@ async function initCloudSync() {
       if (db.fuelStock === undefined) db.fuelStock = 5000;
       if (db.fuelMin === undefined) db.fuelMin = 1000;
       if (!Array.isArray(db.fuelHistory)) db.fuelHistory = [];
+      if (!Array.isArray(db.machines)) db.machines = [];
       
       db.products.forEach(p => {
         if (!p.activeIngredient) p.activeIngredient = "";
@@ -740,7 +759,7 @@ function closeMenu() {
 }
 
 function navigateTo(target) {
-  if (role === "Operador" && ["cadastro", "importar", "entrada", "retirada", "relatorios", "combustivel"].includes(target)) {
+  if (role === "Operador" && ["cadastro", "importar", "entrada", "retirada", "relatorios", "combustivel", "maquinas"].includes(target)) {
     toast("Acesso restrito para operadores.");
     target = "dashboard";
   }
@@ -784,6 +803,8 @@ function applyRolePermissions() {
   
   const navComb = $("navCombustivel");
   if (navComb) navComb.style.display = isOp ? "none" : "flex";
+  const navMaq = $("navMaquinas");
+  if (navMaq) navMaq.style.display = isOp ? "none" : "flex";
 }
 
 function renderActiveView() {
@@ -797,6 +818,10 @@ function renderActiveView() {
   else if (currentView === "combustivel") {
     if (role === "Operador") { navigateTo("dashboard"); return; }
     renderCombustivel();
+  }
+  else if (currentView === "maquinas") {
+    if (role === "Operador") { navigateTo("dashboard"); return; }
+    renderMaquinas();
   }
   else if (currentView === "importar") {}
   else if (currentView === "solicitar") renderRequest();
@@ -833,7 +858,6 @@ function renderDashboard() {
     $("stDieselSub").textContent = fuelVol <= 0 ? "Tanque zerado!" : fuelVol <= fuelMin ? "⚠️ Nível crítico!" : "Volume normal";
   }
 
-  // Verificação de Validade de Lotes (Regra dos 4 meses / 120 dias)
   const today = new Date();
   let expiredLotsCount = 0;
   let warningLotsCount = 0;
@@ -844,8 +868,7 @@ function renderDashboard() {
         if (l.exp) {
           const expDate = new Date(l.exp);
           if (!isNaN(expDate)) {
-            const diffTime = expDate - today;
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            const diffDays = Math.ceil((expDate - today) / (1000 * 60 * 60 * 24));
             if (diffDays < 0) {
               expiredLotsCount++;
             } else if (diffDays <= 120) {
@@ -899,7 +922,7 @@ function renderDashboard() {
   const quickBtnsHtml = activeQuickIds.map(id => {
     const item = ALL_QUICK_OPTIONS.find(x => x.id === id);
     if (!item) return "";
-    if (role === "Operador" && ["combustivel", "entrada", "retirada", "relatorios"].includes(item.id)) return "";
+    if (role === "Operador" && ["combustivel", "maquinas", "entrada", "retirada", "relatorios"].includes(item.id)) return "";
     return `<button class="quick-btn" data-goto="${item.id}"><span>${item.icon}</span><strong>${item.title}</strong><small>${item.desc}</small></button>`;
   }).filter(Boolean).join("");
 
@@ -909,7 +932,7 @@ function renderDashboard() {
   $("btnCustomizeQuick").onclick = () => {
     const current = getCustomQuickLinks();
     let checkboxesHtml = ALL_QUICK_OPTIONS.map(opt => {
-      if (role === "Operador" && ["combustivel", "entrada", "retirada", "relatorios"].includes(opt.id)) return "";
+      if (role === "Operador" && ["combustivel", "maquinas", "entrada", "retirada", "relatorios"].includes(opt.id)) return "";
       const checked = current.includes(opt.id) ? "checked" : "";
       return `<label style="display:flex;align-items:center;gap:10px;padding:8px 0;font-size:13px;border-bottom:1px solid var(--line);cursor:pointer;"><input type="checkbox" value="${opt.id}" class="quick-check" ${checked} style="width:18px;height:18px;"> <span>${opt.icon} <strong>${opt.title}</strong> (${opt.desc})</span></label>`;
     }).join("");
@@ -939,6 +962,42 @@ function renderDashboard() {
   bindOrderButtons();
 }
 
+function renderMaquinas() {
+  const maquinas = db.machines || [];
+  $("machinesTableContainer").innerHTML = maquinas.length ? `<div class="tablewrap"><table><thead><tr><th>Nome da Máquina / Veículo</th><th>Tipo / Modelo</th><th>Ações</th></tr></thead><tbody>${maquinas.map(m => `<tr><td><strong>${esc(m.name)}</strong></td><td>${esc(m.model || '—')}</td><td><button class="btn danger smallbtn" onclick="deleteMachine('${m.id}')">🗑️ Excluir</button></td></tr>`).join("")}</tbody></table></div>` : `<div class="empty">Nenhuma máquina cadastrada ainda.</div>`;
+
+  $("btnNewMachine").onclick = () => {
+    openModal("Cadastrar Nova Máquina", `
+      <div class="formgrid">
+        <div class="field full"><label>Nome / Identificação da Máquina *</label><input id="newMachName" placeholder="Ex: Trator John Deere 8370R"></div>
+        <div class="field full"><label>Tipo ou Modelo (Opcional)</label><input id="newMachModel" placeholder="Ex: Trator / Colheitadeira / Caminhão / Pulverizador"></div>
+      </div>
+    `, [
+      { text: "Cancelar", fn: closeModal },
+      { text: "Salvar Máquina", cls: "primary", fn: async () => {
+        const name = $("newMachName").value.trim();
+        const model = $("newMachModel").value.trim();
+        if (!name) return toast("Informe o nome da máquina.");
+        
+        if (!Array.isArray(db.machines)) db.machines = [];
+        db.machines.push({ id: uid(), name, model });
+        await save();
+        closeModal();
+        renderMaquinas();
+        toast("Máquina cadastrada com sucesso!");
+      }}
+    ]);
+  };
+}
+
+async function deleteMachine(id) {
+  if (!confirm("Deseja realmente excluir esta máquina da lista?")) return;
+  db.machines = db.machines.filter(m => m.id !== id);
+  await save();
+  renderMaquinas();
+  toast("Máquina removida!");
+}
+
 function renderCombustivel() {
   const vol = db.fuelStock || 0;
   const min = db.fuelMin || 1000;
@@ -951,8 +1010,13 @@ function renderCombustivel() {
   else if (vol <= min) badgeHtml = '<span class="badge pending">Nível Baixo</span>';
   $("fuelStatusBadge").innerHTML = badgeHtml;
 
+  // Popular select de máquinas cadastradas
+  const destSelect = $("fuelDestSelect");
+  const machines = db.machines || [];
+  destSelect.innerHTML = `<option value="">Selecione uma máquina cadastrada...</option>` + machines.map(m => `<option value="${esc(m.name)}">${esc(m.name)} (${esc(m.model || 'Frota')})</option>`).join("");
+
   const fHist = db.fuelHistory || [];
-  $("fuelHistoryContainer").innerHTML = fHist.length ? `<div class="tablewrap"><table><thead><tr><th>Data</th><th>Tipo</th><th>Litros</th><th>Destino / Fornecedor</th><th>Resp.</th><th>Ações</th></tr></thead><tbody>${fHist.map(h => `<tr><td>${fmtDate(h.date)}</td><td><span class="badge ${h.type === 'Entrada' ? 'delivered' : 'refused'}">${esc(h.type)}</span></td><td><strong>${num(h.q)} L</strong></td><td>${esc(h.dest)}</td><td>${esc(h.role)}</td><td><button class="btn danger smallbtn" onclick="deleteFuelItem('${h.id}')">🗑️ Apagar</button></td></tr>`).join("")}</tbody></table></div>` : `<div class="empty">Nenhuma movimentação de combustível registrada.</div>`;
+  $("fuelHistoryContainer").innerHTML = fHist.length ? `<div class="tablewrap"><table><thead><tr><th>Data</th><th>Tipo</th><th>Litros</th><th>Destino / Fornecedor</th><th>Resp.</th><th>Ações</th></tr></thead><tbody>${fHist.map(h => `<tr><td>${fmtDate(h.date)}</td><td><span class="badge ${h.type === 'Entrada' ? 'delivered' : 'refused'}">${esc(h.type)}</span></td><td><strong>${num(h.q)} L</strong></td><td>${esc(h.dest)}</td><td>${esc(h.role)}</td><td><div class="row-actions"><button class="btn light smallbtn" onclick="editFuelItem('${h.id}')">✏️ Editar</button><button class="btn danger smallbtn" onclick="deleteFuelItem('${h.id}')">🗑️ Apagar</button></div></td></tr>`).join("")}</tbody></table></div>` : `<div class="empty">Nenhuma movimentação de combustível registrada.</div>`;
 
   const btnFuelOcr = $("btnFuelOcr");
   const fuelOcrInput = $("fuelOcrInput");
@@ -964,35 +1028,77 @@ function renderCombustivel() {
     const file = e.target.files[0];
     if (!file) return;
 
-    ocrStatusMsg.textContent = "🔍 Lendo números da imagem (OCR)... Aguarde.";
+    ocrStatusMsg.textContent = "🔍 Otimizando imagem e lendo números... Aguarde.";
     btnFuelOcr.disabled = true;
 
     try {
-      const result = await Tesseract.recognize(file, 'eng', {
-        logger: m => {
-          if (m.status === 'recognizing text') {
-            ocrStatusMsg.textContent = `Lendo imagem: ${Math.round(m.progress * 100)}%`;
+      const img = document.createElement('img');
+      const reader = new FileReader();
+
+      reader.onload = async function(event) {
+        img.src = event.target.result;
+        img.onload = async function() {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          
+          const maxDim = 1200;
+          let w = img.width;
+          let h = img.height;
+          if (w > h && w > maxDim) { h *= maxDim / w; w = maxDim; }
+          else if (h > maxDim) { w *= maxDim / h; h = maxDim; }
+          
+          canvas.width = w;
+          canvas.height = h;
+          
+          ctx.drawImage(img, 0, 0, w, h);
+          
+          const imgData = ctx.getImageData(0, 0, w, h);
+          const data = imgData.data;
+          
+          for (let i = 0; i < data.length; i += 4) {
+            let avg = (data[i] + data[i+1] + data[i+2]) / 3;
+            let v = avg < 130 ? 0 : 255; 
+            data[i] = v;     
+            data[i+1] = v; 
+            data[i+2] = v; 
           }
-        }
-      });
+          ctx.putImageData(imgData, 0, 0);
 
-      const text = result.data.text;
-      const numbers = text.match(/\d+([.,]\d+)?/g);
+          const processedImageUrl = canvas.toDataURL('image/jpeg');
 
-      if (numbers && numbers.length > 0) {
-        const foundVal = numbers[0].replace(",", ".");
-        $("fuelQtyInput").value = foundVal;
-        ocrStatusMsg.textContent = `✅ Número detectado: ${foundVal} L! Confira se está correto.`;
-        toast(`Leitura concluída: ${foundVal} L`);
-      } else {
-        ocrStatusMsg.textContent = "⚠️ Nenhum número claro encontrado. Digite manualmente.";
-        toast("Não foi possível identificar números na foto.");
-      }
+          const result = await Tesseract.recognize(processedImageUrl, 'eng', {
+            logger: m => {
+              if (m.status === 'recognizing text') {
+                ocrStatusMsg.textContent = `Lendo visor: ${Math.round(m.progress * 100)}%`;
+              }
+            }
+          });
+
+          const text = result.data.text;
+          const numbers = text.match(/\d+([.,]\d+)?/g);
+
+          if (numbers && numbers.length > 0) {
+            let validNums = numbers.map(n => n.replace(",", ".")).filter(n => Number(n) > 5);
+            let foundVal = validNums.length > 0 ? validNums[0] : numbers[0].replace(",", ".");
+
+            $("fuelQtyInput").value = foundVal;
+            ocrStatusMsg.textContent = `✅ Número detectado com sucesso: ${foundVal} L!`;
+            toast(`Leitura concluída: ${foundVal} L`);
+          } else {
+            ocrStatusMsg.textContent = "⚠️ Não foi possível identificar com clareza. Tente tirar a foto mais de perto e sem reflexo.";
+            toast("Não foi possível ler os números da foto.");
+          }
+
+          btnFuelOcr.disabled = false;
+          fuelOcrInput.value = "";
+        };
+      };
+      reader.readAsDataURL(file);
+
     } catch (err) {
       console.error(err);
-      ocrStatusMsg.textContent = "❌ Erro ao processar a imagem.";
+      ocrStatusMsg.textContent = "❌ Erro ao processar imagem.";
       toast("Erro ao processar imagem.");
-    } finally {
       btnFuelOcr.disabled = false;
       fuelOcrInput.value = "";
     }
@@ -1037,12 +1143,14 @@ function renderCombustivel() {
   btnConfirm.onclick = async () => {
     const type = $("fuelOpType").value;
     const q = Number($("fuelQtyInput").value);
-    const dest = $("fuelDestInput").value.trim();
+    const destSelected = $("fuelDestSelect").value;
+    const destInput = $("fuelDestInput").value.trim();
+    const dest = destSelected || destInput;
     const resp = $("fuelRespInput").value.trim() || role;
     const note = $("fuelNoteInput").value.trim();
 
     if (!q || q <= 0) return toast("Informe uma quantidade válida em litros.");
-    if (!dest) return toast("Informe o destino ou fornecedor do combustível.");
+    if (!dest) return toast("Selecione uma máquina ou informe o destino/fornecedor do combustível.");
 
     if (type === "Saída" && q > db.fuelStock) {
       return toast("A quantidade de saída é maior que o saldo atual do tanque!");
@@ -1068,14 +1176,83 @@ function renderCombustivel() {
     addHistory("Combustível", "Diesel", q, "L", dest, `${type} de combustível por ${resp} (${note})`);
 
     $("fuelQtyInput").value = "";
+    $("fuelDestSelect").value = "";
     $("fuelDestInput").value = "";
     $("fuelNoteInput").value = "";
-    if (ocrStatusMsg) ocrStatusMsg.textContent = "Digite ou clique na câmera para ler da foto.";
+    if (ocrStatusMsg) ocrStatusMsg.textContent = "Tire foto nítida e de perto do visor do tanque.";
 
     await save();
     renderCombustivel();
     toast(`Operação de ${type.toLowerCase()} de diesel registrada com sucesso!`);
   };
+}
+
+function editFuelItem(id) {
+  const item = db.fuelHistory.find(h => h.id === id);
+  if (!item) return;
+
+  const machines = db.machines || [];
+  let machOptions = `<option value="">Outro / Fornecedor</option>` + machines.map(m => `<option value="${esc(m.name)}" ${item.dest === m.name ? 'selected' : ''}>${esc(m.name)}</option>`).join("");
+
+  openModal("Editar Movimentação de Diesel", `
+    <div class="formgrid">
+      <div class="field">
+        <label>Tipo de Movimentação *</label>
+        <select id="editFuelType">
+          <option value="Entrada" ${item.type === 'Entrada' ? 'selected' : ''}>Entrada</option>
+          <option value="Saída" ${item.type === 'Saída' ? 'selected' : ''}>Saída</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Quantidade (Litros) *</label>
+        <input id="editFuelQty" type="number" min="0.1" step="any" value="${item.q}">
+      </div>
+      <div class="field full">
+        <label>Destino / Máquina *</label>
+        <select id="editFuelDestSel" style="margin-bottom:6px;">${machOptions}</select>
+        <input id="editFuelDest" value="${esc(item.dest)}" placeholder="Ou digite o destino">
+      </div>
+      <div class="field full">
+        <label>Observação</label>
+        <input id="editFuelNote" value="${esc(item.note || '')}">
+      </div>
+    </div>
+  `, [
+    { text: "Cancelar", fn: closeModal },
+    { text: "Salvar Alterações", cls: "primary", fn: async () => {
+      const newType = $("editFuelType").value;
+      const newQty = Number($("editFuelQty").value);
+      const newDest = $("editFuelDestSel").value || $("editFuelDest").value.trim();
+      const newNote = $("editFuelNote").value.trim();
+
+      if (!newQty || newQty <= 0) return toast("Informe uma quantidade válida.");
+      if (!newDest) return toast("Informe o destino.");
+
+      // Reverter impacto antigo no tanque
+      if (item.type === "Entrada") {
+        db.fuelStock -= item.q;
+      } else if (item.type === "Saída") {
+        db.fuelStock += item.q;
+      }
+
+      // Aplicar novo impacto
+      if (newType === "Entrada") {
+        db.fuelStock += newQty;
+      } else if (newType === "Saída") {
+        db.fuelStock -= newQty;
+      }
+
+      item.type = newType;
+      item.q = newQty;
+      item.dest = newDest;
+      item.note = newNote;
+
+      await save();
+      closeModal();
+      renderCombustivel();
+      toast("Movimentação de diesel atualizada com sucesso!");
+    }}
+  ]);
 }
 
 async function deleteFuelItem(id) {
@@ -1133,20 +1310,20 @@ function renderStock() {
     let lotsHtml = '<span class="hint">Nenhum lote registrado</span>';
     if (p.lots && p.lots.length > 0) {
       lotsHtml = p.lots.map(l => {
-        let badgeColor = "delivered"; // Verde normal
+        let badgeColor = "delivered";
         let statusText = "Validade OK";
         if (l.exp) {
           const expDate = new Date(l.exp);
           if (!isNaN(expDate)) {
             const diffDays = Math.ceil((expDate - today) / (1000 * 60 * 60 * 24));
             if (diffDays < 0) {
-              badgeColor = "refused"; // Vermelho
+              badgeColor = "refused";
               statusText = "VENCIDO";
             } else if (diffDays <= 30) {
-              badgeColor = "refused"; // Vermelho
+              badgeColor = "refused";
               statusText = `Vence em ${diffDays}d (Crítico)`;
             } else if (diffDays <= 120) {
-              badgeColor = "pending"; // Amarelo (Carência de 4 meses)
+              badgeColor = "pending";
               statusText = `Vence em ${diffDays}d (Atenção)`;
             }
           }
@@ -1154,7 +1331,8 @@ function renderStock() {
         return `<div style="font-size:11px; margin-bottom:3px;">📦 Lote: <strong>${esc(l.lot)}</strong> | Val: <strong>${esc(l.exp)}</strong> <span class="badge ${badgeColor}" style="font-size:9px; padding:2px 6px;">${statusText}</span> (${num(l.q)} ${esc(unitLabel(p.unit))})</div>`;
       }).join("");
     }
-    return `<tr><td><strong>${esc(p.name)}</strong> ${p.inactive ? '<span class="badge neutral">Inativo</span>' : ''}<div class="hint" style="color:var(--blue); font-weight:bold;">🧬 Princípio: ${esc(p.activeIngredient || 'Não informado')}</div></td><td><strong>${num(p.q)}</strong> ${esc(unitLabel(p.unit))}</td><td>${lotsHtml}</td><td>${p.inactive ? '<span class="badge neutral">Fora de linha</span>' : p.q <= 0 ? '<span class="badge refused">Zerado</span>' : p.min > 0 && p.q <= p.min ? '<span class="badge pending">Estoque baixo</span>' : '<span class="badge delivered">Normal</span>'}</td><td><div class="row-actions">${role !== "Operador" ? `<button class="btn light smallbtn stock-edit" data-id="${p.id}">Editar</button>` : ""}<button class="btn outline smallbtn stock-det" data-id="${p.id}">Detalhes</button></div></td></tr>`;
+    const displayActive = (p.activeIngredient && p.activeIngredient.trim() !== "") ? esc(p.activeIngredient) : '<span style="color:#b92e2e; font-weight:normal;">Não informado</span>';
+    return `<tr><td><strong>${esc(p.name)}</strong> ${p.inactive ? '<span class="badge neutral">Inativo</span>' : ''}<div class="hint" style="color:var(--blue); font-weight:bold;">🧬 Princípio: ${displayActive}</div></td><td><strong>${num(p.q)}</strong> ${esc(unitLabel(p.unit))}</td><td>${lotsHtml}</td><td>${p.inactive ? '<span class="badge neutral">Fora de linha</span>' : p.q <= 0 ? '<span class="badge refused">Zerado</span>' : p.min > 0 && p.q <= p.min ? '<span class="badge pending">Estoque baixo</span>' : '<span class="badge delivered">Normal</span>'}</td><td><div class="row-actions">${role !== "Operador" ? `<button class="btn light smallbtn stock-edit" data-id="${p.id}">Editar</button>` : ""}<button class="btn outline smallbtn stock-det" data-id="${p.id}">Detalhes</button></div></td></tr>`;
   }).join("")}</tbody></table></div>` : `<div class="empty">Nenhum produto encontrado para "${esc(stockSearch)}". Tente buscar pelo princípio ativo (ex: Glifosato).</div>`;
 
   if (role !== "Operador") {
@@ -1330,14 +1508,17 @@ function editProduct(id) {
   if (role === "Operador") return;
   const p = getProduct(id);
   if (!p) return;
-  openModal("Editar produto", `<div class="formgrid"><div class="field full"><label>Nome</label><input id="editNameInput" value="${esc(p.name)}"></div><div class="field full"><label>Princípio Ativo</label><input id="editActiveInput" value="${esc(p.activeIngredient || '')}"></div><div class="field"><label>Estoque mínimo</label><input id="editMinInput" type="number" value="${p.min}"></div><div class="field full"><label><input type="checkbox" id="editInactiveCheck" ${p.inactive ? "checked":""}> Descontinuar / Produto de teste (oculta alertas)</label></div></div>`, [
+  openModal("Editar produto", `<div class="formgrid"><div class="field full"><label>Nome</label><input id="editNameInput" value="${esc(p.name)}"></div><div class="field full"><label>Princípio Ativo</label><input id="editActiveInput" value="${esc(p.activeIngredient || '')}" placeholder="Ex: Abamectina, Clorantraniliprole..."></div><div class="field"><label>Estoque mínimo</label><input id="editMinInput" type="number" value="${p.min}"></div><div class="field full"><label><input type="checkbox" id="editInactiveCheck" ${p.inactive ? "checked":""}> Descontinuar / Produto de teste (oculta alertas)</label></div></div>`, [
     { text: "Cancelar", fn: closeModal },
     { text: "Salvar", cls: "primary", fn: async () => {
       p.name = $("editNameInput").value.trim();
       p.activeIngredient = $("editActiveInput").value.trim();
       p.min = Number($("editMinInput").value);
       p.inactive = $("editInactiveCheck").checked;
-      await save(); closeModal(); renderStock(); toast("Atualizado na nuvem!");
+      await save(); 
+      closeModal(); 
+      renderStock(); 
+      toast("Atualizado na nuvem!");
     }}
   ]);
 }
@@ -1548,7 +1729,7 @@ document.addEventListener("DOMContentLoaded", () => {
     lines.forEach((line, idx) => {
       const match = line.trim().match(/^(.+?)\s+(\d+(?:[.,]\d+)?)\s*(ml|mililitros?|litros?|l|kg|quilos?|gramas?|g|unidades?|un|und)?$/i);
       if (!match) {
-        errors.push(`Linha ${idx + 1}: formato não reconhecido. Use: Nome Quantidade Unidade (Ex: 2,4D 1l)`);
+        errors.push(`Linha ${idx + 1}: formato não reconhecido. Use: Nome Quantidade Unidade (Ex: 2,4D 1l)`);[span_4](start_span)[span_4](end_span)
         return;
       }
 
@@ -1657,7 +1838,7 @@ document.addEventListener("DOMContentLoaded", () => {
     lines.forEach((line, idx) => {
       const match = line.trim().match(/^(.+?)\s+(\d+(?:[.,]\d+)?)\s*(ml|mililitros?|litros?|l|kg|quilos?|gramas?|g|unidades?|un|und)?$/i);
       if (!match) {
-        errors.push(`Linha ${idx + 1}: formato não reconhecido. Use: Nome Quantidade Unidade (Ex: 2,4D 20 L)`);
+        errors.push(`Linha ${idx + 1}: formato não reconhecido. Use: Nome Quantidade Unidade (Ex: 2,4D 20 L)`);[span_5](start_span)[span_5](end_span)
         return;
       }
 
@@ -1897,7 +2078,7 @@ document.addEventListener("DOMContentLoaded", () => {
           const yyyy = dateMatch[3];
           formattedExp = `${yyyy}-${mm}-${dd}`;
         } else {
-          parseErrors.push(`Linha ${lineIdx + 1}: Data inválida (${datePart}). Use o formato DD-MM-AAAA (ex: 31-12-2028).`);
+          parseErrors.push(`Linha ${lineIdx + 1}: Data inválida (${datePart}). Use o formato DD-MM-AAAA (ex: 31-12-2028).`);[span_6](start_span)[span_6](end_span)
           return;
         }
 
@@ -1915,7 +2096,7 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    container.innerHTML = items.length ? `<hr><h3>Conferência: ${items.length} produto(s)</h3><div class="tablewrap"><table><thead><tr><th>Produto</th><th>Qtd</th><th>Lote</th><th>Validade</th><th>Princípio Ativo</th></tr></thead><tbody>${items.map(p => `<tr><td><strong>${esc(p.name)}</strong></td><td>${num(p.q)} ${esc(p.u)}</td><td>${esc(p.lot)}</td><td>${esc(p.exp.split('-').reverse().join('/'))}</td><td>${esc(p.active || '—')}</td></tr>`).join("")}</tbody></table></div><div class="formactions"><button class="btn green" id="bulkConfirmBtn">Confirmar cadastro</button></div>` : `<div class="empty">Nenhum produto válido encontrado. Siga o formato: Nome QtdUnidade LOTE-Numero DD-MM-AAAA PrincípioAtivo</div>`;
+    container.innerHTML = items.length ? `<hr><h3>Conferência: ${items.length} produto(s)</h3><div class="tablewrap"><table><thead><tr><th>Produto</th><th>Qtd</th><th>Lote</th><th>Validade</th><th>Princípio Ativo</th></tr></thead><tbody>${items.map(p => `<tr><td><strong>${esc(p.name)}</strong></td><td>${num(p.q)} ${esc(p.u)}</td><td>${esc(p.lot)}</td><td>${esc(p.exp.split('-').reverse().join('/'))}</td><td>${esc(p.active || '—')}</td></tr>`).join("")}</tbody></table></div><div class="formactions"><button class="btn green" id="bulkConfirmBtn">Confirmar cadastro</button></div>` : `<div class="empty">Nenhum produto válido encontrado. Siga o formato: Nome QtdUnidade LOTE-Numero DD-MM-AAAA PrincípioAtivo</div>`;[span_7](start_span)[span_7](end_span)
     
     const bcf = $("bulkConfirmBtn");
     if (bcf) {
