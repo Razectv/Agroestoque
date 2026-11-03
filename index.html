@@ -399,25 +399,24 @@ tbody tr:last-child td{border-bottom:0}
   <!-- SOLICITAR PRODUTOS EM MASSA POR HECTARE -->
   <section id="view-solicitar" class="view-section">
    <div class="pagehead">
-    <div><div class="eyebrow">SOLICITAÇÃO DE MATERIAIS</div><h1>Solicitação em Massa por Hectare</h1><p>Insira a receita e o sistema converterá automaticamente para unidades fáceis de carregar (ex: mL para L).</p></div>
+    <div><div class="eyebrow">SOLICITAÇÃO DE MATERIAIS</div><h1>Solicitação em Massa por Hectare</h1><p>Cole a receita completa enviada pelo agrônomo. O leitor inteligente identificará talhão, hectares, produtos e observações automaticamente!</p></div>
    </div>
    <div class="notice">
-    <strong>Formato da receita (uma linha por produto):</strong><br>
-    Basta digitar o <strong>Nome</strong>, um <strong>espaço</strong>, a <strong>quantidade por hectare</strong> e a <strong>unidade</strong>.<br>
-    <em>Exemplo:</em> <code>2,4D 1l</code> ou <code>Cypress 0.5 L</code>.<br>
-    <small style="color:var(--blue); font-weight:bold;">💡 Inteligência ativa: O sistema busca pelo nome comercial ou princípio ativo no estoque!</small>
+    <strong>Dica de Uso:</strong><br>
+    Basta colar o texto completo enviado pelo agrônomo na caixa abaixo (ex: <em>Talhão 04, 120 ha, produtos com dosagens e observações no fim</em>). O sistema preencherá os campos e você poderá conferir e editar tudo antes de enviar.<br>
+    <small style="color:var(--blue); font-weight:bold;">💡 Exemplo de formato aceito: Adjust Silver: 50 ml/ha | Sperto: 150 gr/ha</small>
    </div>
    <div class="panel">
     <div class="formgrid">
      <div class="field"><label>Solicitante / Equipe *</label><input id="reqRequester" placeholder="Ex: João Operador"></div>
-     <div class="field"><label>Fazenda / Destino *</label><input id="reqFarm" list="farmList" placeholder="Ex: Talhão 04"><datalist id="farmList"></datalist></div>
+     <div class="field"><label>Fazenda / Talhão *</label><input id="reqFarm" list="farmList" placeholder="Ex: Talhão 04"><datalist id="farmList"></datalist></div>
      <div class="field"><label>Área Total (Hectares) *</label><input id="reqHectares" type="number" min="0.1" step="any" placeholder="Ex: 120"></div>
-     <div class="field"><label>Observação / Talhão</label><input id="reqNote" placeholder="Ex: Aplicação de herbicida pré-plantio"></div>
+     <div class="field"><label>Observação / Recomendações</label><input id="reqNote" placeholder="Ex: Aplicar nas horas mais frescas"></div>
     </div>
     
     <div class="field full" style="margin-top:15px">
-     <label>Lista de Produtos e Doses por Hectare</label>
-     <textarea id="reqBulkText" placeholder="2,4D 1l&#10;Cypress 0.5 L&#10;Cloranta 500 ml"></textarea>
+     <label>Cole a Receita Completa do Agrônomo (Texto Bruto)</label>
+     <textarea id="reqBulkText" placeholder="Cole aqui o texto inteiro enviado pelo agrônomo..."></textarea>
     </div>
 
     <div class="formactions">
@@ -666,6 +665,7 @@ const units = {
   ml:{base:"ml",factor:1,label:"mL"}, mililitro:{base:"ml",factor:1,label:"mL"}, mililitros:{base:"ml",factor:1,label:"mL"},
   kg:{base:"g",factor:1000,label:"kg"}, quilo:{base:"g",factor:1000,label:"kg"}, quilos:{base:"g",factor:1000,label:"kg"},
   g:{base:"g",factor:1,label:"g"}, grama:{base:"g",factor:1,label:"g"}, gramas:{base:"g",factor:1,label:"g"},
+  gr:{base:"g",factor:1,label:"g"},
   un:{base:"un",factor:1,label:"un"}, und:{base:"un",factor:1,label:"un"}, unidade:{base:"un",factor:1,label:"un"}, unidades:{base:"un",factor:1,label:"un"}
 };
 function unitInfo(u) { return units[norm(u).replace(/\./g, "")] || null; }
@@ -753,9 +753,26 @@ function toast(s) {
 }
 
 function getProduct(id) { return db.products.find(p => p.id === id); }
-function findProduct(name) {
+
+// Função inteligente de busca com correspondência exata ou sugestão por similaridade
+function findBestProductMatch(name) {
   const cleanInput = norm(name);
-  return db.products.find(p => norm(p.name) === cleanInput || norm(p.activeIngredient) === cleanInput);
+  if (!cleanInput) return { product: null, matchType: "none" };
+
+  // 1. Tenta correspondência exata pelo nome comercial ou princípio ativo
+  let found = db.products.find(p => norm(p.name) === cleanInput || norm(p.activeIngredient || "") === cleanInput);
+  if (found) return { product: found, matchType: "exact" };
+
+  // 2. Tenta encontrar se o nome contém ou é contido (ex: "Boro 10 Plus" -> encontra "Boro")
+  let partial = db.products.find(p => norm(p.name).includes(cleanInput) || cleanInput.includes(norm(p.name)));
+  if (partial) return { product: partial, matchType: "similar" };
+
+  // 3. Tenta por palavras-chave principais (ex: pegar a primeira palavra significativa como "Boro" ou "Stimulate")
+  const firstWord = cleanInput.replace(/[^a-zà-ÿ0-9]/g, "");
+  let keywordMatch = db.products.find(p => norm(p.name).startsWith(firstWord.slice(0, 4)) || norm(p.activeIngredient || "").includes(firstWord.slice(0, 4)));
+  if (keywordMatch) return { product: keywordMatch, matchType: "similar" };
+
+  return { product: null, matchType: "none" };
 }
 
 function addHistory(type, name, q, u, origin, details = "") {
@@ -1476,7 +1493,6 @@ function renderHistory() {
     newWrap.scrollLeft = currentScrollLeft;
   }
 
-  // Atualizar botões e eventos de seleção
   const btnDelSelected = $("btnDeleteSelectedHistory");
   const countSpan = $("selectedCount");
   
@@ -1512,7 +1528,6 @@ function renderHistory() {
   });
 }
 
-// Botão de apagar selecionados em massa
 document.addEventListener("DOMContentLoaded", () => {
   const btnDelSelected = $("btnDeleteSelectedHistory");
   if (btnDelSelected) {
@@ -1533,7 +1548,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const index = db.history.findIndex(h => h.id === id);
         if (index !== -1) {
           const item = db.history[index];
-          const prod = findProduct(item.name);
+          const prod = db.products.find(p => norm(p.name) === norm(item.name));
           if (prod) {
             const cv = convert(item.q, item.u, prod.unit);
             if (cv !== null) {
@@ -1571,7 +1586,7 @@ async function deleteHistoryItem(id) {
     return;
   }
 
-  const prod = findProduct(item.name);
+  const prod = db.products.find(p => norm(p.name) === norm(item.name));
   if (prod) {
     const cv = convert(item.q, item.u, prod.unit);
     if (cv !== null) {
@@ -1612,7 +1627,7 @@ function newProductModal() {
       const u = $("modalPUnit").value;
       const min = Number($("modalPMin").value);
       if (!name) return toast("Informe o nome.");
-      if (findProduct(name)) return toast("Já existe um produto com esse nome.");
+      if (db.products.some(p => norm(p.name) === norm(name))) return toast("Já existe um produto com esse nome.");
       const p = { id: uid(), name, activeIngredient, q, unit: u, min, lots: q > 0 ? [{ lot: "INICIAL", exp: "2028-12-31", q }] : [], inactive: false };
       db.products.push(p);
       addHistory("Cadastro", p, q, u, "Manual");
@@ -1871,101 +1886,196 @@ document.addEventListener("DOMContentLoaded", () => {
   $("orderFilterSelect").onchange = e => { orderFilter = e.target.value; renderOrders(); };
 
   $("btnPreviewRecipe").onclick = () => {
-    const hectares = Number($("reqHectares").value);
     const text = $("reqBulkText").value.trim();
-    if (!hectares || hectares <= 0) return toast("Informe a quantidade total de hectares.");
-    if (!text) return toast("Insira a lista de produtos da receita.");
+    if (!text) return toast("Cole o texto da receita enviado pelo agrônomo.");
 
-    const lines = text.split(/\r?\n/).filter(x => x.trim());
+    let detectedFarm = "";
+    let detectedHectares = 0;
+    let detectedNotes = [];
     recipeDraft = [];
-    let errors = [];
+
+    const lines = text.split(/\r?\n/).map(x => x.trim()).filter(Boolean);
 
     lines.forEach((line, idx) => {
-      const match = line.trim().match(/^(.+?)\s+(\d+(?:[.,]\d+)?)\s*(ml|mililitros?|litros?|l|kg|quilos?|gramas?|g|unidades?|un|und)?$/i);
-      if (!match) {
-        errors.push(`Linha ${idx + 1}: formato não reconhecido. Use: Nome Quantidade Unidade (Ex: 2,4D 1l)`);
+      const lower = line.toLowerCase();
+      
+      if (lower.includes("talhão") || lower.includes("talhao") || lower.includes("fazenda")) {
+        detectedFarm = line.replace(/^(talhão|talhao|fazenda):?/i, "").trim();
         return;
       }
 
-      const prodName = match[1].trim();
-      const dosePerHa = Number(match[2].replace(",", "."));
-      const rawUnit = match[3] || "un";
-
-      const product = findProduct(prodName);
-      if (!product) {
-        errors.push(`Linha ${idx + 1}: Produto ou Princípio Ativo "${prodName}" não foi encontrado no estoque.`);
-        return;
-      }
-      if (!Number.isFinite(dosePerHa) || dosePerHa < 0) {
-        errors.push(`Linha ${idx + 1}: Quantidade inválida.`);
+      const haMatch = line.match(/(\d+(?:[.,]\d+)?)\s*(ha|hectares?)/i);
+      if (haMatch && !line.includes("/")) {
+        detectedHectares = Number(haMatch[1].replace(",", "."));
         return;
       }
 
-      const uInfo = unitInfo(rawUnit);
-      if (!uInfo) {
-        errors.push(`Linha ${idx + 1}: Unidade inválida (${rawUnit}).`);
+      const prodMatch = line.match(/^([A-Za-zÀ-ÿ0-9\s\-\(\)]+?)\s*[:\-]?\s*(\d+(?:[.,]\d+)?)\s*(ml|mililitros?|litros?|l|kg|quilos?|gramas?|g|gr|unidades?|un|und)?(\/ha)?$/i);
+
+      if (prodMatch) {
+        const agronomyName = prodMatch[1].trim();
+        const dosePerHa = Number(prodMatch[2].replace(",", "."));
+        const rawUnit = prodMatch[3] || "un";
+
+        const matchResult = findBestProductMatch(agronomyName);
+        
+        recipeDraft.push({
+          agronomyName: agronomyName,
+          product: matchResult.product,
+          matchType: matchResult.matchType,
+          doseHa: dosePerHa,
+          doseUnit: unitLabel(rawUnit),
+          rawUnit: rawUnit
+        });
         return;
       }
 
-      const totalBaseUnits = dosePerHa * uInfo.factor * hectares;
-      const optimized = optimizeUnit(totalBaseUnits, uInfo.base);
-
-      recipeDraft.push({
-        id: product.id,
-        name: product.name,
-        doseHa: dosePerHa,
-        doseUnit: uInfo.label,
-        q: optimized.q,
-        u: optimized.u
-      });
+      if (line.length > 3 && !lower.includes("receita") && !lower.includes("aplicação")) {
+        detectedNotes.push(line);
+      }
     });
 
-    const container = $("recipePreviewContainer");
-    if (errors.length > 0) {
-      container.innerHTML = `<div class="notice warning">${errors.join("<br>")}</div>`;
-      return;
+    if (detectedFarm) $("reqFarm").value = detectedFarm;
+    if (detectedHectares > 0) $("reqHectares").value = detectedHectares;
+    if (detectedNotes.length > 0) $("reqNote").value = detectedNotes.join(" | ");
+
+    const hectares = Number($("reqHectares").value);
+    if (!hectares || hectares <= 0) {
+      return toast("Informe ou preencha a quantidade total de hectares.");
+    }
+    if (recipeDraft.length === 0) {
+      return toast("Nenhum produto reconhecido no texto. Verifique o formato.");
     }
 
+    const allProductsOptions = db.products.map(p => `<option value="${p.id}">${esc(p.name)} (${esc(p.activeIngredient || 'Geral')})</option>`).join("");
+
+    const container = $("recipePreviewContainer");
     container.innerHTML = `
       <hr>
-      <h3>Conferência e Conversão Automática (${hectares} hectares)</h3>
+      <h3>Conferência e Sugestão Inteligente (${hectares} hectares)</h3>
+      <p class="hint">O sistema verificou os produtos no estoque. Se algum nome exato não foi encontrado, sugerimos o equivalente mais próximo abaixo para sua confirmação:</p>
+      
+      <div class="formgrid" style="margin-bottom:15px;">
+        <div class="field"><label>Talhão / Destino</label><input id="confFarmInput" value="${esc($("reqFarm").value)}"></div>
+        <div class="field"><label>Hectares</label><input id="confHaInput" type="number" step="any" value="${hectares}"></div>
+        <div class="field full"><label>Observação / Recomendações</label><input id="confNoteInput" value="${esc($("reqNote").value)}"></div>
+      </div>
+
       <div class="tablewrap">
         <table>
           <thead>
-            <tr><th>Produto</th><th>Dose / Hectare</th><th>Total para o Depósito (Convertido)</th></tr>
+            <tr><th>Produto na Receita</th><th>Produto Vinculado no Estoque (Sugestão)</th><th>Dose / ha</th><th>Total Calculado</th></tr>
           </thead>
           <tbody>
-            ${recipeDraft.map(item => `<tr><td>${esc(item.name)}</td><td>${num(item.doseHa)} ${esc(item.doseUnit)}/ha</td><td><strong>${num(item.q)}</strong> ${esc(item.u)}</td></tr>`).join("")}
+            ${recipeDraft.map((item, index) => {
+              let selectHtml = "";
+              let badgeHtml = "";
+              
+              if (item.matchType === "exact") {
+                badgeHtml = `<span class="badge delivered" style="font-size:9px;">Exato</span>`;
+              } else if (item.matchType === "similar") {
+                badgeHtml = `<span class="badge pending" style="font-size:9px;" title="Nome diferente, sugerido por semelhança">⚠️ Equivalente Sugerido</span>`;
+              } else {
+                badgeHtml = `<span class="badge refused" style="font-size:9px;">Não encontrado</span>`;
+              }
+
+              const currentSelectedId = item.product ? item.product.id : "";
+              selectHtml = `<select class="recipe-prod-select" data-index="${index}" style="font-size:12px; padding:6px;">
+                <option value="">-- Selecione o produto no estoque --</option>
+                ${db.products.map(p => `<option value="${p.id}" ${p.id === currentSelectedId ? 'selected' : ''}>${esc(p.name)} (${esc(p.activeIngredient || 'Geral')})</option>`).join("")}
+              </select>`;
+
+              const calcQty = item.product ? (item.doseHa * unitInfo(item.rawUnit)?.factor * hectares) : 0;
+              const optimized = item.product ? optimizeUnit(calcQty, unitInfo(item.rawUnit)?.base) : { q: 0, u: item.rawUnit };
+
+              return `<tr>
+                <td><strong>${esc(item.agronomyName)}</strong><br>${badgeHtml}</td>
+                <td>${selectHtml}</td>
+                <td>${num(item.doseHa)} ${esc(item.doseUnit)}/ha</td>
+                <td><strong class="calc-total-${index}">${num(optimized.q)} ${esc(optimized.u)}</strong></td>
+              </tr>`;
+            }).join("")}
           </tbody>
         </table>
       </div>
       <div class="formactions" style="margin-top:15px">
-        <button class="btn green" id="btnConfirmRecipeOrder">Enviar Pedido para o Depósito</button>
+        <button class="btn green" id="btnConfirmRecipeOrder">Confirmar e Enviar Pedido para o Depósito</button>
       </div>
     `;
 
+    document.querySelectorAll(".recipe-prod-select").forEach(sel => {
+      sel.onchange = (e) => {
+        const idx = Number(e.target.dataset.index);
+        const selectedId = e.target.value;
+        const prod = getProduct(selectedId);
+        recipeDraft[idx].product = prod || null;
+        
+        const currentHa = Number($("confHaInput").value) || hectares;
+        const item = recipeDraft[idx];
+        const tdTotal = document.querySelector(`.calc-total-${idx}`);
+        
+        if (prod && tdTotal) {
+          const calcQty = item.doseHa * unitInfo(item.rawUnit)?.factor * currentHa;
+          const optimized = optimizeUnit(calcQty, unitInfo(item.rawUnit)?.base);
+          tdTotal.textContent = `${num(optimized.q)} ${esc(optimized.u)}`;
+        } else if (tdTotal) {
+          tdTotal.textContent = "—";
+        }
+      };
+    });
+
+    $("confHaInput").oninput = (e) => {
+      const newHa = Number(e.target.value) || 0;
+      recipeDraft.forEach((item, idx) => {
+        const tdTotal = document.querySelector(`.calc-total-${idx}`);
+        if (item.product && tdTotal) {
+          const calcQty = item.doseHa * unitInfo(item.rawUnit)?.factor * newHa;
+          const optimized = optimizeUnit(calcQty, unitInfo(item.rawUnit)?.base);
+          tdTotal.textContent = `${num(optimized.q)} ${esc(optimized.u)}`;
+        }
+      });
+    };
+
     $("btnConfirmRecipeOrder").onclick = async () => {
-      if (!recipeDraft.length) return toast("Nenhum item na receita.");
-      const farm = $("reqFarm").value.trim() || "Fazenda principal";
+      const finalFarm = $("confFarmInput").value.trim() || "Fazenda principal";
+      const finalHa = Number($("confHaInput").value) || hectares;
+      const finalNote = $("confNoteInput").value.trim();
       const requester = $("reqRequester").value.trim() || role;
-      const note = $("reqNote").value.trim();
+
+      let missingProducts = recipeDraft.filter(item => !item.product);
+      if (missingProducts.length > 0) {
+        return toast("Por favor, selecione o produto correspondente no estoque para todos os itens antes de confirmar.");
+      }
+
+      const finalCalculatedItems = recipeDraft.map(item => {
+        const totalBaseUnits = item.doseHa * unitInfo(item.rawUnit)?.factor * finalHa;
+        const optimized = optimizeUnit(totalBaseUnits, unitInfo(item.rawUnit)?.base);
+        return {
+          id: item.product.id,
+          name: item.product.name,
+          doseHa: item.doseHa,
+          doseUnit: item.doseUnit,
+          q: optimized.q,
+          u: optimized.u
+        };
+      });
 
       const o = {
         id: uid(),
         no: String(Date.now()).slice(-7),
         requester,
-        farm,
-        hectares,
-        note,
+        farm: finalFarm,
+        hectares: finalHa,
+        note: finalNote,
         created: Date.now(),
         status: "Pendente",
-        items: recipeDraft.map(x => ({ ...x })),
-        events: [{ status: "Pendente", date: Date.now(), role, desc: "Pedido gerado por hectare com conversão automática" }]
+        items: finalCalculatedItems,
+        events: [{ status: "Pendente", date: Date.now(), role, desc: "Pedido gerado a partir de texto de agrônomo com sugestão inteligente" }]
       };
 
       db.orders.unshift(o);
-      if (!db.farms.some(f => norm(f) === norm(farm))) db.farms.push(farm);
-      addHistory("Solicitação", `Pedido em Massa #${o.no}`, recipeDraft.length, "itens", farm, `${hectares} hectares`);
+      if (!db.farms.some(f => norm(f) === norm(finalFarm))) db.farms.push(finalFarm);
+      addHistory("Solicitação", `Pedido em Massa #${o.no}`, finalCalculatedItems.length, "itens", finalFarm, `${finalHa} hectares`);
       
       if (confirm("Pedido gerado com sucesso! Deseja enviar o resumo agora mesmo para o WhatsApp do depósito?")) {
         sendOrderWhatsApp(o);
@@ -1973,7 +2083,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
       recipeDraft = [];
       $("reqBulkText").value = "";
-      $("reqHectares").value = "";
       container.innerHTML = "";
       await save();
       navigateTo("pedidos");
@@ -2000,9 +2109,9 @@ document.addEventListener("DOMContentLoaded", () => {
       const qty = Number(match[2].replace(",", "."));
       const rawUnit = match[3] || "un";
 
-      const product = findProduct(prodName);
-      if (!product) {
-        errors.push(`Linha ${idx + 1}: Produto "${prodName}" não está cadastrado.`);
+      const matchRes = findBestProductMatch(prodName);
+      if (!matchRes.product) {
+        errors.push(`Linha ${idx + 1}: Produto "${prodName}" não foi encontrado no estoque.`);
         return;
       }
       if (!Number.isFinite(qty) || qty <= 0) {
@@ -2017,7 +2126,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       withdrawalDraft.push({
-        product,
+        product: matchRes.product,
         q: qty,
         u: uInfo.label,
         rawUnit: rawUnit
@@ -2180,7 +2289,8 @@ document.addEventListener("DOMContentLoaded", () => {
           let count = 0;
           let updated = 0;
           importedPdfDraft.forEach(x => {
-            const existing = findProduct(x.name);
+            const matchRes = findBestProductMatch(x.name);
+            const existing = matchRes.product;
             if (existing) {
               existing.q += x.q;
               existing.lots = existing.lots || [];
@@ -2296,7 +2406,8 @@ document.addEventListener("DOMContentLoaded", () => {
           addHistory("Inventário", "Substituição Geral de Estoque", currentItems.length, "itens", origin, "Estoque totalmente atualizado e substituído");
         } else {
           currentItems.forEach(x => {
-            const existing = findProduct(x.name);
+            const matchRes = findBestProductMatch(x.name);
+            const existing = matchRes.product;
             if (existing) {
               existing.q += x.q;
               if (x.active) existing.activeIngredient = x.active;
