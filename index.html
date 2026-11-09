@@ -558,7 +558,7 @@ tbody tr:last-child td{border-bottom:0}
 "use strict";
 // VERSÃO DO CÓDIGO ATUAL
 const CURRENT_CODE_VERSION = "25.1";
-const RELEASE_NOTES = `• Correção na captura da foto do folheto (agora a foto não desaparece mais da tela);\n• Sincronização em segundo plano aprimorada para evitar congelamentos;\n• Sistema de notificação e barra de progresso de atualização de 5s.`;
+const RELEASE_NOTES = `• Correção na captura da foto do folheto (agora a foto não desaparece mais da tela);\n• Sincronização em segundo plano aprimorada para evitar congelamentos;\n• Correção definitiva no aviso de atualização do topo.`;
 
 const TITLES = {
   dashboard: "Visão geral",
@@ -617,6 +617,20 @@ function limparFolhetosExpirados() {
   }
 }
 
+// FUNÇÃO PARA COMPARAR SE A VERSÃO V1 É ESTRITAMENTE MAIOR QUE A V2
+function isVersionGreater(v1, v2) {
+  if (!v1 || !v2) return false;
+  const p1 = String(v1).split('.').map(Number);
+  const p2 = String(v2).split('.').map(Number);
+  for (let i = 0; i < Math.max(p1.length, p2.length); i++) {
+    const val1 = p1[i] || 0;
+    const val2 = p2[i] || 0;
+    if (val1 > val2) return true;
+    if (val1 < val2) return false;
+  }
+  return false;
+}
+
 // VERIFICA SE O CELULAR ESTÁ ABRINDO ESTA VERSÃO PELA PRIMEIRA VEZ
 function checkDeviceVersionOnLoad() {
   const lastInstalledVersion = localStorage.getItem("agroestoque_installed_version");
@@ -642,9 +656,18 @@ async function initCloudSync() {
     const cloudData = await window.cloudLoad();
     if (cloudData && Array.isArray(cloudData.products)) {
       
-      // Notificação se houver uma nova versão na nuvem enquanto usa a página
-      if (cloudData.systemVersion && cloudData.systemVersion !== CURRENT_CODE_VERSION) {
+      // MOSTRA O BANNER APENAS SE A NUVEM TIVER UMA VERSÃO MAIOR/MAIS NOVA
+      if (cloudData.systemVersion && isVersionGreater(cloudData.systemVersion, CURRENT_CODE_VERSION)) {
         $("updateBanner").classList.add("show");
+      } else {
+        // Se este aparelho tem uma versão igual ou mais nova que a nuvem, oculta o banner
+        $("updateBanner").classList.remove("show");
+        
+        // Se a nuvem estiver com a versão antiga gravada, atualiza o banco na nuvem
+        if (cloudData.systemVersion !== CURRENT_CODE_VERSION) {
+          db.systemVersion = CURRENT_CODE_VERSION;
+          save();
+        }
       }
 
       const rawPrev = JSON.stringify(db);
@@ -1056,7 +1079,7 @@ function renderDashboard() {
 }
 
 function renderEnviarFotoFolheto() {
-  // Mantém os campos intactos sem zerá-los durante a navegação ou sincronização
+  // Mantém os campos intactos
 }
 
 function renderStock() {
@@ -1626,7 +1649,7 @@ function updateEntryProductSelect() {
   }).join("");
 }
 
-// BARRA DE PROGRESSO DE 5 SEGUNDOS
+// BARRA DE PROGRESSO DE 5 SEGUNDOS COM LIMPEZA DE CACHE
 function dispararAtualizacao5Segundos() {
   $("updateBanner").classList.remove("show");
   $("updateModalBack").classList.add("show");
@@ -1645,14 +1668,16 @@ function dispararAtualizacao5Segundos() {
     if (progress >= 100) {
       clearInterval(interval);
       setTimeout(() => {
-        window.location.reload(true);
+        // Recarrega forçando um novo parâmetro para ignorar o cache do celular
+        const cleanUrl = window.location.href.split('?')[0];
+        window.location.href = cleanUrl + '?nocache=' + Date.now();
       }, 300);
     }
   }, 100);
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  // Checa se é a primeira vez rodando a versão 25.1 no aparelho
+  // Checa se é a primeira vez rodando no aparelho
   checkDeviceVersionOnLoad();
 
   document.querySelectorAll("[data-target]").forEach(btn => btn.onclick = () => {
