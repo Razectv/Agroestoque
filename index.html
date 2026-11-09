@@ -28,7 +28,7 @@
 
   window.cloudSave = async function(data) {
     try {
-      await setDoc(doc(dbCloud, "sistema", "dados_fazenda_remodelado_v19"), data);
+      await setDoc(doc(dbCloud, "sistema", "dados_fazenda_remodelado_v20"), data);
     } catch (e) {
       console.error("Erro ao salvar na nuvem:", e);
     }
@@ -36,7 +36,7 @@
 
   window.cloudLoad = async function() {
     try {
-      const docSnap = await getDoc(doc(dbCloud, "sistema", "dados_fazenda_remodelado_v19"));
+      const docSnap = await getDoc(doc(dbCloud, "sistema", "dados_fazenda_remodelado_v20"));
       if (docSnap.exists()) {
         return docSnap.data();
       }
@@ -283,7 +283,7 @@ tbody tr:last-child td{border-bottom:0}
   <!-- ESTOQUE -->
   <section id="view-estoque" class="view-section">
    <div class="pagehead">
-    <div><div class="eyebrow">CONTROLE DE PRODUTOS</div><h1>Estoque (Barracão)</h1><p>Consulte saldos e débitos. Clique em Editar para preencher princípio ativo, lote ou validade manualmente se desejar.</p></div>
+    <div><div class="eyebrow">CONTROLE DE PRODUTOS</div><h1>Estoque (Barracão)</h1><p>Consulte saldos e débitos. Clique em Editar para alterar a quantidade exata ou preencher princípio ativo.</p></div>
     <div style="display:flex; gap:8px; flex-wrap:wrap;">
      <button class="btn primary" id="btnNewProductModal">＋ Novo produto</button>
      <button class="btn green" data-goto="importar_pdf">📁 Carregar PDF de Estoque</button>
@@ -420,10 +420,10 @@ tbody tr:last-child td{border-bottom:0}
    </div>
   </section>
 
-  <!-- HISTÓRICO -->
+  <!-- HISTÓRICO COM OPÇÃO DE EXCLUIR/ESTORNAR -->
   <section id="view-historico" class="view-section">
    <div class="pagehead">
-    <div><div class="eyebrow">AUDITORIA</div><h1>Histórico de Movimentações</h1></div>
+    <div><div class="eyebrow">AUDITORIA</div><h1>Histórico de Movimentações</h1><p>Você pode excluir um lançamento incorreto clicando em apagar; o sistema estorna o valor no estoque automaticamente.</p></div>
    </div>
    <div class="panel"><div id="historyTableContainer"></div></div>
   </section>
@@ -529,7 +529,7 @@ const fmtDate = s => { const d = new Date(s); return isNaN(d) ? "—" : d.toLoca
 
 const freshDB = () => ({ products: [], orders: [], folhetos: [], fuelFolhetos: [], history: [], fuelHistory: [], machines: [], fuelStock: 5000, pin: "1234" });
 let db = freshDB();
-let role = localStorage.getItem("agroestoque_role_rem_v19") || "Operador";
+let role = localStorage.getItem("agroestoque_role_rem_v20") || "Operador";
 let currentView = "dashboard";
 let stockSearch = "";
 let importedPdfDraft = [];
@@ -537,7 +537,7 @@ let pendingTargetRole = "";
 let currentDraftOrder = null;
 
 async function save() {
-  localStorage.setItem("agroestoque_role_rem_v19", role);
+  localStorage.setItem("agroestoque_role_rem_v20", role);
   if (window.cloudSave) await window.cloudSave(db);
 }
 
@@ -553,6 +553,7 @@ async function initCloudSync() {
       if (!Array.isArray(db.machines)) db.machines = [];
       if (!Array.isArray(db.orders)) db.orders = [];
       if (!Array.isArray(db.folhetos)) db.folhetos = [];
+      if (!Array.isArray(db.history)) db.history = [];
       
       db.products.forEach(p => {
         if (!p.activeIngredient) p.activeIngredient = "";
@@ -866,6 +867,7 @@ function renderActiveView() {
   else if (currentView === "maquinas") renderMaquinas();
   else if (currentView === "importar_pdf") renderImportPdf();
   else if (currentView === "cadastro") renderCadastroMassa();
+  else if (currentView === "historico") renderHistory();
   else if (currentView === "escritorio_folhetos") {
     if (!isEscritorio) { navigateTo("dashboard"); return; }
     renderEscritorioFolhetos();
@@ -874,7 +876,6 @@ function renderActiveView() {
     if (!isEscritorio) { navigateTo("dashboard"); return; }
     renderEscritorioCombustivel();
   }
-  else if (currentView === "historico") renderHistory();
 }
 
 function renderDashboard() {
@@ -1216,7 +1217,7 @@ function renderImportPdf() {
 function editProduct(id) {
   const p = getProduct(id);
   if (!p) return;
-  openModal("Editar Produto (Manual)", `
+  openModal("Editar Produto (Estoque)", `
     <div class="formgrid">
       <div class="field full"><label>Nome do Produto</label><input id="editPName" value="${esc(p.name)}"></div>
       <div class="field full"><label>Princípio Ativo (Manual)</label><input id="editPActive" value="${esc(p.activeIngredient || '')}" placeholder="Ex: Glifosato 480g/L"></div>
@@ -1230,10 +1231,12 @@ function editProduct(id) {
       p.activeIngredient = $("editPActive").value.trim();
       p.q = Number($("editPQty").value);
       p.unit = $("editPUnit").value;
+      
+      addHistory("Ajuste Manual", p.name, p.q, p.unit, "Edição Direta no Estoque");
       await save();
       closeModal();
       renderStock();
-      toast("Produto atualizado com sucesso!");
+      toast("Produto atualizado e salvo com sucesso!");
     }}
   ]);
 }
@@ -1244,6 +1247,68 @@ async function deleteProduct(id) {
   await save();
   renderStock();
   toast("Produto removido!");
+}
+
+function renderHistory() {
+  const historyList = db.history || [];
+  $("historyTableContainer").innerHTML = historyList.length ? `
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Data</th>
+            <th>Tipo</th>
+            <th>Produto / Descrição</th>
+            <th>Qtd</th>
+            <th>Resp.</th>
+            <th style="text-align:right;">Ação</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${historyList.map(h => `
+            <tr>
+              <td>${fmtDate(h.date)}</td>
+              <td><span class="badge neutral">${esc(h.type)}</span></td>
+              <td><strong>${esc(h.name)}</strong><br><small style="color:var(--muted);">${esc(h.origin || '')}</small></td>
+              <td>${num(h.q)} ${esc(h.u)}</td>
+              <td>${esc(h.role)}</td>
+              <td style="text-align:right;">
+                <button class="btn danger smallbtn" onclick="estornarHistorico('${h.id}')">🗑️ Apagar / Estornar</button>
+              </td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    </div>
+  ` : `<div class="empty">Sem histórico de movimentações.</div>`;
+}
+
+async function estornarHistorico(historyId) {
+  if (!confirm("Deseja apagar este lançamento? O sistema fará o estorno automático da quantidade no estoque.")) return;
+  
+  const index = db.history.findIndex(h => h.id === historyId);
+  if (index === -1) return toast("Registro não encontrado.");
+  
+  const h = db.history[index];
+  
+  // Tenta localizar o produto afetado para reverter o saldo
+  let prod = db.products.find(p => norm(p.name) === norm(h.name));
+  
+  if (prod) {
+    if (h.type.includes("Baixa") || h.type.includes("Saída")) {
+      // Se foi uma baixa (retirada), estornar significa devolver ao estoque (+)
+      prod.q = Number(prod.q || 0) + Number(h.q);
+    } else if (h.type.includes("Entrada") || h.type.includes("Cadastro")) {
+      // Se foi entrada, estornar significa remover do estoque (-)
+      prod.q = Number(prod.q || 0) - Number(h.q);
+    }
+  }
+
+  // Remove o item do histórico
+  db.history.splice(index, 1);
+  await save();
+  renderHistory();
+  toast("Lançamento apagado e estoque estornado com sucesso!");
 }
 
 function renderEscritorioFolhetos() {
@@ -1420,10 +1485,6 @@ function renderMaquinas() {
       }}
     ]);
   };
-}
-
-function renderHistory() {
-  $("historyTableContainer").innerHTML = db.history.length ? `<div class="tablewrap"><table><thead><tr><th>Data</th><th>Tipo</th><th>Produto</th><th>Qtd</th><th>Resp.</th></tr></thead><tbody>${db.history.map(h => `<tr><td>${fmtDate(h.date)}</td><td>${esc(h.type)}</td><td>${esc(h.name)}</td><td>${num(h.q)} ${esc(h.u)}</td><td>${esc(h.role)}</td></tr>`).join("")}</tbody></table></div>` : `<div class="empty">Sem histórico.</div>`;
 }
 
 function updateEntryProductSelect() {
