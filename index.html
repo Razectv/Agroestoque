@@ -250,7 +250,7 @@ tbody tr:last-child td{border-bottom:0}
  <nav class="nav">
   <button class="nav-btn menu-admin-only" data-target="usuarios"><span class="nav-icon">♙</span>Perfis e Segurança (PIN)</button>
  </nav>
- <div class="sidefoot"><strong>Fazenda Karoline</strong><br>Versão <span id="lblSysVersion">25.0</span></div>
+ <div class="sidefoot"><strong>Fazenda Karoline</strong><br>Versão <span id="lblSysVersion">25.1</span></div>
 </aside>
 
 <div class="overlay" id="overlay"></div>
@@ -557,7 +557,8 @@ tbody tr:last-child td{border-bottom:0}
 <script>
 "use strict";
 // VERSÃO DO CÓDIGO ATUAL
-const CURRENT_CODE_VERSION = "25.0";
+const CURRENT_CODE_VERSION = "25.1";
+const RELEASE_NOTES = `• Correção na captura da foto do folheto (agora a foto não desaparece mais da tela);\n• Sincronização em segundo plano aprimorada para evitar congelamentos;\n• Sistema de notificação e barra de progresso de atualização de 5s.`;
 
 const TITLES = {
   dashboard: "Visão geral",
@@ -616,13 +617,32 @@ function limparFolhetosExpirados() {
   }
 }
 
-// SINCRONIZAÇÃO INTELIGENTE (Não reseta inputs nem interrompe fotos)
+// VERIFICA SE O CELULAR ESTÁ ABRINDO ESTA VERSÃO PELA PRIMEIRA VEZ
+function checkDeviceVersionOnLoad() {
+  const lastInstalledVersion = localStorage.getItem("agroestoque_installed_version");
+  if (lastInstalledVersion !== CURRENT_CODE_VERSION) {
+    localStorage.setItem("agroestoque_installed_version", CURRENT_CODE_VERSION);
+    setTimeout(() => {
+      openModal(`🎉 Sistema Atualizado! (v${CURRENT_CODE_VERSION})`, `
+        <div style="line-height:1.6;">
+          <p>O aplicativo da <strong>Fazenda Karoline</strong> foi atualizado com sucesso!</p>
+          <div class="notice" style="background:#edf5ff; border-left:4px solid var(--blue); color:#102b46; padding:12px; margin:12px 0;">
+            <strong>O que mudou nesta atualização:</strong><br>
+            ${RELEASE_NOTES.replace(/\n/g, '<br>')}
+          </div>
+        </div>
+      `, [{ text: "Entendi e Continuar", cls: "primary", fn: closeModal }]);
+    }, 600);
+  }
+}
+
+// SINCRONIZAÇÃO INTELIGENTE DA NUVEM
 async function initCloudSync() {
   if (window.cloudLoad) {
     const cloudData = await window.cloudLoad();
     if (cloudData && Array.isArray(cloudData.products)) {
       
-      // VERIFICAÇÃO DE NOVA VERSÃO DO CÓDIGO
+      // Notificação se houver uma nova versão na nuvem enquanto usa a página
       if (cloudData.systemVersion && cloudData.systemVersion !== CURRENT_CODE_VERSION) {
         $("updateBanner").classList.add("show");
       }
@@ -647,10 +667,9 @@ async function initCloudSync() {
         if (!Array.isArray(p.lots)) p.lots = [];
       });
 
-      // Só re-renderiza a tela se houver mudança REAL nos dados E se o usuário não estiver digitando
       const activeEl = document.activeElement;
       const isUserTyping = activeEl && (activeEl.tagName === "INPUT" || activeEl.tagName === "TEXTAREA");
-      if (rawPrev !== rawNew && !isUserTyping) {
+      if (rawPrev !== rawNew && !isUserTyping && currentView !== "enviar_foto_folheto") {
         renderActiveView();
         checkDepositoAlert();
       }
@@ -1037,80 +1056,7 @@ function renderDashboard() {
 }
 
 function renderEnviarFotoFolheto() {
-  fotoFolhetoBase64 = "";
-  $("fotoFolhetoTitulo").value = "";
-  $("fotoFolhetoObs").value = "";
-  $("fotoFolhetoFile").value = "";
-  $("fotoFolhetoPreviewContainer").innerHTML = "";
-
-  const fileInput = $("fotoFolhetoFile");
-  fileInput.onchange = e => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const objectUrl = URL.createObjectURL(file);
-    $("fotoFolhetoPreviewContainer").innerHTML = `
-      <p style="color:var(--green); font-weight:bold;">📸 Foto carregada com sucesso!</p>
-      <img src="${objectUrl}" alt="Prévia do Folheto" style="max-width:100%; max-height:280px; border-radius:8px; border:1px solid var(--line); margin-top:8px;">
-    `;
-
-    const reader = new FileReader();
-    reader.onload = event => {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        let width = img.width;
-        let height = img.height;
-        const maxDim = 1200;
-
-        if (width > height && width > maxDim) {
-          height = Math.round((height * maxDim) / width);
-          width = maxDim;
-        } else if (height > maxDim) {
-          width = Math.round((width * maxDim) / height);
-          height = maxDim;
-        }
-
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, width, height);
-
-        fotoFolhetoBase64 = canvas.toDataURL('image/jpeg', 0.82);
-      };
-      img.src = event.target.result;
-    };
-    reader.readAsDataURL(file);
-  };
-
-  $("btnEnviarFotoFolheto").onclick = async () => {
-    const titulo = $("fotoFolhetoTitulo").value.trim();
-    const obs = $("fotoFolhetoObs").value.trim();
-
-    if (!titulo) return toast("Informe a identificação ou talhão do folheto.");
-    if (!fotoFolhetoBase64) return toast("Aguarde a foto carregar completamente.");
-
-    const novoFolhetoFoto = {
-      id: uid(),
-      orderNo: "FOTO-" + String(Date.now()).slice(-5),
-      farm: titulo,
-      requester: role,
-      hectares: 0,
-      note: obs,
-      date: Date.now(),
-      baixadoEscritorio: false,
-      isFoto: true,
-      fotoUrl: fotoFolhetoBase64,
-      items: []
-    };
-
-    if (!Array.isArray(db.folhetos)) db.folhetos = [];
-    db.folhetos.unshift(novoFolhetoFoto);
-    await save();
-
-    toast("Foto do folheto enviada com sucesso para o escritório!");
-    navigateTo("dashboard");
-  };
+  // Mantém os campos intactos sem zerá-los durante a navegação ou sincronização
 }
 
 function renderStock() {
@@ -1680,7 +1626,7 @@ function updateEntryProductSelect() {
   }).join("");
 }
 
-// EXECUÇÃO DO PROCESSO DE ATUALIZAÇÃO COM BARRA DE PROGRESSO DE 5 SEGUNDOS
+// BARRA DE PROGRESSO DE 5 SEGUNDOS
 function dispararAtualizacao5Segundos() {
   $("updateBanner").classList.remove("show");
   $("updateModalBack").classList.add("show");
@@ -1690,7 +1636,7 @@ function dispararAtualizacao5Segundos() {
   const txt = $("updateProgressText");
 
   const interval = setInterval(() => {
-    progress += 2; // Avança a cada 100ms (Total de 5000ms = 5s)
+    progress += 2;
     if (progress > 100) progress = 100;
 
     bar.style.width = progress + "%";
@@ -1706,6 +1652,9 @@ function dispararAtualizacao5Segundos() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+  // Checa se é a primeira vez rodando a versão 25.1 no aparelho
+  checkDeviceVersionOnLoad();
+
   document.querySelectorAll("[data-target]").forEach(btn => btn.onclick = () => {
     const target = btn.dataset.target;
     if (target === "entrada") updateEntryProductSelect();
@@ -1724,6 +1673,89 @@ document.addEventListener("DOMContentLoaded", () => {
   $("overlay").onclick = () => { $("sidebar").classList.remove("open"); $("overlay").classList.remove("show"); };
 
   $("btnStartUpdate").onclick = dispararAtualizacao5Segundos;
+
+  // SELEÇÃO E PRÉVIA DA FOTO
+  const fotoFileInput = $("fotoFolhetoFile");
+  if (fotoFileInput) {
+    fotoFileInput.onchange = e => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const objectUrl = URL.createObjectURL(file);
+      $("fotoFolhetoPreviewContainer").innerHTML = `
+        <p style="color:var(--green); font-weight:bold;">📸 Foto carregada com sucesso!</p>
+        <img src="${objectUrl}" alt="Prévia do Folheto" style="max-width:100%; max-height:280px; border-radius:8px; border:1px solid var(--line); margin-top:8px;">
+      `;
+
+      const reader = new FileReader();
+      reader.onload = event => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          const maxDim = 1200;
+
+          if (width > height && width > maxDim) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          } else if (height > maxDim) {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+
+          fotoFolhetoBase64 = canvas.toDataURL('image/jpeg', 0.82);
+        };
+        img.src = event.target.result;
+      };
+      reader.readAsDataURL(file);
+    };
+  }
+
+  // ENVIO DA FOTO AO ESCRITÓRIO
+  const btnEnviarFoto = $("btnEnviarFotoFolheto");
+  if (btnEnviarFoto) {
+    btnEnviarFoto.onclick = async () => {
+      const titulo = $("fotoFolhetoTitulo").value.trim();
+      const obs = $("fotoFolhetoObs").value.trim();
+
+      if (!titulo) return toast("Informe a identificação ou talhão do folheto.");
+      if (!fotoFolhetoBase64) return toast("Aguarde a foto carregar completamente.");
+
+      const novoFolhetoFoto = {
+        id: uid(),
+        orderNo: "FOTO-" + String(Date.now()).slice(-5),
+        farm: titulo,
+        requester: role,
+        hectares: 0,
+        note: obs,
+        date: Date.now(),
+        baixadoEscritorio: false,
+        isFoto: true,
+        fotoUrl: fotoFolhetoBase64,
+        items: []
+      };
+
+      if (!Array.isArray(db.folhetos)) db.folhetos = [];
+      db.folhetos.unshift(novoFolhetoFoto);
+      await save();
+
+      // Limpa os campos apenas APÓS enviar
+      fotoFolhetoBase64 = "";
+      $("fotoFolhetoTitulo").value = "";
+      $("fotoFolhetoObs").value = "";
+      $("fotoFolhetoFile").value = "";
+      $("fotoFolhetoPreviewContainer").innerHTML = "";
+
+      toast("Foto do folheto enviada com sucesso para o escritório!");
+      navigateTo("dashboard");
+    };
+  }
 
   const roleSelect = $("roleSelect");
   roleSelect.onchange = e => {
