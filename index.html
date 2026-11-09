@@ -28,7 +28,7 @@
 
   window.cloudSave = async function(data) {
     try {
-      await setDoc(doc(dbCloud, "sistema", "dados_fazenda_remodelado_v20"), data);
+      await setDoc(doc(dbCloud, "sistema", "dados_fazenda_remodelado_v22"), data);
     } catch (e) {
       console.error("Erro ao salvar na nuvem:", e);
     }
@@ -36,7 +36,7 @@
 
   window.cloudLoad = async function() {
     try {
-      const docSnap = await getDoc(doc(dbCloud, "sistema", "dados_fazenda_remodelado_v20"));
+      const docSnap = await getDoc(doc(dbCloud, "sistema", "dados_fazenda_remodelado_v22"));
       if (docSnap.exists()) {
         return docSnap.data();
       }
@@ -215,6 +215,7 @@ tbody tr:last-child td{border-bottom:0}
   <button class="nav-btn menu-admin-only" data-target="combustivel" id="navCombustivel"><span class="nav-icon">⛽</span>Combustível (Diesel)</button>
   <button class="nav-btn menu-admin-only" data-target="maquinas" id="navMaquinas"><span class="nav-icon">🚜</span>Máquinas e Frota</button>
   <button class="nav-btn" data-target="solicitar"><span class="nav-icon">＋</span>Solicitar por Hectare</button>
+  <button class="nav-btn" data-target="enviar_foto_folheto"><span class="nav-icon">📸</span>Enviar Foto de Folheto</button>
   <button class="nav-btn menu-escritorio-only" data-target="escritorio_folhetos" id="navFolhetos">
     <span class="nav-icon">📄</span>Folhetos Produtos 
     <span id="folhetoCounterBadge" class="badge pending" style="display:none; margin-left:auto;">0</span>
@@ -293,6 +294,22 @@ tbody tr:last-child td{border-bottom:0}
    <div class="panel">
     <div class="filters"><input id="stockSearchInput" placeholder="🔍 Buscar produto ou princípio ativo..."></div>
     <div id="stockTableContainer"></div>
+   </div>
+  </section>
+
+  <!-- ENVIAR FOTO DE FOLHETO MANUAL -->
+  <section id="view-enviar_foto_folheto" class="view-section">
+   <div class="pagehead">
+    <div><div class="eyebrow">DOCUMENTOS MANUAIS</div><h1>Enviar Foto de Folheto</h1><p>Tire uma foto ou selecione a imagem do folheto manual preenchido no depósito para enviar direto ao escritório.</p></div>
+   </div>
+   <div class="panel">
+    <div class="formgrid">
+     <div class="field full"><label>Identificação / Talhão / Nº do Folheto *</label><input id="fotoFolhetoTitulo" placeholder="Ex: Talhão 04 ou Folheto #128"></div>
+     <div class="field full"><label>Foto do Folheto Físico *</label><input type="file" id="fotoFolhetoFile" accept="image/*" capture="environment"><small>Você pode tirar a foto direto com a câmera do celular ou escolher da galeria.</small></div>
+     <div class="field full"><label>Observações (Opcional)</label><input id="fotoFolhetoObs" placeholder="Ex: Retirado por João para aplicação"></div>
+    </div>
+    <div id="fotoFolhetoPreviewContainer" style="margin-top:15px; text-align:center;"></div>
+    <div class="formactions"><button class="btn green" id="btnEnviarFotoFolheto">📤 Enviar Folheto com Foto ao Escritório</button></div>
    </div>
   </section>
 
@@ -375,7 +392,7 @@ tbody tr:last-child td{border-bottom:0}
   <!-- ESCRITÓRIO: FOLHETOS DE SEPARAÇÃO (PRODUTOS) -->
   <section id="view-escritorio_folhetos" class="view-section">
    <div class="pagehead">
-    <div><div class="eyebrow">PAINEL DO ESCRITÓRIO</div><h1>Folhetos Pendentes de Produtos</h1><p>Acompanhe os folhetos de defensivos/insumos gerados pelo depósito para dar baixa no sistema.</p></div>
+    <div><div class="eyebrow">PAINEL DO ESCRITÓRIO</div><h1>Folhetos Pendentes de Produtos</h1><p>Acompanhe os folhetos gerados pelo sistema ou enviados por foto. Após a baixa, são apagados automaticamente em 24h.</p></div>
    </div>
    <div class="panel">
     <div id="escritorioFolhetosContainer"></div>
@@ -431,17 +448,24 @@ tbody tr:last-child td{border-bottom:0}
   <!-- USUÁRIOS E PERFIS -->
   <section id="view-usuarios" class="view-section">
    <div class="pagehead">
-    <div><div class="eyebrow">SEGURANÇA E SENHAS</div><h1>Gerenciamento de Senhas (PIN)</h1></div>
+    <div><div class="eyebrow">SEGURANÇA E SENHAS</div><h1>Gerenciamento de Senhas (PIN) Individuais</h1></div>
    </div>
    <div class="panel">
     <div class="notice">
-      <strong>🔒 Proteção de Perfis Ativa</strong>
-      Os perfis <strong>Escritório</strong> e <strong>Depósito</strong> exigem senha PIN para troca. O PIN padrão configurado é <strong>1234</strong>.
+      <strong>🔒 Segurança Separada por Perfil</strong>
+      Cada perfil (Escritório e Depósito) possui sua própria senha PIN numérica. O padrão inicial de ambos é <strong>1234</strong>.
     </div>
     <div class="formgrid">
-      <div class="field"><label>Novo PIN para Escritório / Depósito</label><input id="newPinInput" type="password" placeholder="Digite o novo PIN numérico" maxlength="6"></div>
+      <div class="field">
+        <label>Selecione o Perfil para Alterar a Senha</label>
+        <select id="pinTargetProfile"><option value="Escritório">Escritório</option><option value="Depósito">Depósito</option></select>
+      </div>
+      <div class="field">
+        <label>Nova Senha PIN (numérica)</label>
+        <input id="newPinInput" type="number" inputmode="numeric" placeholder="Ex: 5678" maxlength="6">
+      </div>
     </div>
-    <div class="formactions"><button class="btn primary" id="btnSavePin">Salvar Nova Senha PIN</button></div>
+    <div class="formactions"><button class="btn primary" id="btnSavePin">Salvar Nova Senha do Perfil</button></div>
    </div>
   </section>
  </div>
@@ -462,7 +486,7 @@ tbody tr:last-child td{border-bottom:0}
  </div>
 </div>
 
-<!-- MODAL DE SENHA PIN -->
+<!-- MODAL DE SENHA PIN COM TECLADO NUMÉRICO -->
 <div class="modalback" id="pinModalBack">
  <div class="modal" style="width:min(400px, 100%);">
   <div class="modal-head">
@@ -470,9 +494,8 @@ tbody tr:last-child td{border-bottom:0}
     <button class="close" id="pinModalClose">×</button>
   </div>
   <div class="field">
-    <label>Senha PIN de acesso para o perfil:</label>
-    <input id="pinInputVal" type="password" placeholder="Digite o PIN (ex: 1234)" autofocus style="font-size:20px !important; letter-spacing:3px; text-align:center;">
-    <small style="margin-top:5px; text-align:center; display:block;">PIN padrão inicial: <strong>1234</strong></small>
+    <label>Senha PIN numérica de acesso:</label>
+    <input id="pinInputVal" type="number" inputmode="numeric" pattern="[0-9]*" placeholder="Digite o PIN" autofocus style="font-size:24px !important; letter-spacing:6px; text-align:center;">
   </div>
   <div class="modal-foot">
     <button class="btn outline" id="pinCancelBtn">Cancelar</button>
@@ -494,7 +517,7 @@ tbody tr:last-child td{border-bottom:0}
 
 <!-- MODAL GERAL -->
 <div class="modalback" id="modalback">
- <div class="modal">
+ <div class="modal" style="width:min(900px, 100%);">
   <div class="modal-head"><h2 id="modalTitle">Detalhes</h2><button class="close" id="modalCloseBtn">×</button></div>
   <div id="modalBody"></div>
   <div class="modal-foot" id="modalFoot"></div>
@@ -512,6 +535,7 @@ const TITLES = {
   maquinas: "Máquinas e Frota",
   importar_pdf: "Importar PDF de Estoque",
   solicitar: "Solicitação por Hectare",
+  enviar_foto_folheto: "Enviar Foto de Folheto",
   escritorio_folhetos: "Folhetos Produtos",
   escritorio_combustivel: "Folhetos Diesel Pendentes",
   cadastro: "Cadastro em Massa",
@@ -527,18 +551,37 @@ const norm = s => String(s ?? "").trim().toLocaleLowerCase("pt-BR").replace(/[\s
 const num = n => Number(n || 0).toLocaleString("pt-BR", {maximumFractionDigits: 3});
 const fmtDate = s => { const d = new Date(s); return isNaN(d) ? "—" : d.toLocaleString("pt-BR", {dateStyle: "short", timeStyle: "short"}); };
 
-const freshDB = () => ({ products: [], orders: [], folhetos: [], fuelFolhetos: [], history: [], fuelHistory: [], machines: [], fuelStock: 5000, pin: "1234" });
+const freshDB = () => ({ products: [], orders: [], folhetos: [], fuelFolhetos: [], history: [], fuelHistory: [], machines: [], fuelStock: 5000, pins: { Escritório: "1234", Depósito: "1234" } });
 let db = freshDB();
-let role = localStorage.getItem("agroestoque_role_rem_v20") || "Operador";
+let role = localStorage.getItem("agroestoque_role_rem_v22") || "Operador";
 let currentView = "dashboard";
 let stockSearch = "";
 let importedPdfDraft = [];
 let pendingTargetRole = "";
 let currentDraftOrder = null;
+let fotoFolhetoBase64 = "";
 
 async function save() {
-  localStorage.setItem("agroestoque_role_rem_v20", role);
+  localStorage.setItem("agroestoque_role_rem_v22", role);
   if (window.cloudSave) await window.cloudSave(db);
+}
+
+function limparFolhetosExpirados() {
+  if (!Array.isArray(db.folhetos)) return;
+  const agora = Date.now();
+  const vinteQuatroHoras = 24 * 60 * 60 * 1000;
+  
+  const originalLen = db.folhetos.length;
+  db.folhetos = db.folhetos.filter(f => {
+    if (f.baixadoEscritorio && f.baixadoEm) {
+      return (agora - f.baixadoEm) < vinteQuatroHoras;
+    }
+    return true;
+  });
+
+  if (db.folhetos.length !== originalLen) {
+    save();
+  }
 }
 
 async function initCloudSync() {
@@ -547,7 +590,7 @@ async function initCloudSync() {
     if (cloudData && Array.isArray(cloudData.products)) {
       db = cloudData;
       if (db.fuelStock === undefined) db.fuelStock = 5000;
-      if (!db.pin) db.pin = "1234";
+      if (!db.pins) db.pins = { Escritório: db.pin || "1234", Depósito: db.pin || "1234" };
       if (!Array.isArray(db.fuelHistory)) db.fuelHistory = [];
       if (!Array.isArray(db.fuelFolhetos)) db.fuelFolhetos = [];
       if (!Array.isArray(db.machines)) db.machines = [];
@@ -555,6 +598,8 @@ async function initCloudSync() {
       if (!Array.isArray(db.folhetos)) db.folhetos = [];
       if (!Array.isArray(db.history)) db.history = [];
       
+      limparFolhetosExpirados();
+
       db.products.forEach(p => {
         if (!p.activeIngredient) p.activeIngredient = "";
         if (!Array.isArray(p.lots)) p.lots = [];
@@ -633,10 +678,6 @@ function parseRecipeLine(line) {
 }
 
 function navigateTo(target) {
-  if (role === "Operador" && ["cadastro", "importar_pdf", "entrada", "combustivel", "maquinas", "escritorio_folhetos", "escritorio_combustivel", "usuarios"].includes(target)) {
-    toast("Acesso restrito para operadores.");
-    target = "dashboard";
-  }
   if (!TITLES[target]) return;
   currentView = target;
   document.querySelectorAll(".view-section").forEach(sec => sec.classList.remove("active"));
@@ -868,6 +909,7 @@ function renderActiveView() {
   else if (currentView === "importar_pdf") renderImportPdf();
   else if (currentView === "cadastro") renderCadastroMassa();
   else if (currentView === "historico") renderHistory();
+  else if (currentView === "enviar_foto_folheto") renderEnviarFotoFolheto();
   else if (currentView === "escritorio_folhetos") {
     if (!isEscritorio) { navigateTo("dashboard"); return; }
     renderEscritorioFolhetos();
@@ -931,7 +973,7 @@ function renderDashboard() {
 
   const quicks = [
     { id: "estoque", icon: "▤", title: "Estoque", desc: "Consultar e gerenciar" },
-    { id: "importar_pdf", icon: "📁", title: "Importar PDF", desc: "Carregar inventário" },
+    { id: "enviar_foto_folheto", icon: "📸", title: "Enviar Foto de Folheto", desc: "Mandar papel manual" },
     { id: "solicitar", icon: "＋", title: "Solicitar por Hectare", desc: "Enviar receita" },
     { id: "combustivel", icon: "⛽", title: "Combustível", desc: "Controle de Diesel" }
   ];
@@ -943,6 +985,59 @@ function renderDashboard() {
 
   $("quickButtons").innerHTML = quicks.map(q => `<button class="quick-btn" data-goto="${q.id}"><span>${q.icon}</span><strong>${q.title}</strong><small>${q.desc}</small></button>`).join("");
   document.querySelectorAll(".quick-btn").forEach(b => b.onclick = () => navigateTo(b.dataset.goto));
+}
+
+function renderEnviarFotoFolheto() {
+  fotoFolhetoBase64 = "";
+  $("fotoFolhetoTitulo").value = "";
+  $("fotoFolhetoObs").value = "";
+  $("fotoFolhetoFile").value = "";
+  $("fotoFolhetoPreviewContainer").innerHTML = "";
+
+  const fileInput = $("fotoFolhetoFile");
+  fileInput.onchange = e => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = event => {
+      fotoFolhetoBase64 = event.target.result;
+      $("fotoFolhetoPreviewContainer").innerHTML = `
+        <p style="color:var(--green); font-weight:bold;">📸 Foto carregada com sucesso!</p>
+        <img src="${fotoFolhetoBase64}" alt="Prévia do Folheto" style="max-width:100%; max-height:280px; border-radius:8px; border:1px solid var(--line); margin-top:8px;">
+      `;
+    };
+    reader.readAsDataURL(file);
+  };
+
+  $("btnEnviarFotoFolheto").onclick = async () => {
+    const titulo = $("fotoFolhetoTitulo").value.trim();
+    const obs = $("fotoFolhetoObs").value.trim();
+
+    if (!titulo) return toast("Informe a identificação ou talhão do folheto.");
+    if (!fotoFolhetoBase64) return toast("Selecione ou tire a foto do folheto manual.");
+
+    const novoFolhetoFoto = {
+      id: uid(),
+      orderNo: "FOTO-" + String(Date.now()).slice(-5),
+      farm: titulo,
+      requester: role,
+      hectares: 0,
+      note: obs,
+      date: Date.now(),
+      baixadoEscritorio: false,
+      isFoto: true,
+      fotoUrl: fotoFolhetoBase64,
+      items: []
+    };
+
+    if (!Array.isArray(db.folhetos)) db.folhetos = [];
+    db.folhetos.unshift(novoFolhetoFoto);
+    await save();
+
+    toast("Foto do folheto enviada com sucesso para o escritório!");
+    navigateTo("dashboard");
+  };
 }
 
 function renderStock() {
@@ -1291,20 +1386,16 @@ async function estornarHistorico(historyId) {
   
   const h = db.history[index];
   
-  // Tenta localizar o produto afetado para reverter o saldo
   let prod = db.products.find(p => norm(p.name) === norm(h.name));
   
   if (prod) {
     if (h.type.includes("Baixa") || h.type.includes("Saída")) {
-      // Se foi uma baixa (retirada), estornar significa devolver ao estoque (+)
       prod.q = Number(prod.q || 0) + Number(h.q);
     } else if (h.type.includes("Entrada") || h.type.includes("Cadastro")) {
-      // Se foi entrada, estornar significa remover do estoque (-)
       prod.q = Number(prod.q || 0) - Number(h.q);
     }
   }
 
-  // Remove o item do histórico
   db.history.splice(index, 1);
   await save();
   renderHistory();
@@ -1312,48 +1403,68 @@ async function estornarHistorico(historyId) {
 }
 
 function renderEscritorioFolhetos() {
+  limparFolhetosExpirados();
   const folhetos = db.folhetos || [];
   $("escritorioFolhetosContainer").innerHTML = folhetos.length ? folhetos.map(f => `
     <div class="folheto-card" style="${f.baixadoEscritorio ? 'background:#f8fafc; opacity:0.8;' : 'border-left:4px solid var(--green);'}">
       <div class="folheto-head">
         <div>
-          <strong>Folheto Pedido #${esc(f.orderNo)}</strong>
-          <small style="display:block; color:var(--muted);">Destino: ${esc(f.farm)} | Solicitante: ${esc(f.requester)} | Data: ${fmtDate(f.date)}</small>
+          <strong>${f.isFoto ? '📸 Folheto por Foto' : 'Folheto Pedido'} #${esc(f.orderNo)}</strong>
+          <small style="display:block; color:var(--muted);">Destino/Talhão: ${esc(f.farm)} | Solicitante: ${esc(f.requester)} | Data: ${fmtDate(f.date)}</small>
         </div>
         <div style="margin-top:6px;">
-          ${f.baixadoEscritorio ? '<span class="badge delivered">✓ Baixado no Escritório</span>' : `<button class="btn green smallbtn" onclick="confirmarBaixaEscritorio('${f.id}')">✓ Confirmar Baixa no Sistema</button>`}
+          ${f.baixadoEscritorio ? '<span class="badge delivered">✓ Baixado (Apaga em 24h)</span>' : `<button class="btn green smallbtn" onclick="confirmarBaixaEscritorio('${f.id}')">✓ Confirmar Baixa no Sistema</button>`}
         </div>
       </div>
-      <div class="tablewrap">
-        <table class="compact-table">
-          <thead>
-            <tr>
-              <th style="width:60%;">Produto Separado</th>
-              <th style="width:40%; text-align:right;">Quantidade</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${f.items.map(it => `
+      ${f.isFoto ? `
+        <div style="margin:10px 0;">
+          <p><strong>Observação:</strong> ${esc(f.note || 'Nenhuma')}</p>
+          <img src="${f.fotoUrl}" alt="Foto do Folheto" style="max-height:160px; border-radius:8px; border:1px solid var(--line); cursor:pointer;" onclick="abrirFotoGrande('${f.fotoUrl}')">
+          <p><small style="color:var(--blue); cursor:pointer;" onclick="abrirFotoGrande('${f.fotoUrl}')">🔍 Clique na imagem para ampliar</small></p>
+        </div>
+      ` : `
+        <div class="tablewrap">
+          <table class="compact-table">
+            <thead>
               <tr>
-                <td><strong>${esc(it.name)}</strong></td>
-                <td style="text-align:right;"><strong style="color:var(--blue); font-size:14px;">${num(it.q)} ${esc(it.u)}</strong></td>
+                <th style="width:60%;">Produto Separado</th>
+                <th style="width:40%; text-align:right;">Quantidade</th>
               </tr>
-            `).join("")}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              ${f.items.map(it => `
+                <tr>
+                  <td><strong>${esc(it.name)}</strong></td>
+                  <td style="text-align:right;"><strong style="color:var(--blue); font-size:14px;">${num(it.q)} ${esc(it.u)}</strong></td>
+                </tr>
+              `).join("")}
+            </tbody>
+          </table>
+        </div>
+      `}
     </div>
   `).join("") : `<div class="empty">Nenhum folheto de produto pendente no momento.</div>`;
+}
+
+function abrirFotoGrande(url) {
+  openModal("Visualizar Foto do Folheto", `
+    <div style="text-align:center;">
+      <img src="${url}" alt="Foto Ampliada" style="max-width:100%; border-radius:10px;">
+    </div>
+  `, [
+    { text: "Fechar", fn: closeModal }
+  ]);
 }
 
 async function confirmarBaixaEscritorio(id) {
   const f = db.folhetos.find(x => x.id === id);
   if (!f) return;
   f.baixadoEscritorio = true;
+  f.baixadoEm = Date.now();
   await save();
   renderEscritorioFolhetos();
   renderActiveView();
-  toast("Baixa confirmada pelo escritório com sucesso!");
+  toast("Baixa confirmada! O folheto será apagado automaticamente em 24 horas.");
 }
 
 function renderEscritorioCombustivel() {
@@ -1536,7 +1647,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   $("pinConfirmBtn").onclick = () => {
     const enteredPin = $("pinInputVal").value.trim();
-    const correctPin = db.pin || "1234";
+    if (!db.pins) db.pins = { Escritório: "1234", Depósito: "1234" };
+    const correctPin = db.pins[pendingTargetRole] || "1234";
 
     if (enteredPin === correctPin) {
       role = pendingTargetRole;
@@ -1554,12 +1666,15 @@ document.addEventListener("DOMContentLoaded", () => {
   $("pinInputVal").onkeydown = e => { if (e.key === "Enter") $("pinConfirmBtn").click(); };
 
   $("btnSavePin").onclick = async () => {
+    const targetProf = $("pinTargetProfile").value;
     const newPin = $("newPinInput").value.trim();
     if (!newPin || newPin.length < 3) return toast("Informe um PIN válido (mínimo 3 dígitos).");
-    db.pin = newPin;
+    
+    if (!db.pins) db.pins = { Escritório: "1234", Depósito: "1234" };
+    db.pins[targetProf] = newPin;
     await save();
     $("newPinInput").value = "";
-    toast("Nova senha PIN salva com sucesso!");
+    toast(`Nova senha PIN do perfil ${targetProf} salva com sucesso!`);
   };
 
   $("stockSearchInput").oninput = e => { stockSearch = e.target.value; renderStock(); };
