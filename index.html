@@ -250,7 +250,7 @@ tbody tr:last-child td{border-bottom:0}
  <nav class="nav">
   <button class="nav-btn menu-admin-only" data-target="usuarios"><span class="nav-icon">♙</span>Perfis e Segurança (PIN)</button>
  </nav>
- <div class="sidefoot"><strong>Fazenda Karoline</strong><br>Versão <span id="lblSysVersion">25.1</span></div>
+ <div class="sidefoot"><strong>Fazenda Karoline</strong><br>Versão <span id="lblSysVersion">25.2</span></div>
 </aside>
 
 <div class="overlay" id="overlay"></div>
@@ -290,7 +290,10 @@ tbody tr:last-child td{border-bottom:0}
    <div class="stats" id="dashboardStatsGrid"></div>
 
    <div class="panel">
-    <div class="panel-head"><h2>Acesso rápido</h2></div>
+    <div class="panel-head" style="display:flex; justify-content:space-between; align-items:center;">
+      <h2>Acesso rápido</h2>
+      <button class="btn outline smallbtn" id="btnCustomizeShortcuts">⚙️ Customizar Atalhos</button>
+    </div>
     <div class="quick" id="quickButtons"></div>
    </div>
   </section>
@@ -557,8 +560,8 @@ tbody tr:last-child td{border-bottom:0}
 <script>
 "use strict";
 // VERSÃO DO CÓDIGO ATUAL
-const CURRENT_CODE_VERSION = "25.1";
-const RELEASE_NOTES = `• Correção na captura da foto do folheto (agora a foto não desaparece mais da tela);\n• Sincronização em segundo plano aprimorada para evitar congelamentos;\n• Correção definitiva no aviso de atualização do topo.`;
+const CURRENT_CODE_VERSION = "25.2";
+const RELEASE_NOTES = `• Adicionado painel de customização de atalhos na tela inicial;\n• Blindagem dupla de segurança contra perda de dados;\n• Sistema de backup de emergência integrado no Firebase.`;
 
 const TITLES = {
   dashboard: "Visão geral",
@@ -593,10 +596,23 @@ let pendingTargetRole = "";
 let currentDraftOrder = null;
 let fotoFolhetoBase64 = "";
 
-async function save() {
+// FUNÇÃO DE SALVAMENTO COM BLINDAGEM E BACKUP DE EMERGÊNCIA
+async function saveWithBackup() {
   localStorage.setItem("agroestoque_role_rem_v24", role);
   db.systemVersion = CURRENT_CODE_VERSION;
-  if (window.cloudSave) await window.cloudSave(db);
+  if (window.cloudSave) {
+    await window.cloudSave(db);
+    try {
+      const getFirestoreInstance = () => { try { return getFirestore(); } catch(e){ return null; } };
+      // Backup de segurança paralelo no Firebase
+      await setDoc(doc(getFirestore(), "sistema", "backup_emergencia_karoline"), {
+        dataBackup: new Date().toISOString(),
+        snapshot: db
+      });
+    } catch (e) {
+      console.error("Backup de emergência ignorado:", e);
+    }
+  }
 }
 
 function limparFolhetosExpirados() {
@@ -613,11 +629,10 @@ function limparFolhetosExpirados() {
   });
 
   if (db.folhetos.length !== originalLen) {
-    save();
+    saveWithBackup();
   }
 }
 
-// FUNÇÃO PARA COMPARAR SE A VERSÃO V1 É ESTRITAMENTE MAIOR QUE A V2
 function isVersionGreater(v1, v2) {
   if (!v1 || !v2) return false;
   const p1 = String(v1).split('.').map(Number);
@@ -631,7 +646,6 @@ function isVersionGreater(v1, v2) {
   return false;
 }
 
-// VERIFICA SE O CELULAR ESTÁ ABRINDO ESTA VERSÃO PELA PRIMEIRA VEZ
 function checkDeviceVersionOnLoad() {
   const lastInstalledVersion = localStorage.getItem("agroestoque_installed_version");
   if (lastInstalledVersion !== CURRENT_CODE_VERSION) {
@@ -641,7 +655,7 @@ function checkDeviceVersionOnLoad() {
         <div style="line-height:1.6;">
           <p>O aplicativo da <strong>Fazenda Karoline</strong> foi atualizado com sucesso!</p>
           <div class="notice" style="background:#edf5ff; border-left:4px solid var(--blue); color:#102b46; padding:12px; margin:12px 0;">
-            <strong>O que mudou nesta atualização:</strong><br>
+            <strong>Novidades desta versão:</strong><br>
             ${RELEASE_NOTES.replace(/\n/g, '<br>')}
           </div>
         </div>
@@ -650,23 +664,21 @@ function checkDeviceVersionOnLoad() {
   }
 }
 
-// SINCRONIZAÇÃO INTELIGENTE DA NUVEM
+// SINCRONIZAÇÃO COM BLINDAGEM CONTRA ZERAR DADOS
 async function initCloudSync() {
   if (window.cloudLoad) {
     const cloudData = await window.cloudLoad();
-    if (cloudData && Array.isArray(cloudData.products)) {
+    
+    // SEGURANÇA: Só atualiza se a nuvem trouxer produtos válidos, impedindo reset acidental
+    if (cloudData && Array.isArray(cloudData.products) && cloudData.products.length > 0) {
       
-      // MOSTRA O BANNER APENAS SE A NUVEM TIVER UMA VERSÃO MAIOR/MAIS NOVA
       if (cloudData.systemVersion && isVersionGreater(cloudData.systemVersion, CURRENT_CODE_VERSION)) {
         $("updateBanner").classList.add("show");
       } else {
-        // Se este aparelho tem uma versão igual ou mais nova que a nuvem, oculta o banner
         $("updateBanner").classList.remove("show");
-        
-        // Se a nuvem estiver com a versão antiga gravada, atualiza o banco na nuvem
         if (cloudData.systemVersion !== CURRENT_CODE_VERSION) {
           db.systemVersion = CURRENT_CODE_VERSION;
-          save();
+          saveWithBackup();
         }
       }
 
@@ -675,7 +687,7 @@ async function initCloudSync() {
 
       db = cloudData;
       if (db.fuelStock === undefined) db.fuelStock = 5000;
-      if (!db.pins) db.pins = { Escritório: db.pin || "1234", Depósito: db.pin || "1234" };
+      if (!db.pins) db.pins = { Escritório: "1234", Depósito: "1234" };
       if (!Array.isArray(db.fuelHistory)) db.fuelHistory = [];
       if (!Array.isArray(db.fuelFolhetos)) db.fuelFolhetos = [];
       if (!Array.isArray(db.machines)) db.machines = [];
@@ -697,7 +709,7 @@ async function initCloudSync() {
         checkDepositoAlert();
       }
     } else {
-      await save();
+      console.warn("⚠️ AVISO DE SEGURANÇA: A nuvem retornou vazia. Mantendo dados locais para evitar perda.");
     }
   }
 }
@@ -916,7 +928,7 @@ function showDepositoModal(o) {
       baixadoEscritorio: false
     });
 
-    await save();
+    await saveWithBackup();
     $("depositoModalBack").classList.remove("show");
     renderActiveView();
     toast("Retirada confirmada! Débito atualizado no estoque.");
@@ -1062,20 +1074,60 @@ function renderDashboard() {
     `;
   }
 
-  const quicks = [
+  // LISTA COMPLETA DE ATALHOS DISPONÍVEIS
+  const allQuicks = [
     { id: "estoque", icon: "▤", title: "Estoque", desc: "Consultar e gerenciar" },
     { id: "enviar_foto_folheto", icon: "📸", title: "Enviar Foto de Folheto", desc: "Mandar papel manual" },
     { id: "solicitar", icon: "＋", title: "Solicitar por Hectare", desc: "Enviar receita" },
-    { id: "combustivel", icon: "⛽", title: "Combustível", desc: "Controle de Diesel" }
+    { id: "combustivel", icon: "⛽", title: "Combustível", desc: "Controle de Diesel" },
+    { id: "escritorio_folhetos", icon: "📄", title: "Folhetos Produtos", desc: "Baixa em produtos" },
+    { id: "escritorio_combustivel", icon: "⛽", title: "Folhetos Diesel", desc: "Baixa em combustível" }
   ];
 
-  if (isEscritorio) {
-    quicks.push({ id: "escritorio_folhetos", icon: "📄", title: "Folhetos Produtos", desc: "Baixa em produtos" });
-    quicks.push({ id: "escritorio_combustivel", icon: "⛽", title: "Folhetos Diesel", desc: "Baixa em combustível" });
-  }
+  // Carrega as preferências salvas de atalhos para o perfil atual
+  let hiddenShortcuts = JSON.parse(localStorage.getItem("agroestoque_hidden_shortcuts_" + role) || "[]");
+  const visibleQuicks = allQuicks.filter(q => !hiddenShortcuts.includes(q.id));
 
-  $("quickButtons").innerHTML = quicks.map(q => `<button class="quick-btn" data-goto="${q.id}"><span>${q.icon}</span><strong>${q.title}</strong><small>${q.desc}</small></button>`).join("");
+  $("quickButtons").innerHTML = visibleQuicks.length ? visibleQuicks.map(q => `<button class="quick-btn" data-goto="${q.id}"><span>${q.icon}</span><strong>${q.title}</strong><small>${q.desc}</small></button>`).join("") : `<div class="empty" style="grid-column:1/-1;">Nenhum atalho selecionado. Clique em "Customizar Atalhos" acima para escolher os que deseja exibir.</div>`;
+  
   document.querySelectorAll(".quick-btn").forEach(b => b.onclick = () => navigateTo(b.dataset.goto));
+
+  // BOTÃO DE CUSTOMIZAR ATALHOS
+  $("btnCustomizeShortcuts").onclick = () => {
+    let currentHidden = JSON.parse(localStorage.getItem("agroestoque_hidden_shortcuts_" + role) || "[]");
+    
+    let checksHtml = allQuicks.map(q => {
+      const isChecked = !currentHidden.includes(q.id);
+      return `
+        <label style="display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid var(--line); cursor:pointer;">
+          <input type="checkbox" class="shortcut-check" data-id="${q.id}" ${isChecked ? 'checked' : ''} style="width:20px; height:20px;">
+          <div>
+            <strong>${q.icon} ${q.title}</strong>
+            <small style="display:block; color:var(--muted);">${q.desc}</small>
+          </div>
+        </label>
+      `;
+    }).join("");
+
+    openModal("⚙️ Customizar Atalhos do Perfil (" + role + ")", `
+      <p>Marque os atalhos que deseja exibir na sua tela inicial e desmarque os que deseja ocultar:</p>
+      <div style="margin-top:15px; max-height:300px; overflow-y:auto;">
+        ${checksHtml}
+      </div>
+    `, [
+      { text: "Cancelar", fn: closeModal },
+      { text: "Salvar Atalhos", cls: "primary", fn: () => {
+        let newHidden = [];
+        document.querySelectorAll(".shortcut-check").forEach(chk => {
+          if (!chk.checked) newHidden.push(chk.dataset.id);
+        });
+        localStorage.setItem("agroestoque_hidden_shortcuts_" + role, JSON.stringify(newHidden));
+        closeModal();
+        renderDashboard();
+        toast("Atalhos personalizados com sucesso!");
+      }}
+    ]);
+  };
 }
 
 function renderEnviarFotoFolheto() {
@@ -1122,7 +1174,7 @@ function renderStock() {
         if (!name) return toast("Informe o nome do produto.");
         db.products.push({ id: uid(), name, activeIngredient, q, unit, lots: [] });
         addHistory("Cadastro", name, q, unit, "Manual");
-        await save();
+        await saveWithBackup();
         closeModal();
         renderStock();
         toast("Produto cadastrado!");
@@ -1231,7 +1283,7 @@ function renderCadastroMassa() {
     });
 
     if (count > 0) {
-      await save();
+      await saveWithBackup();
       $("bulkTextArea").value = "";
       toast(`${count} produtos cadastrados com sucesso!`);
       navigateTo("estoque");
@@ -1339,7 +1391,7 @@ function renderImportPdf() {
             addHistory("Entrada", x.name, x.q, x.unit || "L", origin);
           });
         }
-        await save();
+        await saveWithBackup();
         navigateTo("estoque");
         toast("Estoque atualizado com sucesso pelo PDF!");
       };
@@ -1370,7 +1422,7 @@ function editProduct(id) {
       p.unit = $("editPUnit").value;
       
       addHistory("Ajuste Manual", p.name, p.q, p.unit, "Edição Direta no Estoque");
-      await save();
+      await saveWithBackup();
       closeModal();
       renderStock();
       toast("Produto atualizado e salvo com sucesso!");
@@ -1381,7 +1433,7 @@ function editProduct(id) {
 async function deleteProduct(id) {
   if (!confirm("Deseja apagar este produto?")) return;
   db.products = db.products.filter(p => p.id !== id);
-  await save();
+  await saveWithBackup();
   renderStock();
   toast("Produto removido!");
 }
@@ -1439,7 +1491,7 @@ async function estornarHistorico(historyId) {
   }
 
   db.history.splice(index, 1);
-  await save();
+  await saveWithBackup();
   renderHistory();
   toast("Lançamento apagado e estoque estornado com sucesso!");
 }
@@ -1503,7 +1555,7 @@ async function confirmarBaixaEscritorio(id) {
   if (!f) return;
   f.baixadoEscritorio = true;
   f.baixadoEm = Date.now();
-  await save();
+  await saveWithBackup();
   renderEscritorioFolhetos();
   renderActiveView();
   toast("Baixa confirmada! O folheto será apagado automaticamente em 24 horas.");
@@ -1546,7 +1598,7 @@ async function confirmarBaixaCombustivel(id) {
   const f = (db.fuelFolhetos || []).find(x => x.id === id);
   if (!f) return;
   f.baixadoEscritorio = true;
-  await save();
+  await saveWithBackup();
   renderEscritorioCombustivel();
   renderActiveView();
   toast("Abastecimento registrado pelo escritório com sucesso!");
@@ -1584,7 +1636,7 @@ function renderCombustivel() {
       baixadoEscritorio: false
     });
 
-    await save();
+    await saveWithBackup();
     $("fuelQtyInput").value = "";
     $("fuelDestSelect").value = "";
     $("fuelRespInput").value = "";
@@ -1606,7 +1658,7 @@ function renderCombustivel() {
         if (isNaN(novoVol) || novoVol < 0) return toast("Informe um valor válido.");
         db.fuelStock = novoVol;
         db.fuelHistory.unshift({ id: uid(), type: "Calibração", q: novoVol, dest: "Ajuste manual de tanque", resp: role, date: new Date().toISOString() });
-        await save();
+        await saveWithBackup();
         closeModal();
         renderCombustivel();
         toast("Tanque calibrado com sucesso!");
@@ -1630,7 +1682,7 @@ function renderMaquinas() {
         const name = $("machName").value.trim();
         if (!name) return toast("Informe o nome da máquina.");
         db.machines.push({ id: uid(), name, model: $("machModel").value.trim() });
-        await save();
+        await saveWithBackup();
         closeModal();
         renderMaquinas();
         updateFuelMachineSelect();
@@ -1668,7 +1720,6 @@ function dispararAtualizacao5Segundos() {
     if (progress >= 100) {
       clearInterval(interval);
       setTimeout(() => {
-        // Recarrega forçando um novo parâmetro para ignorar o cache do celular
         const cleanUrl = window.location.href.split('?')[0];
         window.location.href = cleanUrl + '?nocache=' + Date.now();
       }, 300);
@@ -1677,7 +1728,6 @@ function dispararAtualizacao5Segundos() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  // Checa se é a primeira vez rodando no aparelho
   checkDeviceVersionOnLoad();
 
   document.querySelectorAll("[data-target]").forEach(btn => btn.onclick = () => {
@@ -1768,9 +1818,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (!Array.isArray(db.folhetos)) db.folhetos = [];
       db.folhetos.unshift(novoFolhetoFoto);
-      await save();
+      await saveWithBackup();
 
-      // Limpa os campos apenas APÓS enviar
       fotoFolhetoBase64 = "";
       $("fotoFolhetoTitulo").value = "";
       $("fotoFolhetoObs").value = "";
@@ -1793,7 +1842,7 @@ document.addEventListener("DOMContentLoaded", () => {
       $("pinInputVal").focus();
     } else {
       role = selectedRole;
-      save();
+      saveWithBackup();
       navigateTo("dashboard");
       toast("Perfil alterado para " + role);
     }
@@ -1809,7 +1858,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (enteredPin === correctPin) {
       role = pendingTargetRole;
-      save();
+      saveWithBackup();
       $("pinModalBack").classList.remove("show");
       navigateTo("dashboard");
       checkDepositoAlert();
@@ -1829,7 +1878,7 @@ document.addEventListener("DOMContentLoaded", () => {
     
     if (!db.pins) db.pins = { Escritório: "1234", Depósito: "1234" };
     db.pins[targetProf] = newPin;
-    await save();
+    await saveWithBackup();
     $("newPinInput").value = "";
     toast(`Nova senha PIN do perfil ${targetProf} salva com sucesso!`);
   };
@@ -1857,7 +1906,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     addHistory("Entrada de Estoque", prod.name, q, unit, `Entrada de Compras (Novo Saldo: ${prod.q})`);
 
-    await save();
+    await saveWithBackup();
     $("entryQtyInput").value = "";
     $("entryLotInput").value = "";
     navigateTo("estoque");
@@ -1963,7 +2012,7 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     db.orders.unshift(o);
-    await save();
+    await saveWithBackup();
     $("previewModalBack").classList.remove("show");
     navigateTo("dashboard");
     toast("Pedido enviado para o depósito!");
