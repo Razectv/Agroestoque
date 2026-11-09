@@ -9,6 +9,9 @@
 <meta name="apple-mobile-web-app-title" content="Fazenda Karoline">
 <title>Fazenda Karoline | Gestão de Estoque e Combustível</title>
 
+<!-- MANIFESTO PWA -->
+<link rel="manifest" href="manifest.json">
+
 <!-- Firebase SDKs -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -250,7 +253,7 @@ tbody tr:last-child td{border-bottom:0}
  <nav class="nav">
   <button class="nav-btn menu-admin-only" data-target="usuarios"><span class="nav-icon">♙</span>Perfis e Segurança (PIN)</button>
  </nav>
- <div class="sidefoot"><strong>Fazenda Karoline</strong><br>Versão <span id="lblSysVersion">25.2</span></div>
+ <div class="sidefoot"><strong>Fazenda Karoline</strong><br>Versão <span id="lblSysVersion">25.4</span></div>
 </aside>
 
 <div class="overlay" id="overlay"></div>
@@ -559,9 +562,9 @@ tbody tr:last-child td{border-bottom:0}
 
 <script>
 "use strict";
-// VERSÃO DO CÓDIGO ATUAL
-const CURRENT_CODE_VERSION = "25.2";
-const RELEASE_NOTES = `• Adicionado painel de customização de atalhos na tela inicial;\n• Blindagem dupla de segurança contra perda de dados;\n• Sistema de backup de emergência integrado no Firebase.`;
+// VERSÃO DO CÓDIGO ATUALIZADA
+const CURRENT_CODE_VERSION = "25.4";
+const RELEASE_NOTES = `• Correção do bug de carregamento inicial em branco na tela de Visão Geral;\n• Renderização automática imediata ao conectar com o Firebase.`;
 
 const TITLES = {
   dashboard: "Visão geral",
@@ -663,12 +666,12 @@ function checkDeviceVersionOnLoad() {
   }
 }
 
-// SINCRONIZAÇÃO COM BLINDAGEM CONTRA ZERAR DADOS
+// SINCRONIZAÇÃO COM BLINDAGEM E RENDERIZAÇÃO AUTOMÁTICA
 async function initCloudSync() {
   if (window.cloudLoad) {
     const cloudData = await window.cloudLoad();
     
-    if (cloudData && Array.isArray(cloudData.products) && cloudData.products.length > 0) {
+    if (cloudData && Array.isArray(cloudData.products)) {
       
       if (cloudData.systemVersion && isVersionGreater(cloudData.systemVersion, CURRENT_CODE_VERSION)) {
         $("updateBanner").classList.add("show");
@@ -679,9 +682,6 @@ async function initCloudSync() {
           saveWithBackup();
         }
       }
-
-      const rawPrev = JSON.stringify(db);
-      const rawNew = JSON.stringify(cloudData);
 
       db = cloudData;
       if (db.fuelStock === undefined) db.fuelStock = 5000;
@@ -700,14 +700,9 @@ async function initCloudSync() {
         if (!Array.isArray(p.lots)) p.lots = [];
       });
 
-      const activeEl = document.activeElement;
-      const isUserTyping = activeEl && (activeEl.tagName === "INPUT" || activeEl.tagName === "TEXTAREA");
-      if (rawPrev !== rawNew && !isUserTyping && currentView !== "enviar_foto_folheto") {
-        renderActiveView();
-        checkDepositoAlert();
-      }
-    } else {
-      console.warn("⚠️ AVISO DE SEGURANÇA: A nuvem retornou vazia. Mantendo dados locais para evitar perda.");
+      // GARANTE A RENDERIZAÇÃO IMEDIATA DA TELA AO CARREGAR
+      renderActiveView();
+      checkDepositoAlert();
     }
   }
 }
@@ -1985,7 +1980,7 @@ document.addEventListener("DOMContentLoaded", () => {
       </div>
     `;
 
-    $("previewModalBack").classList.add("show");
+      $("previewModalBack").classList.add("show");
   };
 
   $("previewModalClose").onclick = () => { $("previewModalBack").classList.remove("show"); };
@@ -2013,7 +2008,10 @@ document.addEventListener("DOMContentLoaded", () => {
     toast("Pedido enviado para o depósito!");
   };
 
+  // FORÇA A RENDERIZAÇÃO INICIAL DA TELA IMEDIATAMENTE AO ABRIR
+  renderActiveView();
   initCloudSync();
+  
   setInterval(() => {
     initCloudSync();
   }, 4000);
