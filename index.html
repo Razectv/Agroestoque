@@ -28,7 +28,7 @@
 
   window.cloudSave = async function(data) {
     try {
-      await setDoc(doc(dbCloud, "sistema", "dados_fazenda_remodelado_v23"), data);
+      await setDoc(doc(dbCloud, "sistema", "dados_fazenda_remodelado_v24"), data);
     } catch (e) {
       console.error("Erro ao salvar na nuvem:", e);
     }
@@ -36,7 +36,7 @@
 
   window.cloudLoad = async function() {
     try {
-      const docSnap = await getDoc(doc(dbCloud, "sistema", "dados_fazenda_remodelado_v23"));
+      const docSnap = await getDoc(doc(dbCloud, "sistema", "dados_fazenda_remodelado_v24"));
       if (docSnap.exists()) {
         return docSnap.data();
       }
@@ -553,7 +553,7 @@ const fmtDate = s => { const d = new Date(s); return isNaN(d) ? "—" : d.toLoca
 
 const freshDB = () => ({ products: [], orders: [], folhetos: [], fuelFolhetos: [], history: [], fuelHistory: [], machines: [], fuelStock: 5000, pins: { Escritório: "1234", Depósito: "1234" } });
 let db = freshDB();
-let role = localStorage.getItem("agroestoque_role_rem_v23") || "Operador";
+let role = localStorage.getItem("agroestoque_role_rem_v24") || "Operador";
 let currentView = "dashboard";
 let stockSearch = "";
 let importedPdfDraft = [];
@@ -562,7 +562,7 @@ let currentDraftOrder = null;
 let fotoFolhetoBase64 = "";
 
 async function save() {
-  localStorage.setItem("agroestoque_role_rem_v23", role);
+  localStorage.setItem("agroestoque_role_rem_v24", role);
   if (window.cloudSave) await window.cloudSave(db);
 }
 
@@ -999,8 +999,14 @@ function renderEnviarFotoFolheto() {
     const file = e.target.files[0];
     if (!file) return;
 
-    toast("Processando e otimizando foto...");
-    
+    // Renderização imediata via ObjectURL para garantir que a foto apareça instantaneamente sem sumir
+    const objectUrl = URL.createObjectURL(file);
+    $("fotoFolhetoPreviewContainer").innerHTML = `
+      <p style="color:var(--green); font-weight:bold;">📸 Foto carregada com sucesso!</p>
+      <img src="${objectUrl}" alt="Prévia do Folheto" style="max-width:100%; max-height:280px; border-radius:8px; border:1px solid var(--line); margin-top:8px;">
+    `;
+
+    // Processamento otimizado em background para o base64
     const reader = new FileReader();
     reader.onload = event => {
       const img = new Image();
@@ -1024,12 +1030,6 @@ function renderEnviarFotoFolheto() {
         ctx.drawImage(img, 0, 0, width, height);
 
         fotoFolhetoBase64 = canvas.toDataURL('image/jpeg', 0.82);
-
-        $("fotoFolhetoPreviewContainer").innerHTML = `
-          <p style="color:var(--green); font-weight:bold;">📸 Foto carregada e pronta para envio!</p>
-          <img src="${fotoFolhetoBase64}" alt="Prévia do Folheto" style="max-width:100%; max-height:280px; border-radius:8px; border:1px solid var(--line); margin-top:8px;">
-        `;
-        toast("Foto pronta!");
       };
       img.src = event.target.result;
     };
@@ -1041,7 +1041,7 @@ function renderEnviarFotoFolheto() {
     const obs = $("fotoFolhetoObs").value.trim();
 
     if (!titulo) return toast("Informe a identificação ou talhão do folheto.");
-    if (!fotoFolhetoBase64) return toast("Selecione ou tire a foto do folheto manual.");
+    if (!fotoFolhetoBase64) return toast("Aguarde a foto carregar completamente.");
 
     const novoFolhetoFoto = {
       id: uid(),
