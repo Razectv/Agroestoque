@@ -28,7 +28,7 @@
 
   window.cloudSave = async function(data) {
     try {
-      await setDoc(doc(dbCloud, "sistema", "dados_fazenda_remodelado_v16"), data);
+      await setDoc(doc(dbCloud, "sistema", "dados_fazenda_remodelado_v17"), data);
     } catch (e) {
       console.error("Erro ao salvar na nuvem:", e);
     }
@@ -36,7 +36,7 @@
 
   window.cloudLoad = async function() {
     try {
-      const docSnap = await getDoc(doc(dbCloud, "sistema", "dados_fazenda_remodelado_v16"));
+      const docSnap = await getDoc(doc(dbCloud, "sistema", "dados_fazenda_remodelado_v17"));
       if (docSnap.exists()) {
         return docSnap.data();
       }
@@ -250,6 +250,7 @@ tbody tr:last-child td{border-bottom:0}
    </div>
   </div>
   <div class="topright">
+   <div id="topHeaderActionBtnContainer"></div>
    <select id="roleSelect" class="role-select" aria-label="Perfil">
     <option>Escritório</option>
     <option>Depósito</option>
@@ -268,7 +269,7 @@ tbody tr:last-child td{border-bottom:0}
       <h1>Bom trabalho!</h1>
       <p style="margin-top:4px; font-weight:bold; color:var(--blue);">Perfil atual: <span id="lblRole">Escritório</span></p>
     </div>
-    <button class="btn primary" data-goto="solicitar" id="dashTopBtn">＋ Solicitar por Hectare</button>
+    <div id="dashTopBtnContainer"></div>
    </div>
    
    <div class="stats" id="dashboardStatsGrid"></div>
@@ -528,7 +529,7 @@ const fmtDate = s => { const d = new Date(s); return isNaN(d) ? "—" : d.toLoca
 
 const freshDB = () => ({ products: [], orders: [], folhetos: [], fuelFolhetos: [], history: [], fuelHistory: [], machines: [], fuelStock: 5000, pin: "1234" });
 let db = freshDB();
-let role = localStorage.getItem("agroestoque_role_rem_v16") || "Operador";
+let role = localStorage.getItem("agroestoque_role_rem_v17") || "Operador";
 let currentView = "dashboard";
 let stockSearch = "";
 let importedPdfDraft = [];
@@ -536,7 +537,7 @@ let pendingTargetRole = "";
 let currentDraftOrder = null;
 
 async function save() {
-  localStorage.setItem("agroestoque_role_rem_v16", role);
+  localStorage.setItem("agroestoque_role_rem_v17", role);
   if (window.cloudSave) await window.cloudSave(db);
 }
 
@@ -808,6 +809,7 @@ function renderActiveView() {
   $("lblRole").textContent = role;
 
   const isEscritorio = (role === "Escritório");
+  const isDeposito = (role === "Depósito");
   const isOperador = (role === "Operador");
 
   document.querySelectorAll(".menu-admin-only").forEach(el => {
@@ -817,6 +819,31 @@ function renderActiveView() {
   document.querySelectorAll(".menu-escritorio-only").forEach(el => {
     el.style.display = isEscritorio ? "flex" : "none";
   });
+
+  // Ajuste inteligente do botão superior e da página inicial conforme o perfil
+  const topBtnContainer = $("topHeaderActionBtnContainer");
+  const dashBtnContainer = $("dashTopBtnContainer");
+
+  if (topBtnContainer) {
+    if (isDeposito) {
+      topBtnContainer.innerHTML = `<button class="btn primary smallbtn" data-goto="escritorio_folhetos" onclick="navigateTo('estoque')">📦 Ver Estoque / Folhetos</button>`;
+    } else if (isOperador) {
+      topBtnContainer.innerHTML = `<button class="btn primary smallbtn" data-goto="solicitar" onclick="navigateTo('solicitar')">＋ Solicitar por Hectare</button>`;
+    } else {
+      topBtnContainer.innerHTML = "";
+    }
+  }
+
+  if (dashBtnContainer) {
+    if (isOperador) {
+      dashBtnContainer.innerHTML = `<button class="btn primary" data-goto="solicitar" onclick="navigateTo('solicitar')">＋ Solicitar por Hectare</button>`;
+    } else if (isDeposito) {
+      const pendingCount = db.orders.filter(o => o.status === "Pendente").length;
+      dashBtnContainer.innerHTML = `<button class="btn primary" onclick="checkDepositoAlert()">🚨 Ver Pedidos Pendentes (${pendingCount})</button>`;
+    } else {
+      dashBtnContainer.innerHTML = `<button class="btn primary" data-goto="solicitar" onclick="navigateTo('solicitar')">＋ Solicitar por Hectare</button>`;
+    }
+  }
 
   if (isEscritorio) {
     const pendingFolhetos = (db.folhetos || []).filter(f => !f.baixadoEscritorio).length;
