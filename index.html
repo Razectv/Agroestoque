@@ -70,6 +70,14 @@ input:focus,select:focus,textarea:focus{outline:2px solid #c5d7ff; border-color:
 textarea{min-height:140px; resize:vertical}
 button:disabled{opacity:.45; cursor:not-allowed}
 
+/* Barra de Atualização */
+.update-banner { display:none; background:#ff9800; color:#fff; padding:10px 16px; text-align:center; font-weight:bold; font-size:13px; position:sticky; top:0; z-index:1000; box-shadow:0 2px 8px rgba(0,0,0,0.2); }
+.update-banner.show { display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; }
+.update-banner button { background:#fff; color:#b86b08; border:0; padding:6px 14px; border-radius:6px; font-weight:bold; font-size:12px; cursor:pointer; }
+
+.update-bar-outer { width:100%; height:16px; background:#e2e8f0; border-radius:10px; overflow:hidden; margin:15px 0; border:1px solid #cbd5e1; }
+.update-bar-inner { height:100%; width:0%; background:var(--green); transition:width 0.1s linear; }
+
 .sidebar{position:fixed; inset:0 auto 0 0; width:250px; background:var(--navy); color:#fff; padding:20px 14px; display:flex; flex-direction:column; overflow-y:auto; z-index:40; transition:transform .25s ease}
 .brand{display:flex; align-items:center; gap:10px; padding:6px 8px 24px}
 .brand-icon{display:grid; place-items:center; width:43px; height:43px; border-radius:12px; background:#fff; overflow:hidden; flex-shrink:0}
@@ -203,6 +211,12 @@ tbody tr:last-child td{border-bottom:0}
 </head>
 <body>
 
+<!-- BARRA DE AVISO DE ATUALIZAÇÃO AUTOMÁTICA -->
+<div class="update-banner" id="updateBanner">
+  <span>🚀 Nova atualização disponível para o sistema!</span>
+  <button id="btnStartUpdate">Atualizar Agora</button>
+</div>
+
 <aside class="sidebar" id="sidebar">
  <div class="brand">
   <div class="brand-icon"><img src="logo.png" alt="Fazenda Karoline Logo"></div>
@@ -236,7 +250,7 @@ tbody tr:last-child td{border-bottom:0}
  <nav class="nav">
   <button class="nav-btn menu-admin-only" data-target="usuarios"><span class="nav-icon">♙</span>Perfis e Segurança (PIN)</button>
  </nav>
- <div class="sidefoot"><strong>Fazenda Karoline</strong><br>Sistema Sincronizado</div>
+ <div class="sidefoot"><strong>Fazenda Karoline</strong><br>Versão <span id="lblSysVersion">25.0</span></div>
 </aside>
 
 <div class="overlay" id="overlay"></div>
@@ -368,7 +382,7 @@ tbody tr:last-child td{border-bottom:0}
    <div class="panel"><div id="machinesTableContainer"></div></div>
   </section>
 
-  <!-- SOLICITAR (COM CONFERÊNCIA INTELIGENTE E CONVERSÃO DE DOSE) -->
+  <!-- SOLICITAR -->
   <section id="view-solicitar" class="view-section">
    <div class="pagehead">
     <div><div class="eyebrow">PEDIDOS</div><h1>Solicitação por Hectare</h1><p>Informe a receita por hectare. O sistema multiplica pela área digitada e converte unidades automaticamente.</p></div>
@@ -409,7 +423,7 @@ tbody tr:last-child td{border-bottom:0}
    </div>
   </section>
 
-  <!-- CADASTRO EM MASSA (APENAS NOME E LITROS) -->
+  <!-- CADASTRO EM MASSA -->
   <section id="view-cadastro" class="view-section">
    <div class="pagehead">
     <div><div class="eyebrow">ESTOQUE</div><h1>Cadastro em Massa (Nome e Litros)</h1><p>Insira um produto por linha informando o <strong>Nome e a Quantidade (Litros)</strong>. Exemplo: <code>GLIFOSATO 500</code></p></div>
@@ -437,7 +451,7 @@ tbody tr:last-child td{border-bottom:0}
    </div>
   </section>
 
-  <!-- HISTÓRICO COM OPÇÃO DE EXCLUIR/ESTORNAR -->
+  <!-- HISTÓRICO -->
   <section id="view-historico" class="view-section">
    <div class="pagehead">
     <div><div class="eyebrow">AUDITORIA</div><h1>Histórico de Movimentações</h1><p>Você pode excluir um lançamento incorreto clicando em apagar; o sistema estorna o valor no estoque automaticamente.</p></div>
@@ -470,6 +484,20 @@ tbody tr:last-child td{border-bottom:0}
   </section>
  </div>
 </main>
+
+<!-- MODAL DE PROGRESSO DE ATUALIZAÇÃO (5 SEGUNDOS) -->
+<div class="modalback" id="updateModalBack">
+ <div class="modal" style="width:min(450px, 100%); text-align:center;">
+  <div class="modal-head" style="justify-content:center;">
+    <h2 style="color:var(--navy);">⚡ Atualizando Fazenda Karoline</h2>
+  </div>
+  <p>Baixando novos módulos e atualizando o sistema...</p>
+  <div class="update-bar-outer">
+    <div class="update-bar-inner" id="updateProgressBar"></div>
+  </div>
+  <p><small style="color:var(--muted);" id="updateProgressText">Carregando... 0%</small></p>
+ </div>
+</div>
 
 <!-- MODAL DE CONFERÊNCIA PRÉVIA DO PEDIDO -->
 <div class="modalback" id="previewModalBack">
@@ -528,6 +556,9 @@ tbody tr:last-child td{border-bottom:0}
 
 <script>
 "use strict";
+// VERSÃO DO CÓDIGO ATUAL
+const CURRENT_CODE_VERSION = "25.0";
+
 const TITLES = {
   dashboard: "Visão geral",
   estoque: "Estoque (Barracão)",
@@ -551,7 +582,7 @@ const norm = s => String(s ?? "").trim().toLocaleLowerCase("pt-BR").replace(/[\s
 const num = n => Number(n || 0).toLocaleString("pt-BR", {maximumFractionDigits: 3});
 const fmtDate = s => { const d = new Date(s); return isNaN(d) ? "—" : d.toLocaleString("pt-BR", {dateStyle: "short", timeStyle: "short"}); };
 
-const freshDB = () => ({ products: [], orders: [], folhetos: [], fuelFolhetos: [], history: [], fuelHistory: [], machines: [], fuelStock: 5000, pins: { Escritório: "1234", Depósito: "1234" } });
+const freshDB = () => ({ products: [], orders: [], folhetos: [], fuelFolhetos: [], history: [], fuelHistory: [], machines: [], fuelStock: 5000, pins: { Escritório: "1234", Depósito: "1234" }, systemVersion: CURRENT_CODE_VERSION });
 let db = freshDB();
 let role = localStorage.getItem("agroestoque_role_rem_v24") || "Operador";
 let currentView = "dashboard";
@@ -563,6 +594,7 @@ let fotoFolhetoBase64 = "";
 
 async function save() {
   localStorage.setItem("agroestoque_role_rem_v24", role);
+  db.systemVersion = CURRENT_CODE_VERSION;
   if (window.cloudSave) await window.cloudSave(db);
 }
 
@@ -584,10 +616,20 @@ function limparFolhetosExpirados() {
   }
 }
 
+// SINCRONIZAÇÃO INTELIGENTE (Não reseta inputs nem interrompe fotos)
 async function initCloudSync() {
   if (window.cloudLoad) {
     const cloudData = await window.cloudLoad();
     if (cloudData && Array.isArray(cloudData.products)) {
+      
+      // VERIFICAÇÃO DE NOVA VERSÃO DO CÓDIGO
+      if (cloudData.systemVersion && cloudData.systemVersion !== CURRENT_CODE_VERSION) {
+        $("updateBanner").classList.add("show");
+      }
+
+      const rawPrev = JSON.stringify(db);
+      const rawNew = JSON.stringify(cloudData);
+
       db = cloudData;
       if (db.fuelStock === undefined) db.fuelStock = 5000;
       if (!db.pins) db.pins = { Escritório: db.pin || "1234", Depósito: db.pin || "1234" };
@@ -604,12 +646,18 @@ async function initCloudSync() {
         if (!p.activeIngredient) p.activeIngredient = "";
         if (!Array.isArray(p.lots)) p.lots = [];
       });
+
+      // Só re-renderiza a tela se houver mudança REAL nos dados E se o usuário não estiver digitando
+      const activeEl = document.activeElement;
+      const isUserTyping = activeEl && (activeEl.tagName === "INPUT" || activeEl.tagName === "TEXTAREA");
+      if (rawPrev !== rawNew && !isUserTyping) {
+        renderActiveView();
+        checkDepositoAlert();
+      }
     } else {
       await save();
     }
   }
-  renderActiveView();
-  checkDepositoAlert();
 }
 
 function toast(s) {
@@ -708,7 +756,7 @@ function closeModal() { $("modalback").classList.remove("show"); }
 function checkDepositoAlert() {
   if (role === "Depósito") {
     const pendingOrders = db.orders.filter(o => o.status === "Pendente");
-    if (pendingOrders.length > 0) {
+    if (pendingOrders.length > 0 && !$("depositoModalBack").classList.contains("show")) {
       const latest = pendingOrders[0];
       showDepositoModal(latest);
     }
@@ -849,6 +897,7 @@ function renderActiveView() {
   $("roleSelect").value = role;
   $("avatar").textContent = role[0];
   $("lblRole").textContent = role;
+  $("lblSysVersion").textContent = CURRENT_CODE_VERSION;
 
   const isEscritorio = (role === "Escritório");
   const isDeposito = (role === "Depósito");
@@ -999,14 +1048,12 @@ function renderEnviarFotoFolheto() {
     const file = e.target.files[0];
     if (!file) return;
 
-    // Renderização imediata via ObjectURL para garantir que a foto apareça instantaneamente sem sumir
     const objectUrl = URL.createObjectURL(file);
     $("fotoFolhetoPreviewContainer").innerHTML = `
       <p style="color:var(--green); font-weight:bold;">📸 Foto carregada com sucesso!</p>
       <img src="${objectUrl}" alt="Prévia do Folheto" style="max-width:100%; max-height:280px; border-radius:8px; border:1px solid var(--line); margin-top:8px;">
     `;
 
-    // Processamento otimizado em background para o base64
     const reader = new FileReader();
     reader.onload = event => {
       const img = new Image();
@@ -1633,6 +1680,31 @@ function updateEntryProductSelect() {
   }).join("");
 }
 
+// EXECUÇÃO DO PROCESSO DE ATUALIZAÇÃO COM BARRA DE PROGRESSO DE 5 SEGUNDOS
+function dispararAtualizacao5Segundos() {
+  $("updateBanner").classList.remove("show");
+  $("updateModalBack").classList.add("show");
+  
+  let progress = 0;
+  const bar = $("updateProgressBar");
+  const txt = $("updateProgressText");
+
+  const interval = setInterval(() => {
+    progress += 2; // Avança a cada 100ms (Total de 5000ms = 5s)
+    if (progress > 100) progress = 100;
+
+    bar.style.width = progress + "%";
+    txt.textContent = `Carregando novo código... ${progress}%`;
+
+    if (progress >= 100) {
+      clearInterval(interval);
+      setTimeout(() => {
+        window.location.reload(true);
+      }, 300);
+    }
+  }, 100);
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   document.querySelectorAll("[data-target]").forEach(btn => btn.onclick = () => {
     const target = btn.dataset.target;
@@ -1650,6 +1722,8 @@ document.addEventListener("DOMContentLoaded", () => {
     $("overlay").classList.toggle("show");
   };
   $("overlay").onclick = () => { $("sidebar").classList.remove("open"); $("overlay").classList.remove("show"); };
+
+  $("btnStartUpdate").onclick = dispararAtualizacao5Segundos;
 
   const roleSelect = $("roleSelect");
   roleSelect.onchange = e => {
