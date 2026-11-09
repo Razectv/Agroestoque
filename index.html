@@ -28,7 +28,7 @@
 
   window.cloudSave = async function(data) {
     try {
-      await setDoc(doc(dbCloud, "sistema", "dados_fazenda_remodelado_v22"), data);
+      await setDoc(doc(dbCloud, "sistema", "dados_fazenda_remodelado_v23"), data);
     } catch (e) {
       console.error("Erro ao salvar na nuvem:", e);
     }
@@ -36,7 +36,7 @@
 
   window.cloudLoad = async function() {
     try {
-      const docSnap = await getDoc(doc(dbCloud, "sistema", "dados_fazenda_remodelado_v22"));
+      const docSnap = await getDoc(doc(dbCloud, "sistema", "dados_fazenda_remodelado_v23"));
       if (docSnap.exists()) {
         return docSnap.data();
       }
@@ -305,7 +305,7 @@ tbody tr:last-child td{border-bottom:0}
    <div class="panel">
     <div class="formgrid">
      <div class="field full"><label>Identificação / Talhão / Nº do Folheto *</label><input id="fotoFolhetoTitulo" placeholder="Ex: Talhão 04 ou Folheto #128"></div>
-     <div class="field full"><label>Foto do Folheto Físico *</label><input type="file" id="fotoFolhetoFile" accept="image/*" capture="environment"><small>Você pode tirar a foto direto com a câmera do celular ou escolher da galeria.</small></div>
+     <div class="field full"><label>Foto do Folheto Físico *</label><input type="file" id="fotoFolhetoFile" accept="image/*" capture="environment"><small>As fotos são otimizadas automaticamente para evitar falhas de carregamento no celular.</small></div>
      <div class="field full"><label>Observações (Opcional)</label><input id="fotoFolhetoObs" placeholder="Ex: Retirado por João para aplicação"></div>
     </div>
     <div id="fotoFolhetoPreviewContainer" style="margin-top:15px; text-align:center;"></div>
@@ -553,7 +553,7 @@ const fmtDate = s => { const d = new Date(s); return isNaN(d) ? "—" : d.toLoca
 
 const freshDB = () => ({ products: [], orders: [], folhetos: [], fuelFolhetos: [], history: [], fuelHistory: [], machines: [], fuelStock: 5000, pins: { Escritório: "1234", Depósito: "1234" } });
 let db = freshDB();
-let role = localStorage.getItem("agroestoque_role_rem_v22") || "Operador";
+let role = localStorage.getItem("agroestoque_role_rem_v23") || "Operador";
 let currentView = "dashboard";
 let stockSearch = "";
 let importedPdfDraft = [];
@@ -562,7 +562,7 @@ let currentDraftOrder = null;
 let fotoFolhetoBase64 = "";
 
 async function save() {
-  localStorage.setItem("agroestoque_role_rem_v22", role);
+  localStorage.setItem("agroestoque_role_rem_v23", role);
   if (window.cloudSave) await window.cloudSave(db);
 }
 
@@ -999,13 +999,39 @@ function renderEnviarFotoFolheto() {
     const file = e.target.files[0];
     if (!file) return;
 
+    toast("Processando e otimizando foto...");
+    
     const reader = new FileReader();
     reader.onload = event => {
-      fotoFolhetoBase64 = event.target.result;
-      $("fotoFolhetoPreviewContainer").innerHTML = `
-        <p style="color:var(--green); font-weight:bold;">📸 Foto carregada com sucesso!</p>
-        <img src="${fotoFolhetoBase64}" alt="Prévia do Folheto" style="max-width:100%; max-height:280px; border-radius:8px; border:1px solid var(--line); margin-top:8px;">
-      `;
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+        const maxDim = 1200;
+
+        if (width > height && width > maxDim) {
+          height = Math.round((height * maxDim) / width);
+          width = maxDim;
+        } else if (height > maxDim) {
+          width = Math.round((width * maxDim) / height);
+          height = maxDim;
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+
+        fotoFolhetoBase64 = canvas.toDataURL('image/jpeg', 0.82);
+
+        $("fotoFolhetoPreviewContainer").innerHTML = `
+          <p style="color:var(--green); font-weight:bold;">📸 Foto carregada e pronta para envio!</p>
+          <img src="${fotoFolhetoBase64}" alt="Prévia do Folheto" style="max-width:100%; max-height:280px; border-radius:8px; border:1px solid var(--line); margin-top:8px;">
+        `;
+        toast("Foto pronta!");
+      };
+      img.src = event.target.result;
     };
     reader.readAsDataURL(file);
   };
