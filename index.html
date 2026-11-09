@@ -28,7 +28,7 @@
 
   window.cloudSave = async function(data) {
     try {
-      await setDoc(doc(dbCloud, "sistema", "dados_fazenda_remodelado_v18"), data);
+      await setDoc(doc(dbCloud, "sistema", "dados_fazenda_remodelado_v19"), data);
     } catch (e) {
       console.error("Erro ao salvar na nuvem:", e);
     }
@@ -36,7 +36,7 @@
 
   window.cloudLoad = async function() {
     try {
-      const docSnap = await getDoc(doc(dbCloud, "sistema", "dados_fazenda_remodelado_v18"));
+      const docSnap = await getDoc(doc(dbCloud, "sistema", "dados_fazenda_remodelado_v19"));
       if (docSnap.exists()) {
         return docSnap.data();
       }
@@ -48,11 +48,12 @@
   };
 </script>
 
-<!-- Biblioteca PDF.js para Leitura de PDF -->
+<!-- Bibliotecas PDF.js e jsPDF -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script>
   pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 </script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <style>
 :root{--navy:#102b46;--blue:#2864e8;--green:#159568;--bg:#f3f6fa;--text:#1e293b;--muted:#758195;--line:#e3e9f0;--red:#d94343;--orange:#b86b08;--wa:#25d366}
@@ -286,6 +287,7 @@ tbody tr:last-child td{border-bottom:0}
     <div style="display:flex; gap:8px; flex-wrap:wrap;">
      <button class="btn primary" id="btnNewProductModal">＋ Novo produto</button>
      <button class="btn green" data-goto="importar_pdf">📁 Carregar PDF de Estoque</button>
+     <button class="btn outline" id="btnExportPdfReport">🖨️ Baixar Relatório em PDF</button>
     </div>
    </div>
    <div class="panel">
@@ -297,16 +299,15 @@ tbody tr:last-child td{border-bottom:0}
   <!-- IMPORTAR PDF DE ESTOQUE -->
   <section id="view-importar_pdf" class="view-section">
    <div class="pagehead">
-    <div><div class="eyebrow">CADASTRO AUTOMÁTICO</div><h1>Carregar / Importar PDF de Estoque</h1><p>Selecione o arquivo PDF do seu inventário. O sistema lê automaticamente apenas o <strong>Nome e Litros/Quantidade</strong>.</p></div>
+    <div><div class="eyebrow">CADASTRO AUTOMÁTICO</div><h1>Carregar / Importar PDF de Estoque</h1><p>Selecione o arquivo PDF do seu inventário. O sistema lê automaticamente o <strong>Nome e a Quantidade</strong> da tabela.</p></div>
    </div>
    <div class="panel">
     <div class="field">
       <label>Arquivo PDF do Estoque *</label>
       <input type="file" id="pdfFileInput" accept=".pdf">
-      <small>O sistema extrai apenas os nomes e saldos em litros do documento enviado.</small>
+      <small>O sistema lê o formato em colunas do relatório de estoque enviado.</small>
     </div>
     <div class="formgrid" style="margin-top:15px;">
-     <div class="field"><label>Unidade Padrão</label><select id="importUnitSelect"><option>L</option><option>kg</option><option>mL</option><option>g</option><option>un</option></select></div>
      <div class="field"><label>Origem / Observação</label><input id="importOriginInput" value="Importado via PDF"></div>
      <div class="field full">
       <label style="display:flex;align-items:center;gap:10px;cursor:pointer;color:var(--blue);font-weight:bold;">
@@ -528,7 +529,7 @@ const fmtDate = s => { const d = new Date(s); return isNaN(d) ? "—" : d.toLoca
 
 const freshDB = () => ({ products: [], orders: [], folhetos: [], fuelFolhetos: [], history: [], fuelHistory: [], machines: [], fuelStock: 5000, pin: "1234" });
 let db = freshDB();
-let role = localStorage.getItem("agroestoque_role_rem_v18") || "Operador";
+let role = localStorage.getItem("agroestoque_role_rem_v19") || "Operador";
 let currentView = "dashboard";
 let stockSearch = "";
 let importedPdfDraft = [];
@@ -536,7 +537,7 @@ let pendingTargetRole = "";
 let currentDraftOrder = null;
 
 async function save() {
-  localStorage.setItem("agroestoque_role_rem_v18", role);
+  localStorage.setItem("agroestoque_role_rem_v19", role);
   if (window.cloudSave) await window.cloudSave(db);
 }
 
@@ -990,6 +991,57 @@ function renderStock() {
       }}
     ]);
   };
+
+  $("btnExportPdfReport").onclick = exportarRelatorioPDF;
+}
+
+function exportarRelatorioPDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+
+  doc.setFillColor(16, 43, 70);
+  doc.rect(14, 15, 182, 12, "F");
+  doc.setTextColor(255, 255, 255);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(12);
+  doc.text("CONTROLE DE ESTOQUE", 105, 22, { align: "center" });
+
+  doc.setFontSize(9);
+  doc.setTextColor(100, 100, 100);
+  doc.text(`Produtos e quantidades atuais — ${db.products.length} produtos`, 105, 33, { align: "center" });
+
+  let startY = 40;
+  doc.setFillColor(240, 243, 246);
+  doc.rect(14, startY, 182, 8, "F");
+  doc.setTextColor(50, 50, 50);
+  doc.setFont("helvetica", "bold");
+  doc.text("PRODUTO", 18, startY + 6);
+  doc.text("QUANTIDADE", 175, startY + 6, { align: "right" });
+
+  startY += 8;
+  doc.setFont("helvetica", "normal");
+
+  db.products.forEach((p, idx) => {
+    if (startY > 275) {
+      doc.addPage();
+      startY = 20;
+    }
+    
+    if (idx % 2 === 0) {
+      doc.setFillColor(248, 250, 252);
+      doc.rect(14, startY, 182, 7, "F");
+    }
+
+    doc.text(String(p.name), 18, startY + 5);
+    doc.text(`${num(p.q)} ${p.unit || 'L'}`, 175, startY + 5, { align: "right" });
+
+    doc.setDrawColor(220, 225, 230);
+    doc.line(14, startY + 7, 196, startY + 7);
+    startY += 7;
+  });
+
+  doc.save("controle_estoque_fazenda_karoline.pdf");
+  toast("Relatório em PDF gerado com sucesso!");
 }
 
 function renderCadastroMassa() {
@@ -1004,7 +1056,6 @@ function renderCadastroMassa() {
       const clean = line.trim();
       if (!clean) return;
 
-      // Separa o último token numérico como quantidade e o restante como nome
       const match = clean.match(/(.+?)\s+(\d+(?:[.,]\d+)?)\s*(L|l|kg|KG|mL|ml|g|G|un|UN)?$/);
       if (match) {
         let name = match[1].trim();
@@ -1022,7 +1073,6 @@ function renderCadastroMassa() {
         });
         count++;
       } else {
-        // Caso digite apenas o nome com quantidade no início ou fim de outra forma
         const parts = clean.split(/\s+/);
         let possibleQty = parseFloat(parts[parts.length - 1].replace(',', '.'));
         if (!isNaN(possibleQty) && parts.length > 1) {
@@ -1061,63 +1111,74 @@ function renderImportPdf() {
     const file = e.target.files[0];
     if (!file) return;
 
-    toast("Lendo arquivo PDF do estoque (Nome e Litros)...");
+    toast("Lendo estrutura da tabela do PDF...");
     try {
       const arrayBuffer = await file.arrayBuffer();
       const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-      let textLines = [];
+      let allTextItems = [];
 
       for (let i = 1; i <= pdf.numPages; i++) {
         const page = await pdf.getPage(i);
         const textContent = await page.getTextContent();
-        textContent.items.forEach(item => {
-          let str = item.str.trim();
-          if (str !== "" && str !== "|") textLines.push(str);
+        
+        let items = textContent.items.map(item => ({
+          str: item.str.trim(),
+          x: item.transform[4],
+          y: item.transform[5]
+        })).filter(it => it.str !== "" && it.str !== "|");
+
+        let rowsMap = {};
+        items.forEach(item => {
+          let foundRow = Object.keys(rowsMap).find(yCoord => Math.abs(Number(yCoord) - item.y) < 6);
+          let keyY = foundRow !== undefined ? foundRow : item.y;
+          if (!rowsMap[keyY]) rowsMap[keyY] = [];
+          rowsMap[keyY].push(item);
+        });
+
+        let sortedKeys = Object.keys(rowsMap).sort((a, b) => b - a);
+
+        sortedKeys.forEach(yKey => {
+          let rowItems = rowsMap[yKey].sort((a, b) => a.x - b.x);
+          let rowText = rowItems.map(it => it.str).join(" ");
+          allTextItems.push(rowText);
         });
       }
 
       importedPdfDraft = [];
-      let i = 0;
       
-      while (i < textLines.length) {
-        let current = textLines[i];
-        
-        if (/^(PRODUTO|QUANTIDADE|CONTROLE DE ESTOQUE|Produtos e quantidades atuais|\d+\s+produtos)/i.test(current)) {
-          i++;
-          continue;
+      allTextItems.forEach(line => {
+        if (/^(PRODUTO|QUANTIDADE|CONTROLE DE ESTOQUE|Produtos e quantidades atuais|\d+\s+produtos|\d+\/\d+)$/i.test(line)) {
+          return;
         }
 
-        if (i + 1 < textLines.length) {
-          let nextStr = textLines[i+1].replace(/[^\d.,]/g, "").replace(",", ".");
-          let potentialQty = Number(nextStr);
+        const match = line.match(/(.+?)\s+(\d+(?:[.,]\d+)?)\s*(L|l|kg|KG|mL|ml|g|G|un|UN)?$/);
+        if (match) {
+          let name = match[1].trim();
+          let q = parseFloat(match[2].replace(',', '.'));
+          let unit = match[3] ? match[3].toLowerCase() : "l";
+          if (unit === 'l') unit = 'L';
           
-          if (!isNaN(potentialQty) && textLines[i+1].trim() !== "") {
-            importedPdfDraft.push({ name: current, q: potentialQty });
-            i += 2;
-            continue;
-          }
+          importedPdfDraft.push({ name, q, unit });
         }
-        i++;
-      }
+      });
 
       const container = $("importPreviewContainer");
       if (importedPdfDraft.length === 0) {
-        container.innerHTML = `<div class="notice warning" style="color:var(--red);">Nenhum produto identificado automaticamente no PDF.</div>`;
+        container.innerHTML = `<div class="notice warning" style="color:var(--red);">Nenhum produto identificado. Verifique se o PDF segue o padrão de colunas.</div>`;
         return;
       }
 
-      const defaultUnit = $("importUnitSelect").value;
       const isReplaceMode = $("importReplaceCheck").checked;
 
       container.innerHTML = `
         <hr>
-        <h3>Itens Extraídos do PDF (${importedPdfDraft.length} produtos)</h3>
+        <h3>Itens Extraídos com Sucesso (${importedPdfDraft.length} produtos encontrados)</h3>
         ${isReplaceMode ? '<p style="color:var(--red); font-weight:bold;">⚠️ ATENÇÃO: O estoque atual será substituído pelos dados deste PDF!</p>' : ''}
-        <div class="tablewrap" style="margin-top:10px; max-height:250px; overflow-y:auto;">
+        <div class="tablewrap" style="margin-top:10px; max-height:280px; overflow-y:auto;">
           <table>
-            <thead><tr><th>Produto</th><th>Quantidade</th><th>Unidade</th></tr></thead>
+            <thead><tr><th>Produto</th><th>Quantidade</th></tr></thead>
             <tbody>
-              ${importedPdfDraft.map(p => `<tr><td><strong>${esc(p.name)}</strong></td><td>${num(p.q)}</td><td>${esc(defaultUnit)}</td></tr>`).join("")}
+              ${importedPdfDraft.map(p => `<tr><td><strong>${esc(p.name)}</strong></td><td>${num(p.q)} ${esc(p.unit)}</td></tr>`).join("")}
             </tbody>
           </table>
         </div>
@@ -1131,23 +1192,23 @@ function renderImportPdf() {
         if (isReplaceMode) {
           db.products = [];
           importedPdfDraft.forEach(x => {
-            db.products.push({ id: uid(), name: x.name, activeIngredient: "", q: x.q, unit: defaultUnit, min: 0, lots: [] });
+            db.products.push({ id: uid(), name: x.name, activeIngredient: "", q: x.q, unit: x.unit || "L", min: 0, lots: [] });
           });
           addHistory("Inventário", "Substituição por PDF", importedPdfDraft.length, "itens", origin);
         } else {
           importedPdfDraft.forEach(x => {
-            db.products.push({ id: uid(), name: x.name, activeIngredient: "", q: x.q, unit: defaultUnit, min: 0, lots: [] });
-            addHistory("Entrada", x.name, x.q, defaultUnit, origin);
+            db.products.push({ id: uid(), name: x.name, activeIngredient: "", q: x.q, unit: x.unit || "L", min: 0, lots: [] });
+            addHistory("Entrada", x.name, x.q, x.unit || "L", origin);
           });
         }
         await save();
         navigateTo("estoque");
-        toast("Estoque atualizado com sucesso através do PDF!");
+        toast("Estoque atualizado com sucesso pelo PDF!");
       };
 
     } catch (err) {
       console.error(err);
-      toast("Erro ao ler o arquivo PDF.");
+      toast("Erro ao processar o arquivo PDF.");
     }
   };
 }
