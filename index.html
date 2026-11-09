@@ -604,7 +604,6 @@ async function saveWithBackup() {
     await window.cloudSave(db);
     try {
       const getFirestoreInstance = () => { try { return getFirestore(); } catch(e){ return null; } };
-      // Backup de segurança paralelo no Firebase
       await setDoc(doc(getFirestore(), "sistema", "backup_emergencia_karoline"), {
         dataBackup: new Date().toISOString(),
         snapshot: db
@@ -669,7 +668,6 @@ async function initCloudSync() {
   if (window.cloudLoad) {
     const cloudData = await window.cloudLoad();
     
-    // SEGURANÇA: Só atualiza se a nuvem trouxer produtos válidos, impedindo reset acidental
     if (cloudData && Array.isArray(cloudData.products) && cloudData.products.length > 0) {
       
       if (cloudData.systemVersion && isVersionGreater(cloudData.systemVersion, CURRENT_CODE_VERSION)) {
@@ -1084,7 +1082,6 @@ function renderDashboard() {
     { id: "escritorio_combustivel", icon: "⛽", title: "Folhetos Diesel", desc: "Baixa em combustível" }
   ];
 
-  // Carrega as preferências salvas de atalhos para o perfil atual
   let hiddenShortcuts = JSON.parse(localStorage.getItem("agroestoque_hidden_shortcuts_" + role) || "[]");
   const visibleQuicks = allQuicks.filter(q => !hiddenShortcuts.includes(q.id));
 
@@ -1130,9 +1127,7 @@ function renderDashboard() {
   };
 }
 
-function renderEnviarFotoFolheto() {
-  // Mantém os campos intactos
-}
+function renderEnviarFotoFolheto() {}
 
 function renderStock() {
   const query = norm(stockSearch);
