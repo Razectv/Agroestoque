@@ -8,9 +8,10 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Fazenda Karoline">
 <title>Fazenda Karoline | Gestão de Estoque e Combustível</title>
+<!-- MANIFESTO PWA -->
 <link rel="manifest" href="manifest.json">
 
-<!-- Firebase SDKs - Conectado ao documento único fixo: dados_fazenda -->
+<!-- Firebase SDKs -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
   import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
@@ -27,7 +28,7 @@
   const app = initializeApp(firebaseConfig);
   const dbCloud = getFirestore(app);
 
-  // Salva unificado estritamente no documento 'dados_fazenda'
+  // SALVAMENTO BLINDADO NO DOCUMENTO UNIFICADO 'dados_fazenda'
   window.cloudSave = async function(data) {
     try {
       await setDoc(doc(dbCloud, "sistema", "dados_fazenda"), data);
@@ -36,7 +37,7 @@
     }
   };
 
-  // Carrega unificado estritamente do documento 'dados_fazenda'
+  // CARREGAMENTO BLINDADO DO DOCUMENTO UNIFICADO 'dados_fazenda'
   window.cloudLoad = async function() {
     try {
       const docSnap = await getDoc(doc(dbCloud, "sistema", "dados_fazenda"));
@@ -61,8 +62,8 @@
 <style>
 :root{--navy:#102b46;--blue:#2864e8;--green:#159568;--bg:#f3f6fa;--text:#1e293b;--muted:#758195;--line:#e3e9f0;--red:#d94343;--orange:#b86b08;--wa:#25d366}
 *{box-sizing:border-box; touch-action:manipulation; -webkit-tap-highlight-color:transparent;}
-html, body{margin:0; background:var(--bg); color:var(--text); font:14px -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif; -webkit-text-size-adjust:100%;}
-button,input,select,textarea{font:inherit; touch-action:manipulation;}
+html, body{margin:0; background:var(--bg); color:var(--text); font:14px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; -webkit-text-size-adjust:100%;}
+button, input, select, textarea{font:inherit; touch-action:manipulation;}
 button{cursor:pointer;}
 
 input, select, textarea {
@@ -73,6 +74,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid #c5d7ff; border-color:
 textarea{min-height:140px; resize:vertical}
 button:disabled{opacity:.45; cursor:not-allowed}
 
+/* Barra de Atualização */
 .update-banner { display:none; background:#ff9800; color:#fff; padding:10px 16px; text-align:center; font-weight:bold; font-size:13px; position:sticky; top:0; z-index:1000; box-shadow:0 2px 8px rgba(0,0,0,0.2); }
 .update-banner.show { display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; }
 .update-banner button { background:#fff; color:#b86b08; border:0; padding:6px 14px; border-radius:6px; font-weight:bold; font-size:12px; cursor:pointer; }
@@ -150,7 +152,7 @@ button:disabled{opacity:.45; cursor:not-allowed}
 .tablewrap{width:100%; overflow-x:auto; -webkit-overflow-scrolling:touch; border:1px solid var(--line); border-radius:9px}
 table{width:100%; border-collapse:collapse; text-align:left; font-size:13px}
 th{background:#f7f9fc; color:#69778b; font-size:11px; text-transform:uppercase; letter-spacing:.3px}
-th,td{padding:12px; border-bottom:1px solid #edf0f4; vertical-align:middle}
+th, td{padding:12px; border-bottom:1px solid #edf0f4; vertical-align:middle}
 tbody tr:last-child td{border-bottom:0}
 
 .compact-table { width:100% !important; min-width:0 !important; table-layout:fixed; }
@@ -177,333 +179,405 @@ tbody tr:last-child td{border-bottom:0}
 .folheto-card { background:#fff; border:1px solid var(--line); border-radius:12px; padding:16px; margin-bottom:15px; box-shadow:0 2px 5px rgba(0,0,0,0.02); }
 .folheto-head { display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--line); padding-bottom:10px; margin-bottom:12px; gap:8px; }
 
+.clickable-row { cursor:pointer; transition:background-color 0.15s; }
+.clickable-row:hover { background-color:#f0f5ff !important; }
+
+@media(min-width: 1025px) {
+  .main { margin-left: 250px; }
+  .stats { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .quick { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+@media(max-width: 1024px) {
+  .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .quick { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
 @media(max-width: 768px) {
- .sidebar{transform:translateX(-105%)}
- .sidebar.open{transform:translateX(0)}
- .main{margin-left:0}
- .topbar{height:auto; min-height:60px; padding:8px 12px; gap:8px}
- .menu-btn{display:block; flex-shrink:0}
- .top-title{font-size:14px}.top-sub{font-size:10px}
- .topright{gap:6px}.avatar{display:none}.role-select{min-width:0; max-width:125px; font-size:14px; padding:8px 4px}
- .content{padding:14px 10px 24px}.pagehead h1{font-size:21px}.pagehead p{font-size:11px}
- .stats{grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px}.stat{padding:12px}
- .panel{padding:14px; margin-bottom:12px}
+  .sidebar{transform:translateX(-105%)}
+  .sidebar.open{transform:translateX(0)}
+  .main{margin-left:0}
+  .topbar{height:auto; min-height:60px; padding:8px 12px; gap:8px}
+  .menu-btn{display:block; flex-shrink:0}
+  .top-title{font-size:14px}.top-sub{font-size:10px}
+  .topright{gap:6px}.avatar{display:none}.role-select{min-width:0; max-width:125px; font-size:14px; padding:8px 4px}
+  .content{padding:14px 10px 24px}.pagehead h1{font-size:21px}.pagehead p{font-size:11px}
+  .stats{grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px}.stat{padding:12px}.stat-label{font-size:11px}.stat-icon{width:30px; height:30px}
+  .stat strong{font-size:20px; margin:7px 0 3px}.stat small{font-size:10px}
+  .panel{padding:14px; margin-bottom:12px}.quick{grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px}
+  .quick button{padding:12px}.formgrid{grid-template-columns:1fr; gap:10px}.full{grid-column:auto}
+  .filters input,.filters select{width:100%; flex:1 1 100%}
+  .tablewrap table:not(.compact-table){min-width:480px}
+  .formactions{display:grid; grid-template-columns:repeat(2,minmax(0,1fr))}
+  .formactions .btn{width:100%}.modalback{padding:6px; align-items:flex-end}
+  .modal{max-height:85dvh; padding:15px 12px; border-radius:14px 14px 0 0; width:100%;}
+  .toast{left:12px; right:12px; bottom:12px; text-align:center}
+  .folheto-head { flex-direction:column; align-items:flex-start; }
 }
 </style>
 </head>
 <body>
 
+<!-- BARRA DE AVISO DE ATUALIZAÇÃO AUTOMÁTICA -->
 <div class="update-banner" id="updateBanner">
   <span>Nova atualização disponível para o sistema!</span>
   <button id="btnStartUpdate">Atualizar Agora</button>
 </div>
 
 <aside class="sidebar" id="sidebar">
- <div class="brand">
-  <div class="brand-icon"><img src="logo.png" alt="Fazenda Karoline Logo"></div>
-  <div><strong>Fazenda Karoline</strong><small>GESTÃO AGRÍCOLA</small></div>
- </div>
- <div class="nav-label">PRINCIPAL</div>
- <nav class="nav">
-  <button class="nav-btn active" data-target="dashboard"><span class="nav-icon">▦</span>Visão geral</button>
-  <button class="nav-btn" data-target="estoque"><span class="nav-icon">▤</span>Estoque</button>
-  <button class="nav-btn menu-admin-only" data-target="combustivel" id="navCombustivel"><span class="nav-icon">⛽</span>Combustível (Diesel)</button>
-  <button class="nav-btn menu-admin-only" data-target="maquinas" id="navMaquinas"><span class="nav-icon">🚜</span>Máquinas e Frota</button>
-  <button class="nav-btn" data-target="solicitar"><span class="nav-icon">＋</span>Solicitar por Hectare</button>
-  <button class="nav-btn" data-target="enviar_foto_folheto"><span class="nav-icon">📷</span>Enviar Foto de Folheto</button>
-  <button class="nav-btn menu-escritorio-only" data-target="escritorio_folhetos" id="navFolhetos">
-    <span class="nav-icon">📄</span>Folhetos Produtos
-    <span id="folhetoCounterBadge" class="badge pending" style="display:none; margin-left:auto;">0</span>
-  </button>
-  <button class="nav-btn menu-escritorio-only" data-target="escritorio_combustivel" id="navFolhetosCombustivel">
-    <span class="nav-icon">⛽</span>Folhetos Diesel
-    <span id="fuelFolhetoCounterBadge" class="badge pending" style="display:none; margin-left:auto;">0</span>
-  </button>
- </nav>
- <div class="nav-label">MOVIMENTAÇÕES</div>
- <nav class="nav">
-  <button class="nav-btn menu-admin-only" data-target="cadastro"><span class="nav-icon">▧</span>Cadastro em Massa</button>
-  <button class="nav-btn menu-admin-only" data-target="importar_pdf"><span class="nav-icon">📁</span>Importar PDF de Estoque</button>
-  <button class="nav-btn menu-admin-only" data-target="entrada"><span class="nav-icon">↓</span>Entrada de produtos</button>
-  <button class="nav-btn" data-target="historico"><span class="nav-icon">◷</span>Histórico</button>
- </nav>
- <div class="nav-label menu-admin-only">GESTÃO</div>
- <nav class="nav">
-  <button class="nav-btn menu-admin-only" data-target="usuarios"><span class="nav-icon">🔒</span>Perfis e Segurança (PIN)</button>
- </nav>
- <div class="sidefoot"><strong>Fazenda Karoline</strong><br>Versão <span id="lblSysVersion">25.4</span></div>
+  <div class="brand">
+    <div class="brand-icon"><img src="logo.png" alt="Fazenda Karoline Logo"></div>
+    <div><strong>Fazenda Karoline</strong><small>GESTÃO AGRÍCOLA</small></div>
+  </div>
+  <div class="nav-label">PRINCIPAL</div>
+  <nav class="nav">
+    <button class="nav-btn active" data-target="dashboard"><span class="nav-icon">📊</span>Visão geral</button>
+    <button class="nav-btn" data-target="estoque"><span class="nav-icon">📦</span>Estoque</button>
+    <button class="nav-btn menu-admin-only" data-target="combustivel" id="navCombustivel"><span class="nav-icon">⛽</span>Combustível (Diesel)</button>
+    <button class="nav-btn menu-admin-only" data-target="maquinas" id="navMaquinas"><span class="nav-icon">🚜</span>Máquinas e Frota</button>
+    <button class="nav-btn" data-target="solicitar"><span class="nav-icon">＋</span>Solicitar por Hectare</button>
+    <button class="nav-btn" data-target="enviar_foto_folheto"><span class="nav-icon">📷</span>Enviar Foto de Folheto</button>
+    <button class="nav-btn menu-escritorio-only" data-target="escritorio_folhetos" id="navFolhetos">
+      <span class="nav-icon">📄</span>Folhetos Produtos
+      <span id="folhetoCounterBadge" class="badge pending" style="display:none; margin-left:auto;">0</span>
+    </button>
+    <button class="nav-btn menu-escritorio-only" data-target="escritorio_combustivel" id="navFolhetosCombustivel">
+      <span class="nav-icon">⛽</span>Folhetos Diesel
+      <span id="fuelFolhetoCounterBadge" class="badge pending" style="display:none; margin-left:auto;">0</span>
+    </button>
+  </nav>
+  <div class="nav-label">MOVIMENTAÇÕES</div>
+  <nav class="nav">
+    <button class="nav-btn menu-admin-only" data-target="cadastro"><span class="nav-icon">📋</span>Cadastro em Massa</button>
+    <button class="nav-btn menu-admin-only" data-target="importar_pdf"><span class="nav-icon">📁</span>Importar PDF de Estoque</button>
+    <button class="nav-btn menu-admin-only" data-target="entrada"><span class="nav-icon">↓</span>Entrada de produtos</button>
+    <button class="nav-btn" data-target="historico"><span class="nav-icon">🕒</span>Histórico</button>
+  </nav>
+  <div class="nav-label menu-admin-only">GESTÃO</div>
+  <nav class="nav">
+    <button class="nav-btn menu-admin-only" data-target="usuarios"><span class="nav-icon">🔒</span>Perfis e Segurança (PIN)</button>
+  </nav>
+  <div class="sidefoot"><strong>Fazenda Karoline</strong><br>Versão <span id="lblSysVersion">25.5</span></div>
 </aside>
 
 <div class="overlay" id="overlay"></div>
 
 <main class="main">
- <header class="topbar">
-  <div class="top-left">
-   <button class="menu-btn" id="menuBtn">☰</button>
-   <div>
-    <div class="top-title" id="topTitle">Visão geral</div>
-    <div class="top-sub">Controle operacional com Pendências de Produtos e Diesel</div>
-   </div>
+  <header class="topbar">
+    <div class="top-left">
+      <button class="menu-btn" id="menuBtn">☰</button>
+      <div>
+        <div class="top-title" id="topTitle">Visão geral</div>
+        <div class="top-sub">Controle operacional com Pendências de Produtos e Diesel</div>
+      </div>
+    </div>
+    <div class="topright">
+      <div id="topHeaderActionBtnContainer"></div>
+      <select id="roleSelect" class="role-select" aria-label="Perfil">
+        <option>Escritório</option>
+        <option>Depósito</option>
+        <option>Operador</option>
+      </select>
+      <div class="avatar" id="avatar">E</div>
+    </div>
+  </header>
+
+  <div class="content">
+    <!-- DASHBOARD -->
+    <section id="view-dashboard" class="view-section active">
+      <div class="pagehead">
+        <div>
+          <div class="eyebrow">PAINEL OPERACIONAL</div>
+          <h1>Bom trabalho!</h1>
+          <p style="margin-top:4px; font-weight:bold; color:var(--blue);">Perfil atual: <span id="lblRole">Escritório</span></p>
+        </div>
+        <div id="dashTopBtnContainer"></div>
+      </div>
+      <div class="stats" id="dashboardStatsGrid"></div>
+      <div class="panel">
+        <div class="panel-head" style="display:flex; justify-content:space-between; align-items:center;">
+          <h2>Acesso rápido</h2>
+          <button class="btn outline smallbtn" id="btnCustomizeShortcuts">Customizar Atalhos</button>
+        </div>
+        <div class="quick" id="quickButtons"></div>
+      </div>
+    </section>
+
+    <!-- ESTOQUE -->
+    <section id="view-estoque" class="view-section">
+      <div class="pagehead">
+        <div><div class="eyebrow">CONTROLE DE PRODUTOS</div><h1>Estoque (Barracão)</h1><p>Consulte saldos e débitos. Clique em Editar para alterar a quantidade exata ou preencher princípio ativo.</p></div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <button class="btn primary" id="btnNewProductModal">+ Novo produto</button>
+          <button class="btn green" data-goto="importar_pdf">Carregar PDF de Estoque</button>
+          <button class="btn outline" id="btnExportPdfReport">Baixar Relatório em PDF</button>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="filters"><input id="stockSearchInput" placeholder="🔍 Buscar produto ou princípio ativo..."></div>
+        <div id="stockTableContainer"></div>
+      </div>
+    </section>
+
+    <!-- ENVIAR FOTO DE FOLHETO MANUAL -->
+    <section id="view-enviar_foto_folheto" class="view-section">
+      <div class="pagehead">
+        <div><div class="eyebrow">DOCUMENTOS MANUAIS</div><h1>Enviar Foto de Folheto</h1><p>Tire uma foto ou selecione a imagem do folheto manual preenchido no depósito para enviar direto ao escritório.</p></div>
+      </div>
+      <div class="panel">
+        <div class="formgrid">
+          <div class="field full"><label>Identificação / Talhão / Nº do Folheto *</label><input id="fotoFolhetoTitulo" placeholder="Ex: Talhão 04 ou Folheto #128"></div>
+          <div class="field full"><label>Foto do Folheto Físico *</label><input type="file" id="fotoFolhetoFile" accept="image/*" capture="environment"><small>As fotos são otimizadas automaticamente para evitar falhas de carregamento no celular.</small></div>
+          <div class="field full"><label>Observações (Opcional)</label><input id="fotoFolhetoObs" placeholder="Ex: Retirado por João para aplicação"></div>
+        </div>
+        <div id="fotoFolhetoPreviewContainer" style="margin-top:15px; text-align:center;"></div>
+        <div class="formactions"><button class="btn green" id="btnEnviarFotoFolheto">Enviar Folheto com Foto ao Escritório</button></div>
+      </div>
+    </section>
+
+    <!-- IMPORTAR PDF DE ESTOQUE -->
+    <section id="view-importar_pdf" class="view-section">
+      <div class="pagehead">
+        <div><div class="eyebrow">CADASTRO AUTOMÁTICO</div><h1>Carregar / Importar PDF de Estoque</h1><p>Selecione o arquivo PDF do seu inventário. O sistema lê automaticamente o <strong>Nome e a Quantidade</strong> da tabela.</p></div>
+      </div>
+      <div class="panel">
+        <div class="field">
+          <label>Arquivo PDF do Estoque *</label>
+          <input type="file" id="pdfFileInput" accept=".pdf">
+          <small>O sistema lê o formato em colunas do relatório de estoque enviado.</small>
+        </div>
+        <div class="formgrid" style="margin-top:15px;">
+          <div class="field"><label>Origem / Observação</label><input id="importOriginInput" value="Importado via PDF"></div>
+          <div class="field full">
+            <label style="display:flex;align-items:center;gap:10px;cursor:pointer;color:var(--blue);font-weight:bold;">
+              <input type="checkbox" id="importReplaceCheck" style="width:20px;height:20px;" checked> Substituir todo o estoque atual por este PDF
+            </label>
+          </div>
+        </div>
+        <div id="importPreviewContainer" style="margin-top:20px;"></div>
+      </div>
+    </section>
+
+    <!-- COMBUSTÍVEL -->
+    <section id="view-combustivel" class="view-section">
+      <div class="pagehead">
+        <div><div class="eyebrow">CONTROLE DE TANQUE</div><h1>Combustível (Diesel)</h1><p>Registre abastecimentos. Clique em qualquer registro da tabela para ver o maquinário detalhado.</p></div>
+        <button class="btn outline" id="btnCalibrateFuel">⚙️ Calibrar Tanque</button>
+      </div>
+      <div class="stats" style="grid-template-columns:repeat(2,minmax(0,1fr));">
+        <div class="stat"><div class="stat-top"><span class="stat-label">Volume Atual</span><span class="stat-icon">⛽</span></div><strong id="fuelTotalVol">0 L</strong><small>No tanque</small></div>
+        <div class="stat"><div class="stat-top"><span class="stat-label">Status</span><span class="stat-icon">🛡️</span></div><strong id="fuelStatusBadge"><span class="badge delivered">Normal</span></strong><small>Condição</small></div>
+      </div>
+      <div class="panel">
+        <div class="formgrid">
+          <div class="field"><label>Tipo *</label><select id="fuelOpType"><option value="Saída (Abastecimento)">Saída (Abastecimento)</option><option value="Entrada">Entrada</option></select></div>
+          <div class="field"><label>Litros *</label><input id="fuelQtyInput" type="number" min="0.1" step="any" placeholder="Ex: 500"></div>
+          <div class="field"><label>Selecione a Máquina / Equipamento *</label><select id="fuelDestSelect"><option value="">Selecione...</option></select></div>
+          <div class="field"><label>Responsável (Opcional)</label><input id="fuelRespInput" placeholder="Nome do motorista / operador (opcional)"></div>
+        </div>
+        <div class="formactions"><button class="btn green" id="btnConfirmFuel">Registrar e Enviar Folheto ao Escritório</button></div>
+      </div>
+      <div class="panel"><div class="panel-head"><h2>Histórico de Diesel (Clique para ver detalhes do maquinário)</h2></div><div id="fuelHistoryContainer"></div></div>
+    </section>
+
+    <!-- MÁQUINAS -->
+    <section id="view-maquinas" class="view-section">
+      <div class="pagehead">
+        <div><div class="eyebrow">FROTA</div><h1>Máquinas e Equipamentos</h1></div>
+        <button class="btn primary" id="btnNewMachine">+ Nova Máquina</button>
+      </div>
+      <div class="panel"><div id="machinesTableContainer"></div></div>
+    </section>
+
+    <!-- SOLICITAR -->
+    <section id="view-solicitar" class="view-section">
+      <div class="pagehead">
+        <div><div class="eyebrow">PEDIDOS</div><h1>Solicitação por Hectare</h1><p>Informe a receita por hectare. O sistema multiplica pela área digitada e converte unidades automaticamente.</p></div>
+      </div>
+      <div class="panel">
+        <div class="formgrid">
+          <div class="field"><label>Solicitante *</label><input id="reqRequester" placeholder="Seu nome"></div>
+          <div class="field"><label>Talhão / Fazenda *</label><input id="reqFarm" placeholder="Ex: Talhão 04"></div>
+          <div class="field"><label>Hectares *</label><input id="reqHectares" type="number" min="0.1" step="any" placeholder="Ex: 100"></div>
+          <div class="field"><label>Observação</label><input id="reqNote" placeholder="Instruções"></div>
+        </div>
+        <div class="field full" style="margin-top:15px">
+          <label>Produtos e Doses POR HECTARE (Um por linha, ex: Ajuste 50 mL ou Sperto 200 g)</label>
+          <textarea id="reqBulkText" placeholder="Ajuste 50 mL&#10;Glifosato 2 L&#10;Sperto 200 g"></textarea>
+          <small>🔍 O sistema reconhece a dose por hectare, converte unidades (mL → L, g ↔ kg) e calcula o total exato para a área informada.</small>
+        </div>
+        <div class="formactions"><button class="btn primary" id="btnPreviewOrder">Conferir Pedido Antes de Enviar</button></div>
+      </div>
+    </section>
+
+    <!-- ESCRITÓRIO: FOLHETOS DE SEPARATION (PRODUTOS) -->
+    <section id="view-escritorio_folhetos" class="view-section">
+      <div class="pagehead">
+        <div><div class="eyebrow">PAINEL DO ESCRITÓRIO</div><h1>Folhetos Pendentes de Produtos</h1><p>Acompanhe os folhetos gerados pelo sistema ou enviados por foto. Após a baixa, possuem temporizador visível e são apagados automaticamente em 24h.</p></div>
+      </div>
+      <div class="panel">
+        <div id="escritorioFolhetosContainer"></div>
+      </div>
+    </section>
+
+    <!-- ESCRITÓRIO: FOLHETOS DE DIESEL / COMBUSTÍVEL -->
+    <section id="view-escritorio_combustivel" class="view-section">
+      <div class="pagehead">
+        <div><div class="eyebrow">PAINEL DO ESCRITÓRIO</div><h1>Folhetos Pendentes de Diesel</h1><p>Confirme os abastecimentos realizados pelo depósito e clique para conferir o maquinário abastecido.</p></div>
+      </div>
+      <div class="panel">
+        <div id="escritorioCombustivelContainer"></div>
+      </div>
+    </section>
+
+    <!-- CADASTRO EM MASSA -->
+    <section id="view-cadastro" class="view-section">
+      <div class="pagehead">
+        <div><div class="eyebrow">ESTOQUE</div><h1>Cadastro em Massa (Nome e Litros)</h1><p>Insira um produto por linha informando o <strong>Nome e a Quantidade (Litros)</strong>. Exemplo: <code>GLIFOSATO 500</code></p></div>
+      </div>
+      <div class="panel">
+        <div class="field"><label>Lista de Produtos (Nome e Litros) *</label><textarea id="bulkTextArea" placeholder="GLIFOSATO 500&#10;FOX SUPRA 780&#10;SPERTO 20"></textarea><small>Princípio ativo, lote e validade podem ser preenchidos depois editando cada produto individualmente no estoque.</small></div>
+        <div class="formactions"><button class="btn primary" id="bulkConfirmBtn">Cadastrar / Atualizar em Massa</button></div>
+      </div>
+    </section>
+
+    <!-- ENTRADA -->
+    <section id="view-entrada" class="view-section">
+      <div class="pagehead">
+        <div><div class="eyebrow">ESTOQUE</div><h1>Entrada de Produtos</h1><p>Registre novos lotes de compras. O valor inserido abaterá automaticamente qualquer débito pendente do produto.</p></div>
+      </div>
+      <div class="panel">
+        <div class="formgrid">
+          <div class="field full"><label>Produto *</label><select id="entryProductSelect"><option value="">Selecione...</option></select></div>
+          <div class="field"><label>Quantidade Comprada / Recebida *</label><input id="entryQtyInput" type="number" min="0.001" step="any" placeholder="Ex: 10"></div>
+          <div class="field"><label>Unidade *</label><select id="entryUnitSelect"><option>L</option><option>kg</option><option>mL</option><option>g</option><option>un</option></select></div>
+          <div class="field"><label>Lote (Opcional)</label><input id="entryLotInput" placeholder="Número do lote (opcional)"></div>
+          <div class="field"><label>Validade (Opcional)</label><input id="entryExpInput" type="date"></div>
+        </div>
+        <div class="formactions"><button class="btn green" id="btnConfirmEntry">Confirmar Entrada e Abater Débito</button></div>
+      </div>
+    </section>
+
+    <!-- HISTÓRICO -->
+    <section id="view-historico" class="view-section">
+      <div class="pagehead">
+        <div><div class="eyebrow">AUDITORIA</div><h1>Histórico de Movimentações</h1><p>Você pode excluir um lançamento incorreto clicando em apagar; o sistema estorna o valor no estoque automaticamente.</p></div>
+      </div>
+      <div class="panel"><div id="historyTableContainer"></div></div>
+    </section>
+
+    <!-- USUÁRIOS E PERFIS -->
+    <section id="view-usuarios" class="view-section">
+      <div class="pagehead">
+        <div><div class="eyebrow">SEGURANÇA E SENHAS</div><h1>Gerenciamento de Senhas (PIN) Individuais</h1></div>
+      </div>
+      <div class="panel">
+        <div class="notice">
+          <strong>Segurança Separada por Perfil</strong>
+          Cada perfil (Escritório e Depósito) possui sua própria senha PIN numérica. O padrão inicial de ambos é <strong>1234</strong>.
+        </div>
+        <div class="formgrid">
+          <div class="field">
+            <label>Selecione o Perfil para Alterar a Senha</label>
+            <select id="pinTargetProfile"><option value="Escritório">Escritório</option><option value="Depósito">Depósito</option></select>
+          </div>
+          <div class="field">
+            <label>Nova Senha PIN (numérica)</label>
+            <input id="newPinInput" type="number" inputmode="numeric" placeholder="Ex: 5678" maxlength="6">
+          </div>
+        </div>
+        <div class="formactions"><button class="btn primary" id="btnSavePin">Salvar Nova Senha do Perfil</button></div>
+      </div>
+    </section>
   </div>
-  <div class="topright">
-   <div id="topHeaderActionBtnContainer"></div>
-   <select id="roleSelect" class="role-select" aria-label="Perfil">
-    <option>Escritório</option>
-    <option>Depósito</option>
-    <option>Operador</option>
-   </select>
-   <div class="avatar" id="avatar">E</div>
-  </div>
- </header>
-
- <div class="content">
-  <!-- DASHBOARD -->
-  <section id="view-dashboard" class="view-section active">
-   <div class="pagehead">
-    <div>
-     <div class="eyebrow">PAINEL OPERACIONAL</div>
-     <h1>Bom trabalho!</h1>
-     <p style="margin-top:4px; font-weight:bold; color:var(--blue);">Perfil atual: <span id="lblRole">Escritório</span></p>
-    </div>
-    <div id="dashTopBtnContainer"></div>
-   </div>
-   <div class="stats" id="dashboardStatsGrid"></div>
-   <div class="panel">
-    <div class="panel-head" style="display:flex; justify-content:space-between; align-items:center;">
-     <h2>Acesso rápido</h2>
-     <button class="btn outline smallbtn" id="btnCustomizeShortcuts">Customizar Atalhos</button>
-    </div>
-    <div class="quick" id="quickButtons"></div>
-   </div>
-  </section>
-
-  <!-- ESTOQUE -->
-  <section id="view-estoque" class="view-section">
-   <div class="pagehead">
-    <div><div class="eyebrow">CONTROLE DE PRODUTOS</div><h1>Estoque (Barracão)</h1><p>Consulte saldos e débitos.</p></div>
-    <div style="display:flex; gap:8px; flex-wrap:wrap;">
-     <button class="btn primary" id="btnNewProductModal">＋ Novo produto</button>
-     <button class="btn green" data-goto="importar_pdf">Carregar PDF</button>
-     <button class="btn outline" id="btnExportPdfReport">Baixar Relatório em PDF</button>
-    </div>
-   </div>
-   <div class="panel">
-    <div class="filters"><input id="stockSearchInput" placeholder="🔍 Buscar produto ou princípio ativo..."></div>
-    <div id="stockTableContainer"></div>
-   </div>
-  </section>
-
-  <!-- ENVIAR FOTO DE FOLHETO -->
-  <section id="view-enviar_foto_folheto" class="view-section">
-   <div class="pagehead">
-    <div><div class="eyebrow">DOCUMENTOS MANUAIS</div><h1>Enviar Foto de Folheto</h1><p>Tire uma foto do folheto preenchido no depósito para enviar direto ao escritório.</p></div>
-   </div>
-   <div class="panel">
-    <div class="formgrid">
-     <div class="field full"><label>Identificação / Talhão / Nº do Folheto *</label><input id="fotoFolhetoTitulo" placeholder="Ex: Talhão 04 ou Folheto #128"></div>
-     <div class="field full"><label>Foto do Folheto Físico *</label><input type="file" id="fotoFolhetoFile" accept="image/*" capture="environment"><small>As fotos são otimizadas automaticamente.</small></div>
-     <div class="field full"><label>Observações (Opcional)</label><input id="fotoFolhetoObs" placeholder="Ex: Retirado por João para aplicação"></div>
-    </div>
-    <div id="fotoFolhetoPreviewContainer" style="margin-top:15px; text-align:center;"></div>
-    <div class="formactions"><button class="btn green" id="btnEnviarFotoFolheto">Enviar Folheto com Foto ao Escritório</button></div>
-   </div>
-  </section>
-
-  <!-- IMPORTAR PDF -->
-  <section id="view-importar_pdf" class="view-section">
-   <div class="pagehead"><div><div class="eyebrow">CADASTRO AUTOMÁTICO</div><h1>Carregar / Importar PDF de Estoque</h1><p>Selecione o arquivo PDF do seu inventário.</p></div></div>
-   <div class="panel">
-    <div class="field">
-     <label>Arquivo PDF do Estoque *</label>
-     <input type="file" id="pdfFileInput" accept=".pdf">
-    </div>
-    <div class="formgrid" style="margin-top:15px;">
-     <div class="field"><label>Origem / Observação</label><input id="importOriginInput" value="Importado via PDF"></div>
-     <div class="field full">
-      <label style="display:flex;align-items:center;gap:10px;cursor:pointer;color:var(--blue);font-weight:bold;">
-       <input type="checkbox" id="importReplaceCheck" style="width:20px;height:20px;" checked> Substituir todo o estoque atual por este PDF
-      </label>
-     </div>
-    </div>
-    <div id="importPreviewContainer" style="margin-top:20px;"></div>
-   </div>
-  </section>
-
-  <!-- COMBUSTÍVEL -->
-  <section id="view-combustivel" class="view-section">
-   <div class="pagehead">
-    <div><div class="eyebrow">CONTROLE DE TANQUE</div><h1>Combustível (Diesel)</h1><p>Registre abastecimentos e envie folhetos ao escritório.</p></div>
-    <button class="btn outline" id="btnCalibrateFuel">Calibrar Tanque</button>
-   </div>
-   <div class="stats" style="grid-template-columns:repeat(2,minmax(0,1fr));">
-    <div class="stat"><div class="stat-top"><span class="stat-label">Volume Atual</span></div><strong id="fuelTotalVol">0 L</strong><small>No tanque</small></div>
-    <div class="stat"><div class="stat-top"><span class="stat-label">Status</span></div><strong id="fuelStatusBadge"><span class="badge delivered">Normal</span></strong><small>Condição</small></div>
-   </div>
-   <div class="panel">
-    <div class="formgrid">
-     <div class="field"><label>Tipo *</label><select id="fuelOpType"><option value="Saída (Abastecimento)">Saída (Abastecimento)</option><option value="Entrada">Entrada</option></select></div>
-     <div class="field"><label>Litros *</label><input id="fuelQtyInput" type="number" min="0.1" step="any" placeholder="Ex: 500"></div>
-     <div class="field"><label>Selecione a Máquina / Equipamento *</label><select id="fuelDestSelect"><option value="">Selecione...</option></select></div>
-     <div class="field"><label>Responsável (Opcional)</label><input id="fuelRespInput" placeholder="Nome do motorista"></div>
-    </div>
-    <div class="formactions"><button class="btn green" id="btnConfirmFuel">Registrar e Enviar Folheto ao Escritório</button></div>
-   </div>
-   <div class="panel"><div class="panel-head"><h2>Histórico de Diesel</h2></div><div id="fuelHistoryContainer"></div></div>
-  </section>
-
-  <!-- MÁQUINAS -->
-  <section id="view-maquinas" class="view-section">
-   <div class="pagehead"><div><div class="eyebrow">FROTA</div><h1>Máquinas e Equipamentos</h1></div><button class="btn primary" id="btnNewMachine">＋ Nova Máquina</button></div>
-   <div class="panel"><div id="machinesTableContainer"></div></div>
-  </section>
-
-  <!-- SOLICITAR -->
-  <section id="view-solicitar" class="view-section">
-   <div class="pagehead"><div><div class="eyebrow">PEDIDOS</div><h1>Solicitação por Hectare</h1><p>Informe a receita por hectare.</p></div></div>
-   <div class="panel">
-    <div class="formgrid">
-     <div class="field"><label>Solicitante *</label><input id="reqRequester" placeholder="Seu nome"></div>
-     <div class="field"><label>Talhão / Fazenda *</label><input id="reqFarm" placeholder="Ex: Talhão 04"></div>
-     <div class="field"><label>Hectares *</label><input id="reqHectares" type="number" min="0.1" step="any" placeholder="Ex: 100"></div>
-     <div class="field"><label>Observação</label><input id="reqNote" placeholder="Instruções"></div>
-    </div>
-    <div class="field full" style="margin-top:15px">
-     <label>Produtos e Doses POR HECTARE (Um por linha)</label>
-     <textarea id="reqBulkText" placeholder="Glifosato 2 L&#10;Sperto 200 g"></textarea>
-    </div>
-    <div class="formactions"><button class="btn primary" id="btnPreviewOrder">Conferir Pedido Antes de Enviar</button></div>
-   </div>
-  </section>
-
-  <!-- ESCRITÓRIO FOLHETOS -->
-  <section id="view-escritorio_folhetos" class="view-section">
-   <div class="pagehead"><div><div class="eyebrow">PAINEL DO ESCRITÓRIO</div><h1>Folhetos Pendentes de Produtos</h1><p>Acompanhe os folhetos gerados pelo sistema.</p></div></div>
-   <div class="panel"><div id="escritorioFolhetosContainer"></div></div>
-  </section>
-
-  <!-- ESCRITÓRIO DIESEL -->
-  <section id="view-escritorio_combustivel" class="view-section">
-   <div class="pagehead"><div><div class="eyebrow">PAINEL DO ESCRITÓRIO</div><h1>Folhetos Pendentes de Diesel</h1><p>Confirme os abastecimentos realizados.</p></div></div>
-   <div class="panel"><div id="escritorioCombustivelContainer"></div></div>
-  </section>
-
-  <!-- CADASTRO EM MASSA -->
-  <section id="view-cadastro" class="view-section">
-   <div class="pagehead"><div><div class="eyebrow">ESTOQUE</div><h1>Cadastro em Massa</h1><p>Insira um produto por linha (Nome e Litros).</p></div></div>
-   <div class="panel">
-    <div class="field"><label>Lista de Produtos *</label><textarea id="bulkTextArea" placeholder="GLIFOSATO 500&#10;SPERTO 20"></textarea></div>
-    <div class="formactions"><button class="btn primary" id="bulkConfirmBtn">Cadastrar / Atualizar em Massa</button></div>
-   </div>
-  </section>
-
-  <!-- ENTRADA -->
-  <section id="view-entrada" class="view-section">
-   <div class="pagehead"><div><div class="eyebrow">ESTOQUE</div><h1>Entrada de Produtos</h1><p>Registre novas compras.</p></div></div>
-   <div class="panel">
-    <div class="formgrid">
-     <div class="field full"><label>Produto *</label><select id="entryProductSelect"><option value="">Selecione...</option></select></div>
-     <div class="field"><label>Quantidade *</label><input id="entryQtyInput" type="number" min="0.001" step="any" placeholder="Ex: 10"></div>
-     <div class="field"><label>Unidade *</label><select id="entryUnitSelect"><option>L</option><option>kg</option><option>mL</option><option>g</option><option>un</option></select></div>
-     <div class="field"><label>Lote (Opcional)</label><input id="entryLotInput" placeholder="Número do lote"></div>
-     <div class="field"><label>Validade (Opcional)</label><input id="entryExpInput" type="date"></div>
-    </div>
-    <div class="formactions"><button class="btn green" id="btnConfirmEntry">Confirmar Entrada e Abater Débito</button></div>
-   </div>
-  </section>
-
-  <!-- HISTÓRICO -->
-  <section id="view-historico" class="view-section">
-   <div class="pagehead"><div><div class="eyebrow">AUDITORIA</div><h1>Histórico de Movimentações</h1></div></div>
-   <div class="panel"><div id="historyTableContainer"></div></div>
-  </section>
-
-  <!-- USUÁRIOS E PERFIS -->
-  <section id="view-usuarios" class="view-section">
-   <div class="pagehead"><div><div class="eyebrow">SEGURANÇA E SENHAS</div><h1>Gerenciamento de Senhas (PIN) Individuais</h1></div></div>
-   <div class="panel">
-    <div class="notice"><strong>Segurança Separada por Perfil</strong>Cada perfil (Escritório e Depósito) possui sua própria senha PIN numérica. O padrão inicial de ambos é <strong>1234</strong>.</div>
-    <div class="formgrid">
-     <div class="field">
-      <label>Selecione o Perfil para Alterar a Senha</label>
-      <select id="pinTargetProfile"><option value="Escritório">Escritório</option><option value="Depósito">Depósito</option></select>
-     </div>
-     <div class="field">
-      <label>Nova Senha PIN (numérica)</label>
-      <input id="newPinInput" type="number" inputmode="numeric" placeholder="Ex: 5678">
-     </div>
-    </div>
-    <div class="formactions"><button class="btn primary" id="btnSavePin">Salvar Nova Senha do Perfil</button></div>
-   </div>
-  </section>
- </div>
 </main>
 
-<!-- MODAL DE PROGRESSO DE ATUALIZAÇÃO -->
+<!-- MODAL DE PROGRESSO DE ATUALIZAÇÃO (5 SEGUNDOS) -->
 <div class="modalback" id="updateModalBack">
- <div class="modal" style="width:min(450px, 100%); text-align:center;">
-  <div class="modal-head" style="justify-content:center;"><h2 style="color:var(--navy);">Atualizando Fazenda Karoline</h2></div>
-  <p>Baixando novos módulos e limpando o cache do sistema...</p>
-  <div class="update-bar-outer"><div class="update-bar-inner" id="updateProgressBar"></div></div>
-  <p><small style="color:var(--muted);" id="updateProgressText">Carregando... 0%</small></p>
- </div>
+  <div class="modal" style="width:min(450px, 100%); text-align:center;">
+    <div class="modal-head" style="justify-content:center;">
+      <h2 style="color:var(--navy);">⚙️ Atualizando Fazenda Karoline</h2>
+    </div>
+    <p>Baixando novos módulos e atualizando o sistema...</p>
+    <div class="update-bar-outer">
+      <div class="update-bar-inner" id="updateProgressBar"></div>
+    </div>
+    <p><small style="color:var(--muted);" id="updateProgressText">Carregando... 0%</small></p>
+  </div>
 </div>
 
-<!-- MODAL PRÉVIA DO PEDIDO -->
+<!-- MODAL DE CONFERÊNCIA PRÉVIA DO PEDIDO -->
 <div class="modalback" id="previewModalBack">
- <div class="modal" style="width:min(700px, 100%);">
-  <div class="modal-head"><h2 style="color:var(--blue);">Conferência Inteligente do Pedido</h2><button class="close" id="previewModalClose">×</button></div>
-  <div id="previewModalBody"></div>
-  <div class="modal-foot">
-   <button class="btn outline" id="previewCancelBtn">Voltar e Editar</button>
-   <button class="btn primary" id="previewConfirmBtn">Confirmar e Enviar para o Depósito</button>
+  <div class="modal" style="width:min(700px, 100%);">
+    <div class="modal-head">
+      <h2 style="color:var(--blue);">🔍 Conferência Inteligente do Pedido</h2>
+      <button class="close" id="previewModalClose">×</button>
+    </div>
+    <div id="previewModalBody"></div>
+    <div class="modal-foot">
+      <button class="btn outline" id="previewCancelBtn">Voltar e Editar</button>
+      <button class="btn primary" id="previewConfirmBtn">Confirmar e Enviar para o Depósito</button>
+    </div>
   </div>
- </div>
 </div>
 
-<!-- MODAL PIN -->
+<!-- MODAL DE SENHA PIN COM TECLADO NUMÉRICO -->
 <div class="modalback" id="pinModalBack">
- <div class="modal" style="width:min(400px, 100%);">
-  <div class="modal-head"><h2 id="pinModalTitle">Digite a Senha PIN</h2><button class="close" id="pinModalClose">×</button></div>
-  <div class="field">
-   <label>Senha PIN numérica de acesso:</label>
-   <input id="pinInputVal" type="number" inputmode="numeric" pattern="[0-9]*" placeholder="Digite o PIN" autofocus style="font-size:24px !important; letter-spacing:6px; text-align:center;">
+  <div class="modal" style="width:min(400px, 100%);">
+    <div class="modal-head">
+      <h2 id="pinModalTitle">🔒 Digite a Senha PIN</h2>
+      <button class="close" id="pinModalClose">×</button>
+    </div>
+    <div class="field">
+      <label>Senha PIN numérica de acesso:</label>
+      <input id="pinInputVal" type="number" inputmode="numeric" pattern="[0-9]*" placeholder="Digite o PIN" autofocus style="font-size:24px !important; letter-spacing:6px; text-align:center;">
+    </div>
+    <div class="modal-foot">
+      <button class="btn outline" id="pinCancelBtn">Cancelar</button>
+      <button class="btn primary" id="pinConfirmBtn">Confirmar Acesso</button>
+    </div>
   </div>
-  <div class="modal-foot">
-   <button class="btn outline" id="pinCancelBtn">Cancelar</button>
-   <button class="btn primary" id="pinConfirmBtn">Confirmar Acesso</button>
-  </div>
- </div>
 </div>
 
-<!-- MODAL DEPÓSITO -->
+<!-- MODAL POPUP AUTOMÁTICO PARA O DEPÓSITO -->
 <div class="modalback" id="depositoModalBack">
- <div class="modal" style="border:3px solid var(--orange);">
-  <div class="modal-head"><h2 style="color:var(--orange);">AVISO: Novo Pedido para Separar!</h2><button class="close" id="depositoModalClose">×</button></div>
-  <div id="depositoModalBody"></div>
- </div>
+  <div class="modal" style="border:3px solid var(--orange);">
+    <div class="modal-head">
+      <h2 style="color:var(--orange);">⚠️ AVISO: Novo Pedido para Separar!</h2>
+      <button class="close" id="depositoModalClose">×</button>
+    </div>
+    <div id="depositoModalBody"></div>
+  </div>
 </div>
 
 <!-- MODAL GERAL -->
 <div class="modalback" id="modalback">
- <div class="modal" style="width:min(900px, 100%);">
-  <div class="modal-head"><h2 id="modalTitle">Detalhes</h2><button class="close" id="modalCloseBtn">×</button></div>
-  <div id="modalBody"></div>
-  <div class="modal-foot" id="modalFoot"></div>
- </div>
+  <div class="modal" style="width:min(900px, 100%);">
+    <div class="modal-head"><h2 id="modalTitle">Detalhes</h2><button class="close" id="modalCloseBtn">×</button></div>
+    <div id="modalBody"></div>
+    <div class="modal-foot" id="modalFoot"></div>
+  </div>
 </div>
 
 <div class="toast" id="toast"></div>
 
 <script>
 "use strict";
-const CURRENT_CODE_VERSION = "25.4";
-const RELEASE_NOTES = "• Banco unificado definitivamente em dados_fazenda;\n• Temporizador discreto de 24h nas fotos;\n• Exibição clara do nome da máquina nos folhetos de diesel.";
+// VERSÃO DO CÓDIGO ATUALIZADA
+const CURRENT_CODE_VERSION = "25.5";
+const RELEASE_NOTES = `• Visualização detalhada do maquinário ao clicar nos registros/folhetos de Diesel;\n• Temporizador regressivo em tempo real para auto-exclusão de folhetos (24h);\n• Blindagem total com salvamento e busca direta no documento 'dados_fazenda' no Firebase sem perda de dados ao atualizar.`;
 const TITLES = {
-  dashboard: "Visão geral", estoque: "Estoque (Barracão)", combustivel: "Combustível (Diesel)",
-  maquinas: "Máquinas e Frota", importar_pdf: "Importar PDF de Estoque", solicitar: "Solicitação por Hectare",
-  enviar_foto_folheto: "Enviar Foto de Folheto", escritorio_folhetos: "Folhetos Produtos",
-  escritorio_combustivel: "Folhetos Diesel Pendentes", cadastro: "Cadastro em Massa",
-  entrada: "Entrada de produtos", historico: "Histórico", usuarios: "Perfis e Senhas (PIN)"
+  dashboard: "Visão geral",
+  estoque: "Estoque (Barracão)",
+  combustivel: "Combustível (Diesel)",
+  maquinas: "Máquinas e Frota",
+  importar_pdf: "Importar PDF de Estoque",
+  solicitar: "Solicitação por Hectare",
+  enviar_foto_folheto: "Enviar Foto de Folheto",
+  escritorio_folhetos: "Folhetos Produtos",
+  escritorio_combustivel: "Folhetos Diesel Pendentes",
+  cadastro: "Cadastro em Massa",
+  entrada: "Entrada de produtos",
+  historico: "Histórico",
+  usuarios: "Perfis e Senhas (PIN)"
 };
 
 const $ = id => document.getElementById(id);
@@ -511,7 +585,7 @@ const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[c]));
 const norm = s => String(s ?? "").trim().toLocaleLowerCase("pt-BR").replace(/[\s.,\-]/g, "");
 const num = n => Number(n || 0).toLocaleString("pt-BR", {maximumFractionDigits: 3});
-const fmtDate = s => { const d = new Date(s); return isNaN(d) ? "-" : d.toLocaleString("pt-BR", {dateStyle: "short", timeStyle: "short"}); };
+const fmtDate = s => { const d = new Date(s); return isNaN(d) ? "-" : d.toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" }); };
 
 const freshDB = () => ({
   products: [], orders: [], folhetos: [], fuelFolhetos: [], history: [],
@@ -528,12 +602,60 @@ let pendingTargetRole = "";
 let currentDraftOrder = null;
 let fotoFolhetoBase64 = "";
 
+// CARREGAMENTO INICIAL DO CACHE LOCAL PARA BLINDAGEM CONTRA TELA EM BRANCO
+function loadLocalCache() {
+  try {
+    const cached = localStorage.getItem("agroestoque_db_backup");
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      if (parsed && Array.isArray(parsed.products)) {
+        db = parsed;
+      }
+    }
+  } catch (e) {
+    console.error("Erro ao ler cache local:", e);
+  }
+}
+
+// FUNÇÃO DE SALVAMENTO COM BLINDAGEM EM 'dados_fazenda' E CACHE LOCAL
 async function saveWithBackup() {
   localStorage.setItem("agroestoque_role_rem_v24", role);
   db.systemVersion = CURRENT_CODE_VERSION;
+  // Blindagem local
+  localStorage.setItem("agroestoque_db_backup", JSON.stringify(db));
+  
   if (window.cloudSave) {
     await window.cloudSave(db);
+    try {
+      const getFirestoreInstance = () => { try { return getFirestore(); } catch(e){ return null; } };
+      await setDoc(doc(getFirestoreInstance(), "sistema", "backup_emergencia_karoline"), {
+        dataBackup: new Date().toISOString(),
+        snapshot: db
+      });
+    } catch (e) {
+      console.error("Backup de emergência ignorado:", e);
+    }
   }
+}
+
+// TEMPORIZADOR DE EXCLUSÃO DE FOLHETOS DE 24 HORAS
+function calcularTempoRestanteFormatado(f) {
+  const agora = Date.now();
+  const tempoBase = f.baixadoEm ? f.baixadoEm : f.date;
+  const vinteQuatroHoras = 24 * 60 * 60 * 1000;
+  const expiraEm = tempoBase + vinteQuatroHoras;
+  const diff = expiraEm - agora;
+
+  if (diff <= 0) return { texto: "Expirado", expirado: true };
+
+  const horas = Math.floor(diff / (1000 * 60 * 60));
+  const minutos = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+  const segundos = Math.floor((diff % (1000 * 60)) / 1000);
+
+  return {
+    texto: `${horas}h ${minutos}m ${segundos}s`,
+    expirado: false
+  };
 }
 
 function limparFolhetosExpirados() {
@@ -545,6 +667,10 @@ function limparFolhetosExpirados() {
     if (f.baixadoEscritorio && f.baixadoEm) {
       return (agora - f.baixadoEm) < vinteQuatroHoras;
     }
+    if (f.isFoto) {
+      const baseTime = f.baixadoEm || f.date;
+      return (agora - baseTime) < vinteQuatroHoras;
+    }
     return true;
   });
   if (db.folhetos.length !== originalLen) {
@@ -552,24 +678,71 @@ function limparFolhetosExpirados() {
   }
 }
 
+function isVersionGreater(v1, v2) {
+  if (!v1 || !v2) return false;
+  const p1 = String(v1).split('.').map(Number);
+  const p2 = String(v2).split('.').map(Number);
+  for (let i = 0; i < Math.max(p1.length, p2.length); i++) {
+    const val1 = p1[i] || 0;
+    const val2 = p2[i] || 0;
+    if (val1 > val2) return true;
+    if (val1 < val2) return false;
+  }
+  return false;
+}
+
+function checkDeviceVersionOnLoad() {
+  const lastInstalledVersion = localStorage.getItem("agroestoque_installed_version");
+  if (lastInstalledVersion !== CURRENT_CODE_VERSION) {
+    localStorage.setItem("agroestoque_installed_version", CURRENT_CODE_VERSION);
+    setTimeout(() => {
+      openModal(`Sistema Atualizado! (v${CURRENT_CODE_VERSION})`, `
+        <div style="line-height:1.6;">
+          <p>O aplicativo da <strong>Fazenda Karoline</strong> foi atualizado com sucesso!</p>
+          <div class="notice" style="background:#edf5ff; border-left:4px solid var(--blue); color:#102b46; padding:12px; margin:12px 0;">
+            <strong>Novidades desta versão:</strong><br>
+            ${RELEASE_NOTES.replace(/\n/g, '<br>')}
+          </div>
+        </div>
+      `, [{ text: "Entendi e Continuar", cls: "primary", fn: closeModal }]);
+    }, 600);
+  }
+}
+
+// SINCRONIZAÇÃO COM BLINDAGEM E BUSCA CONTINUA NO FIREBASE ('dados_fazenda')
 async function initCloudSync() {
   if (window.cloudLoad) {
     const cloudData = await window.cloudLoad();
     if (cloudData && Array.isArray(cloudData.products)) {
+      if (cloudData.systemVersion && isVersionGreater(cloudData.systemVersion, CURRENT_CODE_VERSION)) {
+        $("updateBanner").classList.add("show");
+      } else {
+        $("updateBanner").classList.remove("show");
+        if (cloudData.systemVersion !== CURRENT_CODE_VERSION) {
+          db.systemVersion = CURRENT_CODE_VERSION;
+          saveWithBackup();
+        }
+      }
       db = cloudData;
+      if (db.fuelStock === undefined) db.fuelStock = 5000;
+      if (!db.pins) db.pins = { Escritório: "1234", Depósito: "1234" };
+      if (!Array.isArray(db.fuelHistory)) db.fuelHistory = [];
+      if (!Array.isArray(db.fuelFolhetos)) db.fuelFolhetos = [];
+      if (!Array.isArray(db.machines)) db.machines = [];
+      if (!Array.isArray(db.orders)) db.orders = [];
+      if (!Array.isArray(db.folhetos)) db.folhetos = [];
+      if (!Array.isArray(db.history)) db.history = [];
+      limparFolhetosExpirados();
+      db.products.forEach(p => {
+        if (!p.activeIngredient) p.activeIngredient = "";
+        if (!Array.isArray(p.lots)) p.lots = [];
+      });
+      // Atualiza o cache local blindado
+      localStorage.setItem("agroestoque_db_backup", JSON.stringify(db));
+      renderActiveView();
+      checkDepositoAlert();
     }
   }
-  if (db.fuelStock === undefined) db.fuelStock = 5000;
-  if (!db.pins) db.pins = { Escritório: "1234", Depósito: "1234" };
-  if (!Array.isArray(db.fuelHistory)) db.fuelHistory = [];
-  if (!Array.isArray(db.fuelFolhetos)) db.fuelFolhetos = [];
-  if (!Array.isArray(db.machines)) db.machines = [];
-  if (!Array.isArray(db.orders)) db.orders = [];
-  if (!Array.isArray(db.folhetos)) db.folhetos = [];
-  if (!Array.isArray(db.history)) db.history = [];
-  limparFolhetosExpirados();
-  renderActiveView();
-  checkDepositoAlert();
 }
 
 function toast(s) {
@@ -583,10 +756,7 @@ function toast(s) {
 function getProduct(id) { return db.products.find(p => p.id === id); }
 
 function addHistory(type, name, q, u, origin, details = "") {
-  db.history.unshift({
-    id: uid(), type, name: typeof name === "string" ? name : name?.name || "-",
-    q: Number(q) || 0, u: u || "un", origin: origin || "-", details, role, date: new Date().toISOString()
-  });
+  db.history.unshift({ id: uid(), type, name: typeof name === "string" ? name : name?.name || "-", q: Number(q) || 0, u: u || "un", origin: origin || "-", details, role, date: new Date().toISOString() });
 }
 
 function findBestProductMatch(inputName) {
@@ -601,10 +771,15 @@ function findBestProductMatch(inputName) {
     else if (cleanProd.includes(cleanInput) || cleanInput.includes(cleanProd)) score = 80;
     else {
       let matches = 0;
-      for (let char of cleanInput) { if (cleanProd.includes(char)) matches++; }
+      for (let char of cleanInput) {
+        if (cleanProd.includes(char)) matches++;
+      }
       score = (matches / Math.max(cleanProd.length, 1)) * 50;
     }
-    if (score > bestScore) { bestScore = score; bestMatch = p; }
+    if (score > bestScore) {
+      bestScore = score;
+      bestMatch = p;
+    }
   });
   if (bestMatch && bestScore > 15) {
     return { id: bestMatch.id, name: bestMatch.name, unit: bestMatch.unit || "L" };
@@ -657,11 +832,57 @@ function openModal(title, html, buttons = []) {
 
 function closeModal() { $("modalback").classList.remove("show"); }
 
+// VISUALIZAÇÃO DETALHADA DO MAQUINÁRIO ABASTECIDO (COMBUSTÍVEL)
+window.verDetalhesDiesel = function(idOrTicket) {
+  const f = (db.fuelFolhetos || []).find(x => x.id === idOrTicket || x.ticketNo === idOrTicket) || 
+            (db.fuelHistory || []).find(x => x.id === idOrTicket || x.ticketNo === idOrTicket);
+
+  if (!f) return toast("Registro de abastecimento não encontrado.");
+
+  openModal("🚜 Detalhes do Abastecimento / Maquinário", `
+    <div style="line-height:1.8; font-size:14px;">
+      <div style="background:#edf5ff; padding:14px; border-radius:10px; margin-bottom:15px; border-left:4px solid var(--blue);">
+        <span style="font-size:12px; color:var(--muted); font-weight:bold; text-transform:uppercase;">Maquinário / Equipamento Destino</span>
+        <div style="font-size:20px; font-weight:800; color:var(--navy); margin-top:3px;">🚜 ${esc(f.dest || f.farm || 'Não informado')}</div>
+      </div>
+      <div class="formgrid">
+        <div class="field">
+          <label>Volume Abastecido:</label>
+          <strong style="font-size:16px; color:var(--green);">${num(f.q)} Litros</strong>
+        </div>
+        <div class="field">
+          <label>Tipo de Operação:</label>
+          <strong>${esc(f.type || 'Abastecimento')}</strong>
+        </div>
+        <div class="field">
+          <label>Motorista / Responsável:</label>
+          <strong>${esc(f.resp || 'Não informado')}</strong>
+        </div>
+        <div class="field">
+          <label>Nº do Ticket / Folheto:</label>
+          <strong>#${esc(f.ticketNo || (f.id ? f.id.slice(-6) : '-'))}</strong>
+        </div>
+        <div class="field full">
+          <label>Data e Hora do Registro:</label>
+          <strong>📅 ${fmtDate(f.date)}</strong>
+        </div>
+        <div class="field full">
+          <label>Status no Escritório:</label>
+          <span>${f.baixadoEscritorio ? '<span class="badge delivered">✓ Registrado no Escritório</span>' : '<span class="badge pending">⏳ Pendente de Registro</span>'}</span>
+        </div>
+      </div>
+    </div>
+  `, [
+    { text: "Fechar", cls: "primary", fn: closeModal }
+  ]);
+};
+
 function checkDepositoAlert() {
   if (role === "Depósito") {
     const pendingOrders = db.orders.filter(o => o.status === "Pendente");
     if (pendingOrders.length > 0 && !$("depositoModalBack").classList.contains("show")) {
-      showDepositoModal(pendingOrders[0]);
+      const latest = pendingOrders[0];
+      showDepositoModal(latest);
     }
   }
 }
@@ -669,70 +890,115 @@ function checkDepositoAlert() {
 function showDepositoModal(o) {
   let itemsHtml = o.items.map((it, idx) => `
     <tr>
-      <td><input type="text" class="deposito-edit-name" data-orderid="${o.id}" data-index="${idx}" value="${esc(it.name)}" style="padding:6px; width:100%;"></td>
+      <td style="padding-right:4px;">
+        <input type="text" class="deposito-edit-name" data-orderid="${o.id}" data-index="${idx}" value="${esc(it.name)}" style="padding:6px; font-size:13px !important; font-weight:bold; width:100%;" placeholder="Produto">
+      </td>
       <td>
         <div style="display:flex; align-items:center; justify-content:flex-end; gap:4px;">
-          <input type="number" class="deposito-edit-qty" data-orderid="${o.id}" data-index="${idx}" value="${it.q}" step="any" min="0" style="width:65px; padding:6px; text-align:center;">
-          <span>${esc(it.u)}</span>
+          <input type="number" class="deposito-edit-qty" data-orderid="${o.id}" data-index="${idx}" value="${it.q}" step="any" min="0" style="width:65px; padding:6px; font-size:13px !important; font-weight:bold; text-align:center;">
+          <span style="font-size:12px; font-weight:bold;">${esc(it.u)}</span>
         </div>
       </td>
     </tr>
   `).join("");
   $("depositoModalBody").innerHTML = `
-    <p><strong>Pedido:</strong> #${esc(o.no)} | <strong>Destino:</strong> ${esc(o.farm)}</p>
-    <p><strong>Solicitante:</strong> ${esc(o.requester)} | <strong>Área:</strong> ${o.hectares} ha</p>
-    <div class="tablewrap"><table class="compact-table"><thead><tr><th>Produto</th><th style="text-align:right;">Qtd</th></tr></thead><tbody>${itemsHtml}</tbody></table></div>
+    <p style="margin-bottom:4px;"><strong>Pedido:</strong> #${esc(o.no)} | <strong>Destino:</strong> ${esc(o.farm)}</p>
+    <p style="margin-top:0;"><strong>Solicitante:</strong> ${esc(o.requester)} | <strong>Área:</strong> ${o.hectares} ha</p>
+    ${o.note ? `<p class="hint"><strong>Obs:</strong> ${esc(o.note)}</p>` : ''}
+    <p class="hint" style="color:var(--blue); font-weight:bold; margin-top:8px; margin-bottom:12px;">Altere o nome do produto caso o agrônomo tenha autorizado a substituição e ajuste a quantidade final.</p>
+    <div class="tablewrap" style="margin-top:6px;">
+      <table class="compact-table">
+        <thead>
+          <tr>
+            <th style="width:58%;">Produto (Editável)</th>
+            <th style="width:42%; text-align:right;">Qtd Retirada</th>
+          </tr>
+        </thead>
+        <tbody>${itemsHtml}</tbody>
+      </table>
+    </div>
     <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:16px;">
       <button class="btn outline" id="btnFecharAvisoDeposito">Fechar</button>
       <button class="btn green" id="btnSalvarEnviarFolheto" data-id="${o.id}">Confirmar e Enviar</button>
     </div>
   `;
   $("depositoModalBack").classList.add("show");
-  $("depositoModalClose").onclick = () => $("depositoModalBack").classList.remove("show");
-  $("btnFecharAvisoDeposito").onclick = () => $("depositoModalBack").classList.remove("show");
+  $("depositoModalClose").onclick = () => { $("depositoModalBack").classList.remove("show"); };
+  $("btnFecharAvisoDeposito").onclick = () => { $("depositoModalBack").classList.remove("show"); };
   $("btnSalvarEnviarFolheto").onclick = async (e) => {
     const orderId = e.target.dataset.id;
     const order = db.orders.find(x => x.id === orderId);
     if (!order) return;
-    document.querySelectorAll(".deposito-edit-qty").forEach(inp => {
+    const nameInputs = document.querySelectorAll(".deposito-edit-name");
+    const qtyInputs = document.querySelectorAll(".deposito-edit-qty");
+    qtyInputs.forEach(inp => {
       const idx = Number(inp.dataset.index);
       const val = Number(inp.value);
-      if (!isNaN(val) && order.items[idx]) order.items[idx].q = val;
+      if (!isNaN(val) && order.items[idx]) {
+        order.items[idx].q = val;
+      }
     });
-    document.querySelectorAll(".deposito-edit-name").forEach(inp => {
+    nameInputs.forEach(inp => {
       const idx = Number(inp.dataset.index);
       const newNameStr = inp.value.trim();
       if (newNameStr && order.items[idx]) {
-        const matched = findBestProductMatch(newNameStr);
-        order.items[idx].productId = matched.id;
-        order.items[idx].name = matched.name;
-        order.items[idx].u = matched.unit || order.items[idx].u;
+        if (norm(order.items[idx].name) !== norm(newNameStr)) {
+          const matched = findBestProductMatch(newNameStr);
+          order.items[idx].productId = matched.id;
+          order.items[idx].name = matched.name;
+          order.items[idx].u = matched.unit || order.items[idx].u;
+        }
       }
     });
     order.status = "Separado / Enviado ao Escritório";
     order.items.forEach(it => {
-      let prod = it.productId ? db.products.find(p => p.id === it.productId) : db.products.find(p => norm(p.name) === norm(it.name));
+      let prod = null;
+      if (it.productId) {
+        prod = db.products.find(p => p.id === it.productId);
+      }
+      if (!prod) {
+        prod = db.products.find(p => norm(p.name) === norm(it.name));
+      }
       if (prod) {
         prod.q = (Number(prod.q) || 0) - Number(it.q);
         addHistory("Baixa Pedido", prod.name, it.q, prod.unit, `Talhão: ${order.farm}`);
       } else {
-        db.products.push({ id: uid(), name: it.name, activeIngredient: "", q: -Number(it.q), unit: it.u || "L", min: 0, lots: [] });
+        const newProd = {
+          id: uid(),
+          name: it.name,
+          activeIngredient: "",
+          q: -Number(it.q),
+          unit: it.u || "L",
+          min: 0,
+          lots: []
+        };
+        db.products.push(newProd);
         addHistory("Baixa Pedido (Novo Débito)", it.name, it.q, it.u, `Talhão: ${order.farm}`);
       }
     });
-    db.folhetos.unshift({ id: uid(), orderNo: order.no, farm: order.farm, requester: order.requester, hectares: order.hectares, items: order.items, date: Date.now(), baixadoEscritorio: false });
+    db.folhetos.unshift({
+      id: uid(),
+      orderNo: order.no,
+      farm: order.farm,
+      requester: order.requester,
+      hectares: order.hectares,
+      items: order.items,
+      date: Date.now(),
+      baixadoEscritorio: false
+    });
     await saveWithBackup();
     $("depositoModalBack").classList.remove("show");
     renderActiveView();
-    toast("Retirada confirmada!");
+    toast("Retirada confirmada! Débito atualizado no estoque.");
   };
 }
 
 function updateFuelMachineSelect() {
   const sel = $("fuelDestSelect");
   if (!sel) return;
+  const machines = db.machines || [];
   let html = '<option value="">Selecione a máquina / equipamento...</option>';
-  (db.machines || []).forEach(m => {
+  machines.forEach(m => {
     html += `<option value="${esc(m.name)}">${esc(m.name)}${m.model ? ' ('+esc(m.model)+')' : ''}</option>`;
   });
   html += '<option value="Outro / Gerador / Tanque Externo">Outro / Gerador / Tanque Externo</option>';
@@ -747,19 +1013,47 @@ function renderActiveView() {
   const isEscritorio = (role === "Escritório");
   const isDeposito = (role === "Depósito");
   const isOperador = (role === "Operador");
-
-  document.querySelectorAll(".menu-admin-only").forEach(el => el.style.display = isOperador ? "none" : "");
-  document.querySelectorAll(".menu-escritorio-only").forEach(el => el.style.display = isEscritorio ? "flex" : "none");
-
+  document.querySelectorAll(".menu-admin-only").forEach(el => {
+    el.style.display = isOperador ? "none" : "";
+  });
+  document.querySelectorAll(".menu-escritorio-only").forEach(el => {
+    el.style.display = isEscritorio ? "flex" : "none";
+  });
+  const topBtnContainer = $("topHeaderActionBtnContainer");
+  const dashBtnContainer = $("dashTopBtnContainer");
+  if (topBtnContainer) {
+    if (isDeposito) {
+      topBtnContainer.innerHTML = `<button class="btn primary smallbtn" onclick="navigateTo('estoque')">📦 Ver Estoque</button>`;
+    } else if (isOperador) {
+      topBtnContainer.innerHTML = `<button class="btn primary smallbtn" data-goto="solicitar" onclick="navigateTo('solicitar')">＋ Solicitar por Hectare</button>`;
+    } else {
+      topBtnContainer.innerHTML = "";
+    }
+  }
+  if (dashBtnContainer) {
+    if (isOperador) {
+      dashBtnContainer.innerHTML = `<button class="btn primary" data-goto="solicitar" onclick="navigateTo('solicitar')">＋ Solicitar por Hectare</button>`;
+    } else if (isDeposito) {
+      const pendingCount = db.orders.filter(o => o.status === "Pendente").length;
+      dashBtnContainer.innerHTML = `<button class="btn primary" onclick="checkDepositoAlert()">⚠️ Ver Pedidos Pendentes (${pendingCount})</button>`;
+    } else {
+      dashBtnContainer.innerHTML = `<button class="btn primary" data-goto="solicitar" onclick="navigateTo('solicitar')">＋ Solicitar por Hectare</button>`;
+    }
+  }
   if (isEscritorio) {
     const pendingFolhetos = (db.folhetos || []).filter(f => !f.baixadoEscritorio).length;
     const badgeSpan = $("folhetoCounterBadge");
-    if (badgeSpan) { badgeSpan.textContent = pendingFolhetos; badgeSpan.style.display = pendingFolhetos > 0 ? "inline-block" : "none"; }
-    const pendingFuel = (db.fuelFolhetos || []).filter(f => !f.baixadoEscritorio).length;
-    const fuelBadge = $("fuelFolhetoCounterBadge");
-    if (fuelBadge) { fuelBadge.textContent = pendingFuel; fuelBadge.style.display = pendingFuel > 0 ? "inline-block" : "none"; }
+    if (badgeSpan) {
+      badgeSpan.textContent = pendingFolhetos;
+      badgeSpan.style.display = pendingFolhetos > 0 ? "inline-block" : "none";
+    }
+    const pendingFuelFolhetos = (db.fuelFolhetos || []).filter(f => !f.baixadoEscritorio).length;
+    const fuelBadgeSpan = $("fuelFolhetoCounterBadge");
+    if (fuelBadgeSpan) {
+      fuelBadgeSpan.textContent = pendingFuelFolhetos;
+      fuelBadgeSpan.style.display = pendingFuelFolhetos > 0 ? "inline-block" : "none";
+    }
   }
-
   if (currentView === "dashboard") renderDashboard();
   else if (currentView === "estoque") renderStock();
   else if (currentView === "combustivel") renderCombustivel();
@@ -767,74 +1061,158 @@ function renderActiveView() {
   else if (currentView === "importar_pdf") renderImportPdf();
   else if (currentView === "cadastro") renderCadastroMassa();
   else if (currentView === "historico") renderHistory();
-  else if (currentView === "enviar_foto_folheto") {}
-  else if (currentView === "escritorio_folhetos") { if (isEscritorio) renderEscritorioFolhetos(); }
-  else if (currentView === "escritorio_combustivel") { if (isEscritorio) renderEscritorioCombustivel(); }
+  else if (currentView === "enviar_foto_folheto") renderEnviarFotoFolheto();
+  else if (currentView === "escritorio_folhetos") {
+    if (!isEscritorio) { navigateTo("dashboard"); return; }
+    renderEscritorioFolhetos();
+  } else if (currentView === "escritorio_combustivel") {
+    if (!isEscritorio) { navigateTo("dashboard"); return; }
+    renderEscritorioCombustivel();
+  }
 }
 
 function renderDashboard() {
   const isEscritorio = (role === "Escritório");
   const statsGrid = $("dashboardStatsGrid");
   if (isEscritorio) {
-    const pFolhetos = (db.folhetos || []).filter(f => !f.baixadoEscritorio).length;
-    const pFuel = (db.fuelFolhetos || []).filter(f => !f.baixadoEscritorio).length;
+    const pendingFolhetosCount = (db.folhetos || []).filter(f => !f.baixadoEscritorio).length;
+    const pendingFuelCount = (db.fuelFolhetos || []).filter(f => !f.baixadoEscritorio).length;
     statsGrid.innerHTML = `
-      <div class="stat"><span class="stat-label">Produtos ativos</span><strong>${db.products.length}</strong></div>
-      <div class="stat"><span class="stat-label">Diesel Atual</span><strong>${num(db.fuelStock || 0)} L</strong></div>
-      <div class="stat" onclick="navigateTo('escritorio_folhetos')" style="cursor:pointer;"><span class="stat-label">Folhetos Produtos</span><strong style="${pFolhetos>0?'color:var(--orange)':''}">${pFolhetos}</strong></div>
-      <div class="stat" onclick="navigateTo('escritorio_combustivel')" style="cursor:pointer;"><span class="stat-label">Folhetos Diesel</span><strong style="${pFuel>0?'color:var(--orange)':''}">${pFuel}</strong></div>
+      <div class="stat">
+        <div class="stat-top"><span class="stat-label">Produtos ativos</span><span class="stat-icon">📦</span></div>
+        <strong>${db.products.length}</strong>
+        <small>No barracão</small>
+      </div>
+      <div class="stat">
+        <div class="stat-top"><span class="stat-label">Diesel Atual</span><span class="stat-icon">⛽</span></div>
+        <strong>${num(db.fuelStock || 0)} L</strong>
+        <small>Volume no tanque</small>
+      </div>
+      <div class="stat" style="cursor:pointer;" onclick="navigateTo('escritorio_folhetos')">
+        <div class="stat-top"><span class="stat-label">Folhetos Produtos</span><span class="stat-icon">📄</span></div>
+        <strong style="${pendingFolhetosCount > 0 ? 'color:var(--orange);' : ''}">${pendingFolhetosCount}</strong>
+        <small>${pendingFolhetosCount > 0 ? '⚠️ Aguardando baixa' : 'Sem pendências'}</small>
+      </div>
+      <div class="stat" style="cursor:pointer;" onclick="navigateTo('escritorio_combustivel')">
+        <div class="stat-top"><span class="stat-label">Folhetos Diesel</span><span class="stat-icon">⛽</span></div>
+        <strong style="${pendingFuelCount > 0 ? 'color:var(--orange);' : ''}">${pendingFuelCount}</strong>
+        <small>${pendingFuelCount > 0 ? '⚠️ Abastecimento a baixar' : 'Sem pendências'}</small>
+      </div>
     `;
   } else {
-    const pOrders = db.orders.filter(o => o.status === "Pendente").length;
+    const pendingOrdersCount = db.orders.filter(o => o.status === "Pendente").length;
     statsGrid.innerHTML = `
-      <div class="stat"><span class="stat-label">Produtos ativos</span><strong>${db.products.length}</strong></div>
-      <div class="stat"><span class="stat-label">Diesel Atual</span><strong>${num(db.fuelStock || 0)} L</strong></div>
-      <div class="stat"><span class="stat-label">Pedidos Pendentes</span><strong style="${pOrders>0?'color:var(--orange)':''}">${pOrders}</strong></div>
+      <div class="stat">
+        <div class="stat-top"><span class="stat-label">Produtos ativos</span><span class="stat-icon">📦</span></div>
+        <strong>${db.products.length}</strong>
+        <small>No barracão</small>
+      </div>
+      <div class="stat">
+        <div class="stat-top"><span class="stat-label">Diesel Atual</span><span class="stat-icon">⛽</span></div>
+        <strong>${num(db.fuelStock || 0)} L</strong>
+        <small>Volume no tanque</small>
+      </div>
+      <div class="stat">
+        <div class="stat-top"><span class="stat-label">Pedidos Pendentes</span><span class="stat-icon">⏳</span></div>
+        <strong style="${pendingOrdersCount > 0 ? 'color:var(--orange);' : ''}">${pendingOrdersCount}</strong>
+        <small>Aguardando separação</small>
+      </div>
     `;
   }
-  $("quickButtons").innerHTML = `
-    <button class="quick-btn" data-goto="estoque"><span>📦</span><strong>Estoque</strong><small>Consultar</small></button>
-    <button class="quick-btn" data-goto="solicitar"><span>＋</span><strong>Solicitar</strong><small>Por Hectare</small></button>
-    <button class="quick-btn" data-goto="combustivel"><span>⛽</span><strong>Combustível</strong><small>Diesel</small></button>
-    <button class="quick-btn" data-goto="enviar_foto_folheto"><span>📷</span><strong>Enviar Foto</strong><small>Folheto manual</small></button>
-  `;
+  
+  const allQuicks = [
+    { id: "estoque", icon: "📦", title: "Estoque", desc: "Consultar e gerenciar" },
+    { id: "enviar_foto_folheto", icon: "📷", title: "Enviar Foto de Folheto", desc: "Mandar papel manual" },
+    { id: "solicitar", icon: "＋", title: "Solicitar por Hectare", desc: "Enviar receita" },
+    { id: "combustivel", icon: "⛽", title: "Combustível", desc: "Controle de Diesel" },
+    { id: "escritorio_folhetos", icon: "📄", title: "Folhetos Produtos", desc: "Baixa em produtos" },
+    { id: "escritorio_combustivel", icon: "⛽", title: "Folhetos Diesel", desc: "Baixa em combustível" }
+  ];
+  let hiddenShortcuts = JSON.parse(localStorage.getItem("agroestoque_hidden_shortcuts_" + role) || "[]");
+  const visibleQuicks = allQuicks.filter(q => !hiddenShortcuts.includes(q.id));
+  $("quickButtons").innerHTML = visibleQuicks.length ? visibleQuicks.map(q => `<button class="quick-btn" data-goto="${q.id}"><span>${q.icon}</span><strong>${q.title}</strong><small>${q.desc}</small></button>`).join("") : `<div class="empty" style="grid-column:1/-1;">Nenhum atalho selecionado. Clique em "Customizar Atalhos" acima para escolher os que deseja exibir.</div>`;
   document.querySelectorAll(".quick-btn").forEach(b => b.onclick = () => navigateTo(b.dataset.goto));
+  
+  $("btnCustomizeShortcuts").onclick = () => {
+    let currentHidden = JSON.parse(localStorage.getItem("agroestoque_hidden_shortcuts_" + role) || "[]");
+    let checksHtml = allQuicks.map(q => {
+      const isChecked = !currentHidden.includes(q.id);
+      return `
+        <label style="display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid var(--line); cursor:pointer;">
+          <input type="checkbox" class="shortcut-check" data-id="${q.id}" ${isChecked ? 'checked' : ''} style="width:20px; height:20px;">
+          <div>
+            <strong>${q.icon} ${q.title}</strong>
+            <small style="display:block; color:var(--muted);">${q.desc}</small>
+          </div>
+        </label>
+      `;
+    }).join("");
+    openModal("Customizar Atalhos do Perfil (" + role + ")", `
+      <p>Marque os atalhos que deseja exibir na sua tela inicial e desmarque os que deseja ocultar:</p>
+      <div style="margin-top:15px; max-height:300px; overflow-y:auto;">
+        ${checksHtml}
+      </div>
+    `, [
+      { text: "Cancelar", fn: closeModal },
+      { text: "Salvar Atalhos", cls: "primary", fn: () => {
+        let newHidden = [];
+        document.querySelectorAll(".shortcut-check").forEach(chk => {
+          if (!chk.checked) newHidden.push(chk.dataset.id);
+        });
+        localStorage.setItem("agroestoque_hidden_shortcuts_" + role, JSON.stringify(newHidden));
+        closeModal();
+        renderDashboard();
+        toast("Atalhos personalizados com sucesso!");
+      }}
+    ]);
+  };
 }
+
+function renderEnviarFotoFolheto() {}
 
 function renderStock() {
   const query = norm(stockSearch);
   const rows = db.products.filter(p => norm(p.name).includes(query) || norm(p.activeIngredient || "").includes(query));
-  $("stockTableContainer").innerHTML = rows.length ? `<div class="tablewrap"><table><thead><tr><th>Produto</th><th>Princípio Ativo</th><th>Saldo</th><th>Ações</th></tr></thead><tbody>${rows.map(p => `
-    <tr>
+  $("stockTableContainer").innerHTML = rows.length ? `<div class="tablewrap"><table><thead><tr><th>Produto</th><th>Princípio Ativo</th><th>Saldo em Estoque</th><th>Ações</th></tr></thead><tbody>${rows.map(p => {
+    const isNegative = Number(p.q) < 0;
+    return `<tr>
       <td><strong>${esc(p.name)}</strong></td>
       <td>${esc(p.activeIngredient || '-')}</td>
-      <td><strong style="${Number(p.q)<0?'color:var(--red)':''}">${num(p.q)} ${esc(p.unit)}</strong>${Number(p.q)<0?'<span class="badge refused" style="margin-left:6px;">Em Débito</span>':''}</td>
-      <td><div class="row-actions"><button class="btn light smallbtn" onclick="editProduct('${p.id}')">Editar</button><button class="btn danger smallbtn" onclick="deleteProduct('${p.id}')">Apagar</button></div></td>
-    </tr>
-  `).join('')}</tbody></table></div>` : `<div class="empty">Nenhum produto cadastrado.</div>`;
+      <td>
+        <strong style="${isNegative ? 'color:var(--red); font-size:15px;' : ''}">${num(p.q)}</strong> ${esc(p.unit)}
+        ${isNegative ? '<span class="badge refused" style="margin-left:6px;">Em Débito</span>' : ''}
+      </td>
+      <td>
+        <div class="row-actions">
+          <button class="btn light smallbtn" onclick="editProduct('${p.id}')">Editar</button>
+          <button class="btn danger smallbtn" onclick="deleteProduct('${p.id}')">Apagar</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join("")}</tbody></table></div>` : `<div class="empty">Nenhum produto cadastrado.</div>`;
 
   $("btnNewProductModal").onclick = () => {
     openModal("Novo Produto", `
       <div class="formgrid">
         <div class="field full"><label>Nome do Produto *</label><input id="modName" placeholder="Ex: Glifosato"></div>
-        <div class="field full"><label>Princípio Ativo</label><input id="modActive"></div>
+        <div class="field full"><label>Princípio Ativo (Opcional)</label><input id="modActive" placeholder="Ex: Glifosato 480g/L"></div>
         <div class="field"><label>Saldo Inicial *</label><input id="modQty" type="number" value="0"></div>
         <div class="field"><label>Unidade *</label><select id="modUnit"><option>L</option><option>kg</option><option>mL</option><option>g</option><option>un</option></select></div>
       </div>
     `, [
       { text: "Cancelar", fn: closeModal },
-      { text: "Salvar", cls: "primary", fn: async () => {
+      { text: "Salvar Produto", cls: "primary", fn: async () => {
         const name = $("modName").value.trim();
         const activeIngredient = $("modActive").value.trim();
         const q = Number($("modQty").value);
         const unit = $("modUnit").value;
-        if (!name) return toast("Informe o nome.");
+        if (!name) return toast("Informe o nome do produto.");
         db.products.push({ id: uid(), name, activeIngredient, q, unit, lots: [] });
         addHistory("Cadastro", name, q, unit, "Manual");
         await saveWithBackup();
         closeModal();
         renderStock();
-        toast("Cadastrado!");
+        toast("Produto cadastrado!");
       }}
     ]);
   };
@@ -850,38 +1228,96 @@ function exportarRelatorioPDF() {
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
   doc.text("CONTROLE DE ESTOQUE", 105, 22, { align: "center" });
+
+  doc.setFontSize(9);
+  doc.setTextColor(100, 100, 100);
+  doc.text(`Produtos e quantidades atuais – ${db.products.length} produtos`, 105, 33, { align: "center" });
+
   let startY = 40;
+  doc.setFillColor(240, 243, 246);
+  doc.rect(14, startY, 182, 8, "F");
+  doc.setTextColor(50, 50, 50);
+  doc.setFont("helvetica", "bold");
+  doc.text("PRODUTO", 18, startY + 6);
+  doc.text("QUANTIDADE", 175, startY + 6, { align: "right" });
+
+  startY += 8;
+  doc.setFont("helvetica", "normal");
+
   db.products.forEach((p, idx) => {
-    if (startY > 275) { doc.addPage(); startY = 20; }
+    if (startY > 275) {
+      doc.addPage();
+      startY = 20;
+    }
+    if (idx % 2 === 0) {
+      doc.setFillColor(248, 250, 252);
+      doc.rect(14, startY, 182, 7, "F");
+    }
     doc.text(String(p.name), 18, startY + 5);
     doc.text(`${num(p.q)} ${p.unit || 'L'}`, 175, startY + 5, { align: "right" });
+    doc.setDrawColor(220, 225, 230);
+    doc.line(14, startY + 7, 196, startY + 7);
     startY += 7;
   });
+
   doc.save("controle_estoque_fazenda_karoline.pdf");
-  toast("PDF gerado!");
+  toast("Relatório em PDF gerado com sucesso!");
 }
 
 function renderCadastroMassa() {
   $("bulkConfirmBtn").onclick = async () => {
     const text = $("bulkTextArea").value.trim();
-    if (!text) return toast("Insira a lista.");
+    if (!text) return toast("Insira a lista de produtos.");
+
+    const lines = text.split("\n");
     let count = 0;
-    text.split("\n").forEach(line => {
+
+    lines.forEach(line => {
       const clean = line.trim();
       if (!clean) return;
-      const match = clean.match(/(.+)\s+(\d+(?:[.,]\d+)?)\s*(L|l|kg|KG|mL|ml|g|G|un|UN)?$/);
+
+      const match = clean.match(/(.+?)\s+(\d+(?:[.,]\d+)?)\s*(L|l|kg|KG|mL|ml|g|G|un|UN)?$/);
       if (match) {
-        db.products.push({ id: uid(), name: match[1].trim(), activeIngredient: "", q: parseFloat(match[2].replace(',', '.')), unit: (match[3] || 'L').toUpperCase(), lots: [] });
+        let name = match[1].trim();
+        let q = parseFloat(match[2].replace(',', '.'));
+        let unit = match[3] ? match[3].toLowerCase() : 'l';
+        if (unit === 'l') unit = 'L';
+        db.products.push({
+          id: uid(),
+          name,
+          activeIngredient: "",
+          q,
+          unit,
+          lots: []
+        });
         count++;
+      } else {
+        const parts = clean.split(/\s+/);
+        let possibleQty = parseFloat(parts[parts.length - 1].replace(',', '.'));
+        if (!isNaN(possibleQty) && parts.length > 1) {
+          let q = possibleQty;
+          parts.pop();
+          let name = parts.join(" ");
+          db.products.push({
+            id: uid(),
+            name,
+            activeIngredient: "",
+            q,
+            unit: "L",
+            lots: []
+          });
+          count++;
+        }
       }
     });
+
     if (count > 0) {
       await saveWithBackup();
       $("bulkTextArea").value = "";
-      toast(`${count} produtos cadastrados!`);
+      toast(`${count} produtos cadastrados com sucesso!`);
       navigateTo("estoque");
     } else {
-      toast("Formato não reconhecido.");
+      toast("Não foi possível interpretar o formato. Use Nome seguido da Quantidade (Ex: Glifosato 500).");
     }
   };
 }
@@ -889,125 +1325,258 @@ function renderCadastroMassa() {
 function renderImportPdf() {
   const fileInput = $("pdfFileInput");
   if (!fileInput) return;
+
   fileInput.onchange = async e => {
     const file = e.target.files[0];
     if (!file) return;
-    toast("Lendo PDF...");
+
+    toast("Lendo estrutura da tabela do PDF...");
     try {
       const arrayBuffer = await file.arrayBuffer();
       const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-      importedPdfDraft = [];
+      let allTextItems = [];
+
       for (let i = 1; i <= pdf.numPages; i++) {
         const page = await pdf.getPage(i);
         const textContent = await page.getTextContent();
-        textContent.items.forEach(item => {
-          const str = item.str.trim();
-          const match = str.match(/(.+)\s+(\d+(?:[.,]\d+)?)\s*(L|l|kg|KG|mL|ml|g|G|un|UN)?$/);
-          if (match) {
-            importedPdfDraft.push({ name: match[1].trim(), q: parseFloat(match[2].replace(',', '.')), unit: (match[3] || 'L').toUpperCase() });
-          }
+        let items = textContent.items.map(item => ({
+          str: item.str.trim(),
+          x: item.transform[4],
+          y: item.transform[5]
+        })).filter(it => it.str !== "" && it.str !== "|");
+
+        let rowsMap = {};
+        items.forEach(item => {
+          let foundRow = Object.keys(rowsMap).find(yCoord => Math.abs(Number(yCoord) - item.y) < 6);
+          let keyY = foundRow !== undefined ? foundRow : item.y;
+          if (!rowsMap[keyY]) rowsMap[keyY] = [];
+          rowsMap[keyY].push(item);
+        });
+
+        let sortedKeys = Object.keys(rowsMap).sort((a, b) => b - a);
+        sortedKeys.forEach(yKey => {
+          let rowItems = rowsMap[yKey].sort((a, b) => a.x - b.x);
+          let rowText = rowItems.map(it => it.str).join(" ");
+          allTextItems.push(rowText);
         });
       }
-      $("importPreviewContainer").innerHTML = `<h3>${importedPdfDraft.length} produtos encontrados</h3><button class="btn green" id="btnConfirmPdfImport">Salvar no Estoque</button>`;
+
+      importedPdfDraft = [];
+      allTextItems.forEach(line => {
+        if (/^(PRODUTO|QUANTIDADE|CONTROLE DE ESTOQUE|Produtos e quantidades atuais|\d+\s+produtos|\d+\/\d+)$/i.test(line)) {
+          return;
+        }
+        const match = line.match(/(.+?)\s+(\d+(?:[.,]\d+)?)\s*(L|l|kg|KG|mL|ml|g|G|un|UN)?$/);
+        if (match) {
+          let name = match[1].trim();
+          let q = parseFloat(match[2].replace(',', '.'));
+          let unit = match[3] ? match[3].toLowerCase() : 'l';
+          if (unit === 'l') unit = 'L';
+          importedPdfDraft.push({ name, q, unit });
+        }
+      });
+
+      const container = $("importPreviewContainer");
+      if (importedPdfDraft.length === 0) {
+        container.innerHTML = `<div class="notice warning" style="color:var(--red);">⚠️ Nenhum produto identificado. Verifique se o PDF segue o padrão de colunas.</div>`;
+        return;
+      }
+
+      const isReplaceMode = $("importReplaceCheck").checked;
+      container.innerHTML = `
+        <hr>
+        <h3>Itens Extraídos com Sucesso (${importedPdfDraft.length} produtos encontrados)</h3>
+        ${isReplaceMode ? '<p style="color:var(--red); font-weight:bold;">⚠️ ATENÇÃO: O estoque atual será substituído pelos dados deste PDF!</p>' : ''}
+        <div class="tablewrap" style="margin-top:10px; max-height:280px; overflow-y:auto;">
+          <table>
+            <thead><tr><th>Produto</th><th>Quantidade</th></tr></thead>
+            <tbody>
+              ${importedPdfDraft.map(p => `<tr><td><strong>${esc(p.name)}</strong></td><td>${num(p.q)} ${esc(p.unit)}</td></tr>`).join("")}
+            </tbody>
+          </table>
+        </div>
+        <div class="formactions" style="margin-top:15px;">
+          <button class="btn green" id="btnConfirmPdfImport">Confirmar e Salvar no Estoque</button>
+        </div>
+      `;
+
       $("btnConfirmPdfImport").onclick = async () => {
-        if ($("importReplaceCheck").checked) db.products = [];
-        importedPdfDraft.forEach(x => db.products.push({ id: uid(), name: x.name, activeIngredient: "", q: x.q, unit: x.unit, lots: [] }));
+        const origin = $("importOriginInput").value.trim() || "Importação de PDF";
+        if (isReplaceMode) {
+          db.products = [];
+          importedPdfDraft.forEach(x => {
+            db.products.push({ id: uid(), name: x.name, activeIngredient: "", q: x.q, unit: x.unit || "L", min: 0, lots: [] });
+          });
+          addHistory("Inventário", "Substituição por PDF", importedPdfDraft.length, "itens", origin);
+        } else {
+          importedPdfDraft.forEach(x => {
+            db.products.push({ id: uid(), name: x.name, activeIngredient: "", q: x.q, unit: x.unit || "L", min: 0, lots: [] });
+            addHistory("Entrada", x.name, x.q, x.unit || "L", origin);
+          });
+        }
         await saveWithBackup();
         navigateTo("estoque");
-        toast("Estoque atualizado pelo PDF!");
+        toast("Estoque atualizado com sucesso pelo PDF!");
       };
-    } catch (err) { toast("Erro ao ler PDF."); }
+
+    } catch (err) {
+      console.error(err);
+      toast("Erro ao processar o arquivo PDF.");
+    }
   };
 }
 
 function editProduct(id) {
   const p = getProduct(id);
   if (!p) return;
-  openModal("Editar Produto", `
+  openModal("Editar Produto (Estoque)", `
     <div class="formgrid">
-      <div class="field full"><label>Nome</label><input id="editPName" value="${esc(p.name)}"></div>
-      <div class="field full"><label>Princípio Ativo</label><input id="editPActive" value="${esc(p.activeIngredient || '')}"></div>
-      <div class="field"><label>Saldo</label><input id="editPQty" type="number" step="any" value="${p.q}"></div>
+      <div class="field full"><label>Nome do Produto</label><input id="editPName" value="${esc(p.name)}"></div>
+      <div class="field full"><label>Princípio Ativo (Manual)</label><input id="editPActive" value="${esc(p.activeIngredient || "")}" placeholder="Ex: Glifosato 480g/L"></div>
+      <div class="field"><label>Saldo Atual (${esc(p.unit)})</label><input id="editPQty" type="number" step="any" value="${p.q}"></div>
+      <div class="field"><label>Unidade</label><select id="editPUnit"><option ${p.unit==='L'?'selected':''}>L</option><option ${p.unit==='kg'?'selected':''}>kg</option><option ${p.unit==='mL'?'selected':''}>mL</option><option ${p.unit==='g'?'selected':''}>g</option><option ${p.unit==='un'?'selected':''}>un</option></select></div>
     </div>
   `, [
     { text: "Cancelar", fn: closeModal },
-    { text: "Salvar", cls: "primary", fn: async () => {
+    { text: "Salvar Alterações", cls: "primary", fn: async () => {
       p.name = $("editPName").value.trim();
       p.activeIngredient = $("editPActive").value.trim();
       p.q = Number($("editPQty").value);
+      p.unit = $("editPUnit").value;
+      addHistory("Ajuste Manual", p.name, p.q, p.unit, "Edição Direta no Estoque");
       await saveWithBackup();
       closeModal();
       renderStock();
-      toast("Atualizado!");
+      toast("Produto atualizado e salvo com sucesso!");
     }}
   ]);
 }
 
 async function deleteProduct(id) {
-  if (!confirm("Apagar produto?")) return;
+  if (!confirm("Deseja apagar este produto?")) return;
   db.products = db.products.filter(p => p.id !== id);
   await saveWithBackup();
   renderStock();
-  toast("Removido!");
+  toast("Produto removido!");
 }
 
 function renderHistory() {
-  const hList = db.history || [];
-  $("historyTableContainer").innerHTML = hList.length ? `<div class="tablewrap"><table><thead><tr><th>Data</th><th>Tipo</th><th>Produto</th><th>Qtd</th><th>Ação</th></tr></thead><tbody>${hList.map(h => `
-    <tr>
-      <td>${fmtDate(h.date)}</td>
-      <td><span class="badge neutral">${esc(h.type)}</span></td>
-      <td><strong>${esc(h.name)}</strong></td>
-      <td>${num(h.q)} ${esc(h.u)}</td>
-      <td style="text-align:right;"><button class="btn danger smallbtn" onclick="estornarHistorico('${h.id}')">Apagar</button></td>
-    </tr>
-  `).join('')}</tbody></table></div>` : `<div class="empty">Sem histórico.</div>`;
+  const historyList = db.history || [];
+  $("historyTableContainer").innerHTML = historyList.length ? `
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Data</th>
+            <th>Tipo</th>
+            <th>Produto / Descrição</th>
+            <th>Qtd</th>
+            <th>Resp.</th>
+            <th style="text-align:right;">Ação</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${historyList.map(h => `
+            <tr>
+              <td>${fmtDate(h.date)}</td>
+              <td><span class="badge neutral">${esc(h.type)}</span></td>
+              <td><strong>${esc(h.name)}</strong><br><small style="color:var(--muted);">${esc(h.origin || '')}</small></td>
+              <td>${num(h.q)} ${esc(h.u)}</td>
+              <td>${esc(h.role)}</td>
+              <td style="text-align:right;">
+                <button class="btn danger smallbtn" onclick="estornarHistorico('${h.id}')">🗑️ Apagar / Estornar</button>
+              </td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    </div>
+  ` : `<div class="empty">Sem histórico de movimentações.</div>`;
 }
 
 async function estornarHistorico(historyId) {
-  if (!confirm("Apagar lançamento e estornar?")) return;
-  const idx = db.history.findIndex(h => h.id === historyId);
-  if (idx === -1) return;
-  db.history.splice(idx, 1);
+  if (!confirm("Deseja apagar este lançamento? O sistema fará o estorno automático da quantidade no estoque.")) return;
+  const index = db.history.findIndex(h => h.id === historyId);
+  if (index === -1) return toast("Registro não encontrado.");
+  const h = db.history[index];
+  let prod = db.products.find(p => norm(p.name) === norm(h.name));
+  if (prod) {
+    if (h.type.includes("Baixa") || h.type.includes("Saída")) {
+      prod.q = Number(prod.q || 0) + Number(h.q);
+    } else if (h.type.includes("Entrada") || h.type.includes("Cadastro")) {
+      prod.q = Number(prod.q || 0) - Number(h.q);
+    }
+  }
+  db.history.splice(index, 1);
   await saveWithBackup();
   renderHistory();
-  toast("Estornado!");
+  toast("Lançamento apagado e estoque estornado com sucesso!");
 }
 
+// ESCRITÓRIO: FOLHETOS DE PRODUTOS COM TEMPORIZADOR REGRESSIVO DE 24H
 function renderEscritorioFolhetos() {
   limparFolhetosExpirados();
   const folhetos = db.folhetos || [];
-  const agora = Date.now();
-  const vinteQuatroHoras = 24 * 60 * 60 * 1000;
-
   $("escritorioFolhetosContainer").innerHTML = folhetos.length ? folhetos.map(f => {
-    let tempoRestanteHtml = '';
-    if (f.baixadoEscritorio && f.baixadoEm) {
-      const restante = vinteQuatroHoras - (agora - f.baixadoEm);
-      if (restante > 0) {
-        const horas = Math.floor(restante / (1000 * 60 * 60));
-        const minutos = Math.floor((restante % (1000 * 60 * 60)) / (1000 * 60));
-        tempoRestanteHtml = `<small style="display:block; color:var(--muted); font-size:10px; margin-top:2px;">⏱️ Apaga em ${horas}h ${minutos}m</small>`;
-      }
-    }
+    const timer = calcularTempoRestanteFormatado(f);
+    const exibeTimer = f.isFoto || f.baixadoEscritorio;
+
     return `
-      <div class="folheto-card" style="${f.baixadoEscritorio ? 'opacity:0.8;' : 'border-left:4px solid var(--green);'}">
+      <div class="folheto-card" style="${f.baixadoEscritorio ? 'background:#f8fafc; opacity:0.8;' : 'border-left:4px solid var(--green);'}">
         <div class="folheto-head">
           <div>
             <strong>${f.isFoto ? '📷 Folheto por Foto' : 'Folheto Pedido'} #${esc(f.orderNo)}</strong>
-            <small style="display:block;">${esc(f.farm)} | ${esc(f.requester)}</small>
-            ${tempoRestanteHtml}
+            <small style="display:block; color:var(--muted);">Destino/Talhão: ${esc(f.farm)} | Solicitante: ${esc(f.requester)} | Data: ${fmtDate(f.date)}</small>
+            ${exibeTimer ? `
+              <div style="margin-top:6px;">
+                <span class="badge pending" style="background:#fff3cd; color:#856404; font-weight:bold; border:1px solid #ffeeba;">
+                  ⏱️ Apaga em: ${timer.texto}
+                </span>
+              </div>
+            ` : ''}
           </div>
-          <div>${f.baixadoEscritorio ? '<span class="badge delivered">Baixado</span>' : `<button class="btn green smallbtn" onclick="confirmarBaixaEscritorio('${f.id}')">Confirmar Baixa</button>`}</div>
+          <div style="margin-top:6px;">
+            ${f.baixadoEscritorio ? '<span class="badge delivered">✓ Baixado</span>' : `<button class="btn green smallbtn" onclick="confirmarBaixaEscritorio('${f.id}')">✓ Confirmar Baixa no Sistema</button>`}
+          </div>
         </div>
-        ${f.isFoto ? `<img src="${f.fotoUrl}" style="max-height:160px; border-radius:8px; cursor:pointer;" onclick="abrirFotoGrande('${f.fotoUrl}')">` : ''}
+        ${f.isFoto ? `
+          <div style="margin:10px 0;">
+            <p><strong>Observação:</strong> ${esc(f.note || 'Nenhuma')}</p>
+            <img src="${f.fotoUrl}" alt="Foto do Folheto" style="max-height:160px; border-radius:8px; border:1px solid var(--line); cursor:pointer;" onclick="abrirFotoGrande('${f.fotoUrl}')">
+            <p><small style="color:var(--blue); cursor:pointer;" onclick="abrirFotoGrande('${f.fotoUrl}')">🔍 Clique na imagem para ampliar</small></p>
+          </div>
+        ` : ''}
+        <div class="tablewrap">
+          <table class="compact-table">
+            <thead>
+              <tr>
+                <th style="width:60%;">Produto Separado</th>
+                <th style="width:40%; text-align:right;">Quantidade</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${f.items.map(it => `
+                <tr>
+                  <td><strong>${esc(it.name)}</strong></td>
+                  <td style="text-align:right;"><strong style="color:var(--blue); font-size:14px;">${num(it.q)} ${esc(it.u)}</strong></td>
+                </tr>
+              `).join("")}
+            </tbody>
+          </table>
+        </div>
       </div>
     `;
-  }).join('') : `<div class="empty">Nenhum folheto pendente.</div>`;
+  }).join("") : `<div class="empty">Nenhum folheto de produto pendente no momento.</div>`;
 }
 
 function abrirFotoGrande(url) {
-  openModal("Visualizar Foto", `<div style="text-align:center;"><img src="${url}" style="max-width:100%; border-radius:10px;"></div>`, [{ text: "Fechar", fn: closeModal }]);
+  openModal("Visualizar Foto do Folheto", `
+    <div style="text-align:center;">
+      <img src="${url}" alt="Foto Ampliada" style="max-width:100%; border-radius:10px;">
+    </div>
+  `, [
+    { text: "Fechar", fn: closeModal }
+  ]);
 }
 
 async function confirmarBaixaEscritorio(id) {
@@ -1018,22 +1587,42 @@ async function confirmarBaixaEscritorio(id) {
   await saveWithBackup();
   renderEscritorioFolhetos();
   renderActiveView();
-  toast("Baixa confirmada!");
+  toast("Baixa confirmada! O folheto será apagado automaticamente em 24 horas.");
 }
 
+// ESCRITÓRIO: FOLHETOS DE DIESEL COM CLIQUE PARA VER MAQUINÁRIO
 function renderEscritorioCombustivel() {
   const folhetos = db.fuelFolhetos || [];
   $("escritorioCombustivelContainer").innerHTML = folhetos.length ? folhetos.map(f => `
-    <div class="folheto-card" style="${f.baixadoEscritorio ? 'opacity:0.8;' : 'border-left:4px solid var(--orange);'}">
+    <div class="folheto-card" style="${f.baixadoEscritorio ? 'background:#f8fafc; opacity:0.8;' : 'border-left:4px solid var(--orange);'}">
       <div class="folheto-head">
         <div>
-          <strong>Abastecimento #${esc(f.ticketNo)}</strong>
-          <small style="display:block; color:var(--blue); font-weight:bold; margin-top:2px;">🚜 Máquina: ${esc(f.dest)} | Volume: ${num(f.q)} L</small>
+          <strong style="cursor:pointer; color:var(--blue);" onclick="verDetalhesDiesel('${f.id}')">🚜 Folheto Abastecimento #${esc(f.ticketNo || f.id.slice(-6))}</strong>
+          <small style="display:block; color:var(--muted);">Destino / Máquina: <strong>${esc(f.dest)}</strong> | Responsável: ${esc(f.resp || 'Não informado')} | Data: ${fmtDate(f.date)}</small>
         </div>
-        <div>${f.baixadoEscritorio ? '<span class="badge delivered">Registrado</span>' : `<button class="btn green smallbtn" onclick="confirmarBaixaCombustivel('${f.id}')">Confirmar Registro</button>`}</div>
+        <div style="display:flex; gap:6px; flex-wrap:wrap; align-items:center;">
+          <button class="btn outline smallbtn" onclick="verDetalhesDiesel('${f.id}')">🚜 Ver Maquinário</button>
+          ${f.baixadoEscritorio ? '<span class="badge delivered">✓ Registrado</span>' : `<button class="btn green smallbtn" onclick="confirmarBaixaCombustivel('${f.id}')">✓ Confirmar Registro</button>`}
+        </div>
+      </div>
+      <div class="tablewrap" style="cursor:pointer;" onclick="verDetalhesDiesel('${f.id}')">
+        <table class="compact-table">
+          <thead>
+            <tr>
+              <th style="width:60%;">Tipo de Operação</th>
+              <th style="width:40%; text-align:right;">Volume (Litros)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>${esc(f.type || 'Abastecimento')}</strong></td>
+              <td style="text-align:right;"><strong style="color:var(--blue); font-size:14px;">${num(f.q)} L</strong></td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
-  `).join('') : `<div class="empty">Nenhum folheto de diesel.</div>`;
+  `).join("") : `<div class="empty">Nenhum folheto de combustível pendente no momento.</div>`;
 }
 
 async function confirmarBaixaCombustivel(id) {
@@ -1043,43 +1632,93 @@ async function confirmarBaixaCombustivel(id) {
   await saveWithBackup();
   renderEscritorioCombustivel();
   renderActiveView();
-  toast("Registrado!");
+  toast("Abastecimento registrado pelo escritório com sucesso!");
 }
 
+// COMBUSTÍVEL: HISTÓRICO COM CLIQUE PARA VER DETALHES DO MAQUINÁRIO
 function renderCombustivel() {
   updateFuelMachineSelect();
   $("fuelTotalVol").textContent = num(db.fuelStock || 0) + " L";
   const fHist = db.fuelHistory || [];
-  $("fuelHistoryContainer").innerHTML = fHist.length ? `<div class="tablewrap"><table><thead><tr><th>Data</th><th>Tipo</th><th>Litros</th><th>Destino (Máquina)</th></tr></thead><tbody>${fHist.map(h => `
-    <tr><td>${fmtDate(h.date)}</td><td>${esc(h.type)}</td><td><strong>${num(h.q)} L</strong></td><td><strong>${esc(h.dest)}</strong></td></tr>
-  `).join('')}</tbody></table></div>` : `<div class="empty">Nenhum registro.</div>`;
+  $("fuelHistoryContainer").innerHTML = fHist.length ? `
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Data</th>
+            <th>Tipo</th>
+            <th>Litros</th>
+            <th>Máquina / Destino</th>
+            <th>Resp.</th>
+            <th style="text-align:right;">Ação</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${fHist.map(h => `
+            <tr class="clickable-row" onclick="verDetalhesDiesel('${h.id}')">
+              <td>${fmtDate(h.date)}</td>
+              <td><span class="badge ${h.type.includes('Entrada') ? 'delivered' : 'refused'}">${esc(h.type)}</span></td>
+              <td><strong>${num(h.q)} L</strong></td>
+              <td><strong style="color:var(--blue);">🚜 ${esc(h.dest)}</strong></td>
+              <td>${esc(h.resp || 'Não informado')}</td>
+              <td style="text-align:right;">
+                <button class="btn light smallbtn" onclick="event.stopPropagation(); verDetalhesDiesel('${h.id}');">🔍 Ver Maquinário</button>
+              </td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    </div>
+  ` : `<div class="empty">Nenhum registro.</div>`;
 
   $("btnConfirmFuel").onclick = async () => {
     const type = $("fuelOpType").value;
     const q = Number($("fuelQtyInput").value);
     const dest = $("fuelDestSelect").value.trim();
-    if (!q || !dest) return toast("Informe litros e máquina.");
+    let resp = $("fuelRespInput").value.trim();
+    if (!q || !dest) return toast("Informe a quantidade em litros e selecione a máquina de destino.");
+    if (!resp) resp = "Não informado";
+
     if (type.includes("Entrada")) db.fuelStock += q; else db.fuelStock -= q;
-    const item = { id: uid(), ticketNo: String(Date.now()).slice(-7), type, q, dest, date: new Date().toISOString() };
-    db.fuelHistory.unshift(item);
-    db.fuelFolhetos.unshift({ id: item.id, ticketNo: item.ticketNo, type, q, dest, date: Date.now(), baixadoEscritorio: false });
+    const fuelItem = { id: uid(), ticketNo: String(Date.now()).slice(-7), type, q, dest, resp, date: new Date().toISOString() };
+    db.fuelHistory.unshift(fuelItem);
+    if (!Array.isArray(db.fuelFolhetos)) db.fuelFolhetos = [];
+    db.fuelFolhetos.unshift({
+      id: fuelItem.id,
+      ticketNo: fuelItem.ticketNo,
+      type,
+      q,
+      dest,
+      resp,
+      date: Date.now(),
+      baixadoEscritorio: false
+    });
     await saveWithBackup();
     $("fuelQtyInput").value = "";
+    $("fuelDestSelect").value = "";
+    $("fuelRespInput").value = "";
     renderCombustivel();
-    toast("Abastecimento registrado!");
+    toast("Abastecimento registrado! Folheto enviado para o escritório.");
   };
 
   $("btnCalibrateFuel").onclick = () => {
-    openModal("Calibrar Tanque", `
-      <div class="field"><label>Volume atual exato (Litros)</label><input id="calVol" type="number" step="any" value="${db.fuelStock || 0}"></div>
+    openModal("⚙️ Calibrar / Ajustar Tanque de Diesel", `
+      <div class="field">
+        <label>Volume atual exato no tanque (Litros) *</label>
+        <input id="calibrateVolInput" type="number" step="any" value="${db.fuelStock || 0}" style="font-size:18px !important; font-weight:bold;">
+        <small>Isso corrigirá imediatamente o saldo total de combustível para o valor informado.</small>
+      </div>
     `, [
       { text: "Cancelar", fn: closeModal },
-      { text: "Calibrar", cls: "green", fn: async () => {
-        db.fuelStock = Number($("calVol").value);
+      { text: "Atualizar Calibração", cls: "green", fn: async () => {
+        const novoVol = Number($("calibrateVolInput").value);
+        if (isNaN(novoVol) || novoVol < 0) return toast("Informe um valor válido.");
+        db.fuelStock = novoVol;
+        db.fuelHistory.unshift({ id: uid(), type: "Calibração", q: novoVol, dest: "Ajuste manual de tanque", resp: role, date: new Date().toISOString() });
         await saveWithBackup();
         closeModal();
         renderCombustivel();
-        toast("Tanque calibrado!");
+        toast("Tanque calibrado com sucesso!");
       }}
     ]);
   };
@@ -1087,43 +1726,54 @@ function renderCombustivel() {
 
 function renderMaquinas() {
   const maquinas = db.machines || [];
-  $("machinesTableContainer").innerHTML = maquinas.length ? `<div class="tablewrap"><table><thead><tr><th>Máquina</th><th>Modelo</th></tr></thead><tbody>${maquinas.map(m => `
-    <tr><td><strong>${esc(m.name)}</strong></td><td>${esc(m.model || '-')}</td></tr>
-  `).join('')}</tbody></table></div>` : `<div class="empty">Nenhuma máquina.</div>`;
+  $("machinesTableContainer").innerHTML = maquinas.length ? `<div class="tablewrap"><table><thead><tr><th>Máquina</th><th>Modelo</th></tr></thead><tbody>${maquinas.map(m => `<tr><td><strong>${esc(m.name)}</strong></td><td>${esc(m.model || '-')}</td></tr>`).join("")}</tbody></table></div>` : `<div class="empty">Nenhuma máquina cadastrada.</div>`;
 
   $("btnNewMachine").onclick = () => {
     openModal("Nova Máquina", `
       <div class="formgrid">
-        <div class="field full"><label>Nome *</label><input id="machName" placeholder="Ex: Trator John Deere"></div>
-        <div class="field full"><label>Modelo</label><input id="machModel"></div>
+        <div class="field full"><label>Nome *</label><input id="machName" placeholder="Ex: Trator John Deere 6115J"></div>
+        <div class="field full"><label>Modelo / Identificação</label><input id="machModel" placeholder="Ex: Trator 01"></div>
       </div>
     `, [
       { text: "Cancelar", fn: closeModal },
       { text: "Salvar", cls: "primary", fn: async () => {
         const name = $("machName").value.trim();
-        if (!name) return toast("Informe o nome.");
+        if (!name) return toast("Informe o nome da máquina.");
         db.machines.push({ id: uid(), name, model: $("machModel").value.trim() });
         await saveWithBackup();
         closeModal();
         renderMaquinas();
-        toast("Máquina cadastrada!");
+        updateFuelMachineSelect();
+        toast("Máquina cadastrada com sucesso!");
       }}
     ]);
   };
 }
 
-// Animação de Atualização de 5 Segundos
+function updateEntryProductSelect() {
+  const sel = $("entryProductSelect");
+  if (!sel) return;
+  sel.innerHTML = '<option value="">Selecione o produto que chegou...</option>' + db.products.map(p => {
+    const isDebito = Number(p.q) < 0;
+    return `<option value="${p.id}">${esc(p.name)} (${isDebito ? 'DÉBITO: ' + num(p.q) : 'Saldo: ' + num(p.q)} ${esc(p.unit)})</option>`;
+  }).join("");
+}
+
+// BARRA DE PROGRESSO DE 5 SEGUNDOS COM LIMPEZA DE CACHE
 function dispararAtualizacao5Segundos() {
   $("updateBanner").classList.remove("show");
   $("updateModalBack").classList.add("show");
+
   let progress = 0;
   const bar = $("updateProgressBar");
   const txt = $("updateProgressText");
+
   const interval = setInterval(() => {
     progress += 2;
     if (progress > 100) progress = 100;
     bar.style.width = progress + "%";
     txt.textContent = `Carregando novo código... ${progress}%`;
+
     if (progress >= 100) {
       clearInterval(interval);
       setTimeout(() => {
@@ -1135,73 +1785,112 @@ function dispararAtualizacao5Segundos() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  initCloudSync();
+  loadLocalCache();
+  checkDeviceVersionOnLoad();
 
-  document.querySelectorAll("[data-target], [data-goto]").forEach(b => {
-    b.onclick = () => {
-      const target = b.dataset.target || b.dataset.goto;
-      if (target === "entrada") updateEntryProductSelect();
-      navigateTo(target);
-    };
+  document.querySelectorAll("[data-target]").forEach(btn => btn.onclick = () => {
+    const target = btn.dataset.target;
+    if (target === "entrada") updateEntryProductSelect();
+    navigateTo(target);
+  });
+  document.querySelectorAll("[data-goto]").forEach(btn => btn.onclick = () => {
+    const target = btn.dataset.goto;
+    if (target === "entrada") updateEntryProductSelect();
+    navigateTo(target);
   });
 
-  $("menuBtn").onclick = () => { $("sidebar").classList.toggle("open"); $("overlay").classList.toggle("show"); };
+  $("menuBtn").onclick = () => {
+    $("sidebar").classList.toggle("open");
+    $("overlay").classList.toggle("show");
+  };
   $("overlay").onclick = () => { $("sidebar").classList.remove("open"); $("overlay").classList.remove("show"); };
   $("btnStartUpdate").onclick = dispararAtualizacao5Segundos;
 
-  // Foto de Folheto
-  const fotoInput = $("fotoFolhetoFile");
-  if (fotoInput) {
-    fotoInput.onchange = e => {
+  const fotoFileInput = $("fotoFolhetoFile");
+  if (fotoFileInput) {
+    fotoFileInput.onchange = e => {
       const file = e.target.files[0];
       if (!file) return;
+      const objectUrl = URL.createObjectURL(file);
+      $("fotoFolhetoPreviewContainer").innerHTML = `
+        <p style="color:var(--green); font-weight:bold;">📷 Foto carregada com sucesso!</p>
+        <img src="${objectUrl}" alt="Prévia do Folheto" style="max-width:100%; max-height:280px; border-radius:8px; border:1px solid var(--line); margin-top:8px;">
+      `;
       const reader = new FileReader();
-      reader.onload = ev => {
+      reader.onload = event => {
         const img = new Image();
         img.onload = () => {
           const canvas = document.createElement('canvas');
-          let w = img.width, h = img.height;
-          if (w > 1200) { h = Math.round((h * 1200) / w); w = 1200; }
-          canvas.width = w; canvas.height = h;
-          canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+          let width = img.width;
+          let height = img.height;
+          const maxDim = 1200;
+          if (width > height && width > maxDim) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          } else if (height > maxDim) {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
           fotoFolhetoBase64 = canvas.toDataURL('image/jpeg', 0.82);
         };
-        img.src = ev.target.result;
+        img.src = event.target.result;
       };
       reader.readAsDataURL(file);
     };
   }
 
-  const btnEnvFoto = $("btnEnviarFotoFolheto");
-  if (btnEnvFoto) {
-    btnEnvFoto.onclick = async () => {
+  const btnEnviarFoto = $("btnEnviarFotoFolheto");
+  if (btnEnviarFoto) {
+    btnEnviarFoto.onclick = async () => {
       const titulo = $("fotoFolhetoTitulo").value.trim();
-      if (!titulo || !fotoFolhetoBase64) return toast("Informe a identificação e aguarde a foto.");
-      db.folhetos.unshift({
-        id: uid(), orderNo: "FOTO-" + String(Date.now()).slice(-5), farm: titulo,
-        requester: role, hectares: 0, note: $("fotoFolhetoObs").value.trim(),
-        date: Date.now(), baixadoEscritorio: false, isFoto: true, fotoUrl: fotoFolhetoBase64, items: []
-      });
+      const obs = $("fotoFolhetoObs").value.trim();
+      if (!titulo) return toast("Informe a identificação ou talhão do folheto.");
+      if (!fotoFolhetoBase64) return toast("Aguarde a foto carregar completamente.");
+
+      const novoFolhetoFoto = {
+        id: uid(),
+        orderNo: "FOTO-" + String(Date.now()).slice(-5),
+        farm: titulo,
+        requester: role,
+        hectares: 0,
+        note: obs,
+        date: Date.now(),
+        baixadoEscritorio: false,
+        isFoto: true,
+        fotoUrl: fotoFolhetoBase64,
+        items: []
+      };
+
+      if (!Array.isArray(db.folhetos)) db.folhetos = [];
+      db.folhetos.unshift(novoFolhetoFoto);
       await saveWithBackup();
+
       fotoFolhetoBase64 = "";
       $("fotoFolhetoTitulo").value = "";
+      $("fotoFolhetoObs").value = "";
+      $("fotoFolhetoFile").value = "";
+      $("fotoFolhetoPreviewContainer").innerHTML = "";
+
+      toast("Foto do folheto enviada com sucesso para o escritório!");
       navigateTo("dashboard");
-      toast("Foto enviada ao escritório!");
     };
   }
 
-  // Seletor de Perfil com PIN
   const roleSelect = $("roleSelect");
   roleSelect.onchange = e => {
-    const sel = e.target.value;
-    if (sel === "Escritório" || sel === "Depósito") {
-      pendingTargetRole = sel;
+    const selectedRole = e.target.value;
+    if (selectedRole === "Escritório" || selectedRole === "Depósito") {
+      pendingTargetRole = selectedRole;
       $("pinInputVal").value = "";
-      $("pinModalTitle").textContent = `🔒 PIN para acessar perfil: ${sel}`;
+      $("pinModalTitle").textContent = `🔒 PIN para acessar perfil: ${selectedRole}`;
       $("pinModalBack").classList.add("show");
       $("pinInputVal").focus();
     } else {
-      role = sel;
+      role = selectedRole;
       saveWithBackup();
       navigateTo("dashboard");
       toast("Perfil alterado para " + role);
@@ -1211,56 +1900,138 @@ document.addEventListener("DOMContentLoaded", () => {
   $("pinModalClose").onclick = () => { $("pinModalBack").classList.remove("show"); roleSelect.value = role; };
   $("pinCancelBtn").onclick = () => { $("pinModalBack").classList.remove("show"); roleSelect.value = role; };
   $("pinConfirmBtn").onclick = () => {
-    const entered = $("pinInputVal").value.trim();
-    const correct = (db.pins && db.pins[pendingTargetRole]) || "1234";
-    if (entered === correct) {
+    const enteredPin = $("pinInputVal").value.trim();
+    if (!db.pins) db.pins = { Escritório: "1234", Depósito: "1234" };
+    const correctPin = db.pins[pendingTargetRole] || "1234";
+    if (enteredPin === correctPin) {
       role = pendingTargetRole;
       saveWithBackup();
       $("pinModalBack").classList.remove("show");
       navigateTo("dashboard");
-      toast("Acesso autorizado!");
+      checkDepositoAlert();
+      toast("Acesso autorizado para " + role);
     } else {
-      toast("❌ PIN incorreto!");
+      toast("❌ Senha PIN incorreta!");
+      $("pinInputVal").focus();
     }
   };
+
+  $("pinInputVal").onkeydown = e => { if (e.key === "Enter") $("pinConfirmBtn").click(); };
 
   $("btnSavePin").onclick = async () => {
     const targetProf = $("pinTargetProfile").value;
     const newPin = $("newPinInput").value.trim();
-    if (!newPin || newPin.length < 3) return toast("PIN inválido (mínimo 3 dígitos).");
+    if (!newPin || newPin.length < 3) return toast("Informe um PIN válido (mínimo 3 dígitos).");
     if (!db.pins) db.pins = { Escritório: "1234", Depósito: "1234" };
     db.pins[targetProf] = newPin;
     await saveWithBackup();
     $("newPinInput").value = "";
-    toast(`Nova senha PIN salva com sucesso!`);
+    toast(`Nova senha PIN do perfil ${targetProf} salva com sucesso!`);
   };
 
-  // Solicitação por Hectare
+  $("stockSearchInput").oninput = e => {
+    stockSearch = e.target.value;
+    renderStock();
+  };
+
+  $("btnConfirmEntry").onclick = async () => {
+    const prodId = $("entryProductSelect").value;
+    const q = Number($("entryQtyInput").value);
+    const unit = $("entryUnitSelect").value;
+    const lot = $("entryLotInput").value.trim();
+    const exp = $("entryExpInput").value;
+    if (!prodId || !q) return toast("Selecione o produto e informe a quantidade.");
+    const prod = getProduct(prodId);
+    if (!prod) return toast("Produto não encontrado.");
+    const saldoAnterior = Number(prod.q) || 0;
+
+    prod.q = saldoAnterior + q;
+    if (lot && exp) {
+      if (!Array.isArray(prod.lots)) prod.lots = [];
+      prod.lots.push({ lot, exp, q });
+    }
+    addHistory("Entrada de Estoque", prod.name, q, unit, `Entrada de Compras (Novo Saldo: ${prod.q})`);
+    await saveWithBackup();
+    $("entryQtyInput").value = "";
+    $("entryLotInput").value = "";
+    navigateTo("estoque");
+    toast(`Entrada registrada! ${saldoAnterior < 0 ? 'Débito abatido.' : ''} Novo saldo: ${prod.q} ${prod.unit}`);
+  };
+
   $("btnPreviewOrder").onclick = () => {
     const requester = $("reqRequester").value.trim();
     const farm = $("reqFarm").value.trim();
     const hectares = Number($("reqHectares").value);
     const text = $("reqBulkText").value.trim();
-    if (!requester || !farm || !hectares || !text) return toast("Preencha todos os campos.");
+    if (!requester || !farm || !hectares || !text) return toast("Preencha todos os campos do pedido.");
 
+    const rawLines = text.split("\n");
     let calculatedItems = [];
-    text.split("\n").forEach(line => {
+
+    rawLines.forEach(line => {
       const parsed = parseRecipeLine(line);
       if (!parsed || !parsed.name) return;
       const matched = findBestProductMatch(parsed.name);
+      const stockUnit = (matched.unit || "L").trim();
+
       let totalQty = parsed.dose * hectares;
-      calculatedItems.push({ productId: matched.id, name: matched.name, doseTyped: parsed.dose, unitTyped: parsed.typedUnit || matched.unit, q: totalQty, u: matched.unit || "L" });
+      let finalQty = totalQty;
+      let finalUnit = stockUnit;
+
+      const typedU = parsed.typedUnit.toLowerCase();
+      const stockU = stockUnit.toLowerCase();
+
+      if (typedU === "ml" && stockU === "l") {
+        finalQty = totalQty / 1000;
+      } else if (typedU === "l" && stockU === "ml") {
+        finalQty = totalQty * 1000;
+      } else if (typedU === "g" && stockU === "kg") {
+        finalQty = totalQty / 1000;
+      } else if (typedU === "kg" && stockU === "g") {
+        finalQty = totalQty * 1000;
+      }
+
+      calculatedItems.push({
+        productId: matched.id,
+        name: matched.name,
+        typed: parsed.name,
+        doseTyped: parsed.dose,
+        unitTyped: parsed.typedUnit || stockUnit,
+        q: finalQty,
+        u: finalUnit
+      });
     });
 
-    if (calculatedItems.length === 0) return toast("Nenhum produto válido encontrado.");
-    currentDraftOrder = { requester, farm, hectares, note: $("reqNote").value.trim(), items: calculatedItems };
+    if (calculatedItems.length === 0) return toast("Nenhum produto válido encontrado no texto.");
+
+    currentDraftOrder = {
+      requester,
+      farm,
+      hectares,
+      note: $("reqNote").value.trim(),
+      items: calculatedItems
+    };
+
+    let tableHtml = calculatedItems.map(it => `
+      <tr>
+        <td>
+          <strong>${esc(it.name)}</strong>
+          <br><small style="color:var(--muted)">Dose: ${num(it.doseTyped)} ${esc(it.unitTyped)}/ha (Total para ${hectares} ha)</small>
+        </td>
+        <td style="text-align:right;"><strong style="color:var(--blue); font-size:15px;">${num(it.q)} ${esc(it.u)}</strong></td>
+      </tr>
+    `).join("");
 
     $("previewModalBody").innerHTML = `
       <p><strong>Solicitante:</strong> ${esc(requester)} | <strong>Destino:</strong> ${esc(farm)}</p>
       <p><strong>Área Total:</strong> ${hectares} hectares</p>
-      <div class="tablewrap"><table class="compact-table"><thead><tr><th>Produto</th><th style="text-align:right;">Total a Carregar</th></tr></thead><tbody>
-      ${calculatedItems.map(it => `<tr><td><strong>${esc(it.name)}</strong><small><br>Dose: ${it.doseTyped} /ha</small></td><td style="text-align:right;"><strong>${num(it.q)} ${esc(it.u)}</strong></td></tr>`).join('')}
-      </tbody></table></div>
+      <p class="hint" style="color:var(--blue); font-weight:bold; margin-top:10px;">🔍 Produtos e quantidades totais convertidas para a área digitada:</p>
+      <div class="tablewrap" style="margin-top:10px;">
+        <table class="compact-table">
+          <thead><tr><th>Produto no Estoque</th><th style="text-align:right;">Total a Carregar</th></tr></thead>
+          <tbody>${tableHtml}</tbody>
+        </table>
+      </div>
     `;
     $("previewModalBack").classList.add("show");
   };
@@ -1269,7 +2040,17 @@ document.addEventListener("DOMContentLoaded", () => {
   $("previewCancelBtn").onclick = () => $("previewModalBack").classList.remove("show");
   $("previewConfirmBtn").onclick = async () => {
     if (!currentDraftOrder) return;
-    const o = { id: uid(), no: String(Date.now()).slice(-7), ...currentDraftOrder, created: Date.now(), status: "Pendente" };
+    const o = {
+      id: uid(),
+      no: String(Date.now()).slice(-7),
+      requester: currentDraftOrder.requester,
+      farm: currentDraftOrder.farm,
+      hectares: currentDraftOrder.hectares,
+      note: currentDraftOrder.note,
+      created: Date.now(),
+      status: "Pendente",
+      items: currentDraftOrder.items
+    };
     db.orders.unshift(o);
     await saveWithBackup();
     $("previewModalBack").classList.remove("show");
@@ -1277,29 +2058,17 @@ document.addEventListener("DOMContentLoaded", () => {
     toast("Pedido enviado para o depósito!");
   };
 
-  // Entrada de Produtos
-  function updateEntryProductSelect() {
-    const sel = $("entryProductSelect");
-    if (!sel) return;
-    sel.innerHTML = '<option value="">Selecione o produto...</option>' + db.products.map(p => `
-      <option value="${p.id}">${esc(p.name)} (${Number(p.q)<0?'DÉBITO: '+num(p.q):'Saldo: '+num(p.q)} ${esc(p.unit)})</option>
-    `).join('');
-  }
+  // RENDERIZAÇÃO INICIAL DA TELA IMEDIATAMENTE
+  renderActiveView();
+  initCloudSync();
 
-  $("btnConfirmEntry").onclick = async () => {
-    const prodId = $("entryProductSelect").value;
-    const q = Number($("entryQtyInput").value);
-    const unit = $("entryUnitSelect").value;
-    if (!prodId || !q) return toast("Selecione o produto e informe a quantidade.");
-    const prod = getProduct(prodId);
-    if (!prod) return toast("Produto não encontrado.");
-    prod.q = (Number(prod.q) || 0) + q;
-    addHistory("Entrada de Estoque", prod.name, q, unit, "Entrada de Compras");
-    await saveWithBackup();
-    $("entryQtyInput").value = "";
-    navigateTo("estoque");
-    toast("Entrada registrada com sucesso!");
-  };
+  // ATUALIZAÇÃO CONTÍNUA DO FIREBASE E DOS TEMPORIZADORES
+  setInterval(() => {
+    initCloudSync();
+    if (currentView === "escritorio_folhetos") {
+      renderEscritorioFolhetos();
+    }
+  }, 3000);
 });
 </script>
 </body>
