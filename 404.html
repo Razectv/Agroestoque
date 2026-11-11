@@ -253,7 +253,7 @@ tbody tr:last-child td{border-bottom:0}
  <nav class="nav">
   <button class="nav-btn menu-admin-only" data-target="usuarios"><span class="nav-icon">♙</span>Perfis e Segurança (PIN)</button>
  </nav>
- <div class="sidefoot"><strong>Fazenda Karoline</strong><br>Versão <span id="lblSysVersion">26.0</span></div>
+ <div class="sidefoot"><strong>Fazenda Karoline</strong><br>Versão <span id="lblSysVersion">26.1</span></div>
 </aside>
 
 <div class="overlay" id="overlay"></div>
@@ -576,8 +576,8 @@ tbody tr:last-child td{border-bottom:0}
 
 <script>
 "use strict";
-const CURRENT_CODE_VERSION = "26.0";
-const RELEASE_NOTES = `• Suporte ao botão voltar do celular (comportamento de app nativo);\n• Modal de detalhes ao clicar na Saída de Diesel;\n• Temporizador regressivo de 24h em tempo real nos folhetos de foto.`;
+const CURRENT_CODE_VERSION = "26.1";
+const RELEASE_NOTES = `• Correção definitiva do reset ao atualizar a página;\n• Sincronização síncrona com o Firebase v24;\n• Suporte ao botão voltar do celular e temporizadores em tempo real.`;
 
 const TITLES = {
   dashboard: "Visão geral",
@@ -648,48 +648,26 @@ function limparFolhetosExpirados() {
   }
 }
 
-function isVersionGreater(v1, v2) {
-  if (!v1 || !v2) return false;
-  const p1 = String(v1).split('.').map(Number);
-  const p2 = String(v2).split('.').map(Number);
-  for (let i = 0; i < Math.max(p1.length, p2.length); i++) {
-    const val1 = p1[i] || 0;
-    const val2 = p2[i] || 0;
-    if (val1 > val2) return true;
-    if (val1 < val2) return false;
-  }
-  return false;
-}
-
+// CARREGAMENTO BLINDADO CONTRA RESET AO ATUALIZAR
 async function initCloudSync() {
   if (window.cloudLoad) {
     const cloudData = await window.cloudLoad();
-    if (cloudData && Array.isArray(cloudData.products)) {
-      if (cloudData.systemVersion && isVersionGreater(cloudData.systemVersion, CURRENT_CODE_VERSION)) {
-        $("updateBanner").classList.add("show");
-      } else {
-        $("updateBanner").classList.remove("show");
-        if (cloudData.systemVersion !== CURRENT_CODE_VERSION) {
-          db.systemVersion = CURRENT_CODE_VERSION;
-          saveWithBackup();
-        }
-      }
-
+    if (cloudData && Array.isArray(cloudData.products) && cloudData.products.length > 0) {
       db = cloudData;
-      if (db.fuelStock === undefined) db.fuelStock = 5000;
-      if (!db.pins) db.pins = { Escritório: "1234", Depósito: "1234" };
-      if (!Array.isArray(db.fuelHistory)) db.fuelHistory = [];
-      if (!Array.isArray(db.fuelFolhetos)) db.fuelFolhetos = [];
-      if (!Array.isArray(db.machines)) db.machines = [];
-      if (!Array.isArray(db.orders)) db.orders = [];
-      if (!Array.isArray(db.folhetos)) db.folhetos = [];
-      if (!Array.isArray(db.history)) db.history = [];
-      
-      limparFolhetosExpirados();
-      renderActiveView();
-      checkDepositoAlert();
     }
   }
+  if (db.fuelStock === undefined) db.fuelStock = 5000;
+  if (!db.pins) db.pins = { Escritório: "1234", Depósito: "1234" };
+  if (!Array.isArray(db.fuelHistory)) db.fuelHistory = [];
+  if (!Array.isArray(db.fuelFolhetos)) db.fuelFolhetos = [];
+  if (!Array.isArray(db.machines)) db.machines = [];
+  if (!Array.isArray(db.orders)) db.orders = [];
+  if (!Array.isArray(db.folhetos)) db.folhetos = [];
+  if (!Array.isArray(db.history)) db.history = [];
+  
+  limparFolhetosExpirados();
+  renderActiveView();
+  checkDepositoAlert();
 }
 
 function toast(s) {
@@ -732,7 +710,7 @@ function parseRecipeLine(line) {
   return { name, dose, typedUnit };
 }
 
-// FUNÇÃO NAVIGATETO COM SUPORTE AO HISTÓRICO (BOTÃO VOLTAR DO CELULAR)
+// NAVEGAÇÃO COM SUPORTE AO BOTÃO VOLTAR DO CELULAR
 function navigateTo(target, pushHistory = true) {
   if (!TITLES[target]) return;
 
@@ -1318,7 +1296,7 @@ document.addEventListener("DOMContentLoaded", () => {
     navigateTo(targetView, false);
   });
 
-  renderActiveView();
+  // Executa o carregamento imediato ao abrir ou atualizar a página
   initCloudSync();
 
   $("dieselDetailModalClose").onclick = () => { $("dieselDetailModalBack").classList.remove("show"); };
