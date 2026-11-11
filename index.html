@@ -255,7 +255,7 @@ tbody tr:last-child td{border-bottom:0}
   <nav class="nav">
     <button class="nav-btn menu-admin-only" data-target="usuarios"><span class="nav-icon">🔒</span>Perfis e Segurança (PIN)</button>
   </nav>
-  <div class="sidefoot"><strong>Fazenda Karoline</strong><br>Versão <span id="lblSysVersion">25.6</span></div>
+  <div class="sidefoot"><strong>Fazenda Karoline</strong><br>Versão <span id="lblSysVersion">25.7</span></div>
 </aside>
 
 <div class="overlay" id="overlay"></div>
@@ -562,8 +562,8 @@ tbody tr:last-child td{border-bottom:0}
 <script>
 "use strict";
 // VERSÃO DO CÓDIGO ATUALIZADA
-const CURRENT_CODE_VERSION = "25.6";
-const RELEASE_NOTES = `• O temporizador de 24h dos folhetos agora só inicia após a baixa feita pelo escritório;\n• Botão Voltar do celular agora direciona para a Visão Geral antes de fechar o aplicativo.`;
+const CURRENT_CODE_VERSION = "25.7";
+const RELEASE_NOTES = `• Opção de apagar máquinas da frota com confirmação (Confirmar / Cancelar);\n• Correção do seletor de máquinas que desmarcava sozinho durante o abastecimento.`;
 const TITLES = {
   dashboard: "Visão geral",
   estoque: "Estoque (Barracão)",
@@ -665,11 +665,10 @@ function limparFolhetosExpirados() {
   const vinteQuatroHoras = 24 * 60 * 60 * 1000;
   const originalLen = db.folhetos.length;
   db.folhetos = db.folhetos.filter(f => {
-    // SÓ apaga se tiver sido baixado E se passaram 24 horas da baixa
     if (f.baixadoEscritorio && f.baixadoEm) {
       return (agora - f.baixadoEm) < vinteQuatroHoras;
     }
-    return true; // Mantém todos os folhetos que ainda não deram baixa
+    return true;
   });
   if (db.folhetos.length !== originalLen) {
     saveWithBackup();
@@ -994,9 +993,11 @@ function showDepositoModal(o) {
   };
 }
 
+// SELETOR DE MÁQUINAS COM PRESERVAÇÃO DA SELEÇÃO ATUAL (CORREÇÃO DO BUG DOS 2 SEGUNDOS)
 function updateFuelMachineSelect() {
   const sel = $("fuelDestSelect");
   if (!sel) return;
+  const currentVal = sel.value; // Preserva a escolha do usuário
   const machines = db.machines || [];
   let html = '<option value="">Selecione a máquina / equipamento...</option>';
   machines.forEach(m => {
@@ -1004,6 +1005,9 @@ function updateFuelMachineSelect() {
   });
   html += '<option value="Outro / Gerador / Tanque Externo">Outro / Gerador / Tanque Externo</option>';
   sel.innerHTML = html;
+  if (currentVal) {
+    sel.value = currentVal; // Restaura a opção selecionada se ainda for válida
+  }
 }
 
 function renderActiveView() {
@@ -1696,7 +1700,7 @@ function renderCombustivel() {
     });
     await saveWithBackup();
     $("fuelQtyInput").value = "";
-    $("fuelDestSelect").value = "";
+    $("fuelDestSelect").value = ""; // Limpa a seleção após salvar com sucesso
     $("fuelRespInput").value = "";
     renderCombustivel();
     toast("Abastecimento registrado! Folheto enviado para o escritório.");
@@ -1725,9 +1729,33 @@ function renderCombustivel() {
   };
 }
 
+// MÁQUINAS COM OPÇÃO DE APAGAR E CONFIRMAÇÃO
 function renderMaquinas() {
   const maquinas = db.machines || [];
-  $("machinesTableContainer").innerHTML = maquinas.length ? `<div class="tablewrap"><table><thead><tr><th>Máquina</th><th>Modelo</th></tr></thead><tbody>${maquinas.map(m => `<tr><td><strong>${esc(m.name)}</strong></td><td>${esc(m.model || '-')}</td></tr>`).join("")}</tbody></table></div>` : `<div class="empty">Nenhuma máquina cadastrada.</div>`;
+  $("machinesTableContainer").innerHTML = maquinas.length ? `
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Máquina / Equipamento</th>
+            <th>Modelo / Identificação</th>
+            <th style="text-align:right;">Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${maquinas.map(m => `
+            <tr>
+              <td><strong>${esc(m.name)}</strong></td>
+              <td>${esc(m.model || '-')}</td>
+              <td style="text-align:right;">
+                <button class="btn danger smallbtn" onclick="deleteMachine('${m.id}')">🗑️ Apagar</button>
+              </td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    </div>
+  ` : `<div class="empty">Nenhuma máquina cadastrada na frota.</div>`;
 
   $("btnNewMachine").onclick = () => {
     openModal("Nova Máquina", `
@@ -1737,7 +1765,7 @@ function renderMaquinas() {
       </div>
     `, [
       { text: "Cancelar", fn: closeModal },
-      { text: "Salvar", cls: "primary", fn: async () => {
+      { text: "Salvar Máquina", cls: "primary", fn: async () => {
         const name = $("machName").value.trim();
         if (!name) return toast("Informe o nome da máquina.");
         db.machines.push({ id: uid(), name, model: $("machModel").value.trim() });
@@ -1750,6 +1778,29 @@ function renderMaquinas() {
     ]);
   };
 }
+
+// FUNÇÃO DE APAGAR MÁQUINA COM CONFIRMAÇÃO
+window.deleteMachine = function(id) {
+  const m = (db.machines || []).find(x => x.id === id);
+  if (!m) return;
+
+  openModal("⚠️ Confirmar Exclusão de Máquina", `
+    <div style="line-height:1.6;">
+      <p>Tem certeza que deseja apagar a máquina <strong>${esc(m.name)}</strong> da frota?</p>
+      <p class="hint" style="color:var(--red); font-weight:bold;">Esta ação removerá a máquina da lista de cadastrados.</p>
+    </div>
+  `, [
+    { text: "Cancelar", cls: "outline", fn: closeModal },
+    { text: "Sim, Confirmar Exclusão", cls: "danger", fn: async () => {
+      db.machines = (db.machines || []).filter(x => x.id !== id);
+      await saveWithBackup();
+      closeModal();
+      renderMaquinas();
+      updateFuelMachineSelect();
+      toast("Máquina removida da frota com sucesso!");
+    }}
+  ]);
+};
 
 function updateEntryProductSelect() {
   const sel = $("entryProductSelect");
