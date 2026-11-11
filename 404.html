@@ -577,7 +577,7 @@ tbody tr:last-child td{border-bottom:0}
 <script>
 "use strict";
 const CURRENT_CODE_VERSION = "26.0";
-const RELEASE_NOTES = `• Adicionado modal de informações ao clicar na Saída (Abastecimento) de Diesel;\n• Adicionado temporizador regressivo de 24h em tempo real nos folhetos de produtos por foto.`;
+const RELEASE_NOTES = `• Suporte ao botão voltar do celular (comportamento de app nativo);\n• Modal de detalhes ao clicar na Saída de Diesel;\n• Temporizador regressivo de 24h em tempo real nos folhetos de foto.`;
 
 const TITLES = {
   dashboard: "Visão geral",
@@ -750,8 +750,14 @@ function parseRecipeLine(line) {
   return { name, dose, typedUnit };
 }
 
-function navigateTo(target) {
+// FUNÇÃO NAVIGATETO COM SUPORTE AO HISTÓRICO (BOTÃO VOLTAR DO CELULAR)
+function navigateTo(target, pushHistory = true) {
   if (!TITLES[target]) return;
+
+  if (pushHistory && target !== currentView) {
+    history.pushState({ view: target }, "", "#" + target);
+  }
+
   currentView = target;
   document.querySelectorAll(".view-section").forEach(sec => sec.classList.remove("active"));
   const targetSec = $(`view-${target}`);
@@ -1151,7 +1157,7 @@ function renderHistory() {
   $("historyTableContainer").innerHTML = (db.history || []).length ? `<div class="tablewrap"><table><thead><tr><th>Data</th><th>Tipo</th><th>Produto</th><th>Qtd</th></tr></thead><tbody>${db.history.map(h => `<tr><td>${fmtDate(h.date)}</td><td>${esc(h.type)}</td><td>${esc(h.name)}</td><td>${num(h.q)} ${esc(h.u)}</td></tr>`).join("")}</tbody></table></div>` : `<div class="empty">Sem histórico.</div>`;
 }
 
-// INICIA O TEMPORIZADOR EM TEMPO REAL PARA OS FOLHETOS DE FOTO
+// TEMPORIZADOR EM TEMPO REAL PARA OS FOLHETOS DE FOTO
 function startFolhetoTimers() {
   if (timerInterval) clearInterval(timerInterval);
   
@@ -1243,7 +1249,7 @@ function renderEscritorioCombustivel() {
     </div>`).join("") : `<div class="empty">Sem folhetos de combustível.</div>`;
 }
 
-// FUNÇÃO PARA ABRIR O MODAL DE DETALHES AO CLICAR NA SAÍDA DE DIESEL
+// MODAL DE DETALHES DE DIESEL
 function abrirDetalhesDiesel(id) {
   const f = db.fuelFolhetos.find(x => x.id === id);
   if (!f) return;
@@ -1320,6 +1326,16 @@ function updateEntryProductSelect() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+  // Configuração inicial para suporte ao botão voltar do celular
+  if (!history.state) {
+    history.replaceState({ view: 'dashboard' }, "", "#dashboard");
+  }
+
+  window.addEventListener('popstate', (e) => {
+    const targetView = e.state && e.state.view ? e.state.view : 'dashboard';
+    navigateTo(targetView, false);
+  });
+
   renderActiveView();
   initCloudSync();
 
