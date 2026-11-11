@@ -1,143 +1,229 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin - Painel Mestre Fazenda Karoline</title>
-  <style>
-    :root {
-      --navy: #102b46;
-      --blue: #2864e8;
-      --green: #159568;
-      --bg-app: #f4f6f9;
-      --card-bg: #ffffff;
-      --text-main: #333333;
-      --text-muted: #666666;
-      --border-color: #e2e8f0;
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#102b46">
+<title>Fazenda Karoline | Painel Administrativo</title>
+
+<!-- Firebase SDKs -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+  import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyAuuvHAoDmG7ObwYJupqZzv9gGPk5wSExk",
+    authDomain: "agroestoque-fazenda.firebaseapp.com",
+    projectId: "agroestoque-fazenda",
+    storageBucket: "agroestoque-fazenda.firebasestorage.app",
+    messagingSenderId: "175050682787",
+    appId: "1:175050682787:web:beea0f373d9f537b5baa16"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const dbCloud = getFirestore(app);
+
+  window.cloudSave = async function(data) {
+    try {
+      await setDoc(doc(dbCloud, "sistema", "dados_fazenda"), data);
+    } catch (e) {
+      console.error("Erro ao salvar na nuvem:", e);
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    body { background-color: var(--bg-app); color: var(--text-main); padding: 20px; }
-    .container { max-width: 800px; margin: 0 auto; }
-    header { background: var(--navy); color: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; }
-    header h1 { font-size: 20px; }
-    header p { font-size: 13px; opacity: 0.8; }
-    .card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-    .card h2 { font-size: 16px; color: var(--navy); margin-bottom: 15px; border-bottom: 2px solid var(--bg-app); padding-bottom: 8px; }
-    .metricas-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 15px; }
-    .metrica-box { background: var(--bg-app); padding: 15px; border-radius: 8px; text-align: center; }
-    .metrica-num { font-size: 24px; font-weight: bold; color: var(--blue); }
-    .metrica-label { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
-    .acao-linha { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border-color); }
-    .btn { padding: 8px 16px; border-radius: 6px; border: none; font-weight: 600; cursor: pointer; font-size: 13px; }
-    .btn-ativar { background-color: var(--green); color: white; }
-    .btn-desativar { background-color: #dc2626; color: white; }
-    .mensagem-item { background: var(--bg-app); padding: 12px; border-radius: 8px; margin-bottom: 10px; font-size: 13px; border-left: 4px solid var(--blue); }
-    .mensagem-data { font-size: 11px; color: var(--text-muted); display: block; margin-top: 4px; }
-    .sem-mensagens { color: var(--text-muted); font-size: 13px; font-style: italic; text-align: center; padding: 10px; }
-  </style>
+  };
+
+  window.cloudLoad = async function() {
+    try {
+      const docSnap = await getDoc(doc(dbCloud, "sistema", "dados_fazenda"));
+      if (docSnap.exists()) return docSnap.data();
+      return null;
+    } catch (e) {
+      console.error("Erro ao carregar da nuvem:", e);
+      return null;
+    }
+  };
+</script>
+
+<style>
+:root{--navy:#102b46;--blue:#2864e8;--green:#159568;--bg:#f3f6fa;--text:#1e293b;--muted:#758195;--line:#e3e9f0;--red:#d94343;--orange:#b86b08}
+*{box-sizing:border-box; touch-action:manipulation;}
+html, body{margin:0; background:var(--bg); color:var(--text); font:14px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;}
+button, input, select, textarea{font:inherit;}
+button{cursor:pointer;}
+
+.topbar{height:65px; background:white; border-bottom:1px solid var(--line); display:flex; align-items:center; justify-content:space-between; padding:0 24px; position:sticky; top:0; z-index:10;}
+.top-title{font-weight:800; font-size:16px; color:var(--navy);}
+.content{max-width:1200px; margin:auto; padding:24px;}
+.panel{background:white; border:1px solid var(--line); border-radius:12px; padding:20px; margin-bottom:20px;}
+.panel h2{font-size:16px; margin-top:0; color:var(--navy);}
+.btn{border:0; border-radius:8px; padding:10px 16px; font-weight:750; font-size:13px; display:inline-flex; align-items:center; gap:6px;}
+.primary{background:var(--blue); color:white;}
+.green{background:var(--green); color:white;}
+.danger{background:var(--red); color:white;}
+.outline{background:white; color:var(--text); border:1px solid var(--line);}
+.tablewrap{width:100%; overflow-x:auto; margin-top:10px;}
+table{width:100%; border-collapse:collapse; text-align:left; font-size:13px;}
+th{background:#f7f9fc; color:#69778b; font-size:11px; text-transform:uppercase; padding:10px;}
+th, td{padding:10px; border-bottom:1px solid #edf0f4;}
+.toast{position:fixed; bottom:18px; right:18px; background:#142e46; color:white; padding:12px 16px; border-radius:8px; opacity:0; pointer-events:none; transition:opacity .2s; z-index:100;}
+.toast.show{opacity:1;}
+.msg-card{background:#f8fafc; border:1px solid var(--line); border-radius:8px; padding:12px 16px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;}
+</style>
 </head>
 <body>
 
-  <div class="container">
-    <header>
-      <h1>Painel Master — Fazenda Karoline</h1>
-      <p>Gerenciamento de Temas, Tráfego e Feedback dos Operadores</p>
-    </header>
+<header class="topbar">
+  <div class="top-title">🛡️ Painel Administrativo — Fazenda Karoline</div>
+  <div>
+    <button class="btn outline" onclick="window.location.href='index.html'">Voltar ao Sistema</button>
+  </div>
+</header>
 
-    <!-- TRÁFEGO E MÉTRICAS -->
-    <div class="card">
-      <h2>Tráfego e Acessos em Tempo Real</h2>
-      <div class="metricas-grid">
-        <div class="metrica-box">
-          <div class="metrica-num" id="usuariosOnline">1</div>
-          <div class="metrica-label">Pessoas no Site Agora</div>
-        </div>
-        <div class="metrica-box">
-          <div class="metrica-num" id="totalAcessos">14</div>
-          <div class="metrica-label">Acessos Hoje</div>
-        </div>
-        <div class="metrica-box">
-          <div class="metrica-num">Escritório / Dep.</div>
-          <div class="metrica-label">Setores Ativos</div>
-        </div>
-      </div>
-    </div>
+<div class="content">
 
-    <!-- CONTROLE DE TEMAS -->
-    <div class="card">
-      <h2>Controle de Temas Sazonais</h2>
-      <div class="acao-linha">
-        <div>
-          <strong>🎄 Tema Natalino</strong>
-          <p style="font-size: 12px; color: var(--text-muted);">Aplica visual festivo (Verde e Vermelho) no AgroEstoque.</p>
-        </div>
-        <button id="btnTemaMaster" class="btn btn-ativar" onclick="alternarTemaMaster()">Ativar Tema</button>
-      </div>
-    </div>
-
-    <!-- CAIXA DE MENSAGENS E OPINIÕES -->
-    <div class="card">
-      <h2>Mensagens e Reclamações dos Usuários</h2>
-      <div id="listaMensagens">
-        <div class="sem-mensagens">Nenhuma mensagem ou reclamação recebida no momento.</div>
-      </div>
+  <!-- CONTROLE DE TEMA -->
+  <div class="panel" style="border-left: 4px solid var(--green);">
+    <h2>🎄 Configurações Visuais e Temas</h2>
+    <p style="color:var(--muted); font-size:12px;">Ative ou desative o Tema Natalino para todos os usuários conectados na fazenda em tempo real.</p>
+    <div style="display:flex; align-items:center; gap:12px; margin-top:15px;">
+      <button class="btn green" id="btnToggleNatal">Carregando status do tema...</button>
+      <span id="lblStatusNatal" style="font-weight:bold; font-size:13px;"></span>
     </div>
   </div>
 
-  <script>
-    window.addEventListener('DOMContentLoaded', () => {
-      atualizarEstadoBotaoMaster();
-      
-      // Tráfego
-      let acessos = localStorage.getItem('karoline_acessos') || 14;
-      document.getElementById('totalAcessos').textContent = acessos;
+  <!-- GERENCIAMENTO DE MENSAGENS E RECLAMAÇÕES -->
+  <div class="panel">
+    <h2>💬 Caixa de Sugestões e Reclamações</h2>
+    <p style="color:var(--muted); font-size:12px;">Mensagens enviadas pelos colaboradores através da bolinha de mensagem no sistema.</p>
+    <div id="mensagensContainer" style="margin-top:15px;">
+      <div style="color:var(--muted); text-align:center; padding:20px;">Carregando mensagens...</div>
+    </div>
+  </div>
 
-      // Carregar mensagens reais
-      carregarMensagens();
-    });
+  <!-- RESET / MANUTENÇÃO -->
+  <div class="panel">
+    <h2>⚙️ Ferramentas e Segurança</h2>
+    <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:10px;">
+      <button class="btn outline" onclick="exportarBackupCompleto()">📥 Baixar Backup Geral (JSON)</button>
+      <button class="btn danger" onclick="resetarSistema()">⚠️ Limpar / Redefinir Dados</button>
+    </div>
+  </div>
 
-    function alternarTemaMaster() {
-      const statusAtual = localStorage.getItem('karoline_tema_natal') === 'true';
-      const novoStatus = !statusAtual;
-      
-      localStorage.setItem('karoline_tema_natal', novoStatus);
-      atualizarEstadoBotaoMaster();
-      
-      alert(novoStatus ? "Tema Natalino ativado com sucesso para todos os usuários!" : "Tema Natalino desativado.");
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+let dbCache = null;
+
+function toast(s) {
+  const t = $("toast");
+  t.textContent = s;
+  t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 2700);
+}
+
+async function carregarDadosAdmin() {
+  if (window.cloudLoad) {
+    dbCache = await window.cloudLoad();
+    if (!dbCache) {
+      dbCache = { temaNatal: false, products: [], orders: [] };
     }
+    atualizarBotaoNatal();
+    carregarMensagens();
+  }
+}
 
-    function atualizarEstadoBotaoMaster() {
-      const ativo = localStorage.getItem('karoline_tema_natal') === 'true';
-      const btn = document.getElementById('btnTemaMaster');
-      if (ativo) {
-        btn.textContent = "Desativar Tema";
-        btn.className = "btn btn-desativar";
-      } else {
-        btn.textContent = "Ativar Tema";
-        btn.className = "btn btn-ativar";
-      }
+function atualizarBotaoNatal() {
+  const btn = $("btnToggleNatal");
+  const lbl = $("lblStatusNatal");
+  const ativo = Boolean(dbCache.temaNatal);
+
+  if (ativo) {
+    btn.textContent = "Desativar Tema Natalino";
+    btn.className = "btn danger";
+    lbl.textContent = "🎄 Status atual: ATIVO (Todos os usuários estão vendo o tema de Natal)";
+    lbl.style.color = "var(--red)";
+  } else {
+    btn.textContent = "Ativar Tema Natalino 🎄";
+    btn.className = "btn green";
+    lbl.textContent = "☀️ Status atual: DESATIVADO (Tema padrão)";
+    lbl.style.color = "var(--muted)";
+  }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  setTimeout(carregarDadosAdmin, 500);
+
+  $("btnToggleNatal").onclick = async () => {
+    if (!dbCache) return;
+    dbCache.temaNatal = !dbCache.temaNatal;
+    
+    if (window.cloudSave) {
+      await window.cloudSave(dbCache);
+      toast(dbCache.temaNatal ? "🎄 Tema Natalino ativado na nuvem para todos!" : "☀️ Tema padrão restaurado!");
+      atualizarBotaoNatal();
     }
+  };
+});
 
-    function carregarMensagens() {
-      const container = document.getElementById('listaMensagens');
-      const mensagens = JSON.parse(localStorage.getItem('karoline_mensagens') || '[]');
+function carregarMensagens() {
+  const container = $("mensagensContainer");
+  let mensagens = [];
+  try {
+    mensagens = JSON.parse(localStorage.getItem('karoline_mensagens') || '[]');
+  } catch(e) { mensagens = []; }
 
-      if (mensagens.length === 0) {
-        container.innerHTML = '<div class="sem-mensagens">Nenhuma mensagem ou reclamação recebida no momento.</div>';
-        return;
-      }
+  if (mensagens.length === 0) {
+    container.innerHTML = `<div style="color:var(--muted); text-align:center; padding:15px;">Nenhuma mensagem ou reclamação recebida no momento.</div>`;
+    return;
+  }
 
-      container.innerHTML = '';
-      mensagens.forEach((msg) => {
-        const div = document.createElement('div');
-        div.className = 'mensagem-item';
-        div.innerHTML = `
-          <div>${msg.texto}</div>
-          <span class="mensagem-data">Enviado em: ${msg.data}</span>
-        `;
-        container.appendChild(div);
-      });
-    }
-  </script>
+  container.innerHTML = mensagens.map((m, idx) => `
+    <div class="msg-card">
+      <div>
+        <div style="font-size:11px; color:var(--muted); font-weight:bold; margin-bottom:3px;">📅 ${esc(m.data)}</div>
+        <div style="font-size:14px; font-weight:600; color:var(--text);">${esc(m.texto)}</div>
+      </div>
+      <div>
+        <button class="btn danger" style="padding:6px 10px; font-size:11px;" onclick="apagarMensagem(${idx})">Apagar</button>
+      </div>
+    </div>
+  `).join("");
+}
+
+window.apagarMensagem = function(idx) {
+  let mensagens = JSON.parse(localStorage.getItem('karoline_mensagens') || '[]');
+  mensagens.splice(idx, 1);
+  localStorage.setItem('karoline_mensagens', JSON.stringify(mensagens));
+  carregarMensagens();
+  toast("Mensagem removida com sucesso!");
+};
+
+function esc(s) {
+  return String(s ?? "").replace(/[&<>"']/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[c]));
+}
+
+window.exportarBackupCompleto = function() {
+  if (!dbCache) return toast("Dados não carregados ainda.");
+  const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(dbCache, null, 2));
+  const downloadAnchor = document.createElement('a');
+  downloadAnchor.setAttribute("href", dataStr);
+  downloadAnchor.setAttribute("download", `backup_fazenda_karoline_${Date.now()}.json`);
+  document.body.appendChild(downloadAnchor);
+  downloadAnchor.click();
+  downloadAnchor.remove();
+  toast("Backup baixado com sucesso!");
+};
+
+window.resetarSistema = function() {
+  if (prompt("Digite 'CONFIRMAR' para apagar e redefinir os dados gerais do sistema:") === "CONFIRMAR") {
+    localStorage.clear();
+    toast("Sistema limpo com sucesso!");
+    setTimeout(() => window.location.reload(), 1000);
+  }
+};
+</script>
 </body>
 </html>
