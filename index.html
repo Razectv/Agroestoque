@@ -63,7 +63,7 @@
 :root{--navy:#102b46;--blue:#2864e8;--green:#159568;--bg:#f3f6fa;--text:#1e293b;--muted:#758195;--line:#e3e9f0;--red:#d94343;--orange:#b86b08;--wa:#25d366}
 
 /* ==========================================
-   TEMA NATALINO ATIVADO VIA ADMIN
+   TEMA NATALINO ATIVADO VIA NUVEM / ADMIN
    ========================================== */
 body.tema-natal {
   --navy: #0b2918;   /* Verde pinheiro escuro */
@@ -197,26 +197,27 @@ tbody tr:last-child td{border-bottom:0}
 .overlay{display:none; position:fixed; inset:0; background:#0c1e367a; z-index:30}
 .overlay.show{display:block}
 
-/* ÍCONE FLUTUANTE DE MENSAGENS / SUGESTÕES NO CANTO INFERIOR DIREITO */
+/* ÍCONE FLUTUANTE DE MENSAGENS DISCRETO (BOLINHA NO CANTINHO) */
 .floating-msg-btn {
   position: fixed;
-  bottom: 20px;
-  right: 20px;
+  bottom: 16px;
+  right: 16px;
   background: var(--green);
   color: white;
   border: none;
-  border-radius: 50px;
-  padding: 12px 18px;
-  font-weight: bold;
+  border-radius: 50%;
+  width: 45px;
+  height: 45px;
+  font-size: 20px;
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
-  z-index: 999;
-  font-size: 13px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+  z-index: 10; /* Bem abaixo dos modais (que usam z-index 80) para nunca atrapalhar */
   display: flex;
   align-items: center;
-  gap: 8px;
-  transition: transform 0.2s;
+  justify-content: center;
+  transition: transform 0.2s, background-color 0.2s;
 }
+.floating-msg-btn:hover { transform: scale(1.1); }
 .floating-msg-btn:active { transform: scale(0.95); }
 
 .folheto-card { background:#fff; border:1px solid var(--line); border-radius:12px; padding:16px; margin-bottom:15px; box-shadow:0 2px 5px rgba(0,0,0,0.02); }
@@ -299,7 +300,7 @@ tbody tr:last-child td{border-bottom:0}
     <button class="nav-btn menu-admin-only" data-target="usuarios"><span class="nav-icon">🔒</span>Perfis e Segurança (PIN)</button>
     <button class="nav-btn" onclick="abrirAdminComPin()"><span class="nav-icon">🛡️</span>Painel Admin</button>
   </nav>
-  <div class="sidefoot"><strong>Fazenda Karoline</strong><br>Versão <span id="lblSysVersion">25.7</span></div>
+  <div class="sidefoot"><strong>Fazenda Karoline</strong><br>Versão <span id="lblSysVersion">25.8</span></div>
 </aside>
 
 <div class="overlay" id="overlay"></div>
@@ -534,9 +535,9 @@ tbody tr:last-child td{border-bottom:0}
   </div>
 </main>
 
-<!-- BOTÃO FLUTUANTE DE MENSAGENS / RECLAMAÇÕES -->
-<button class="floating-msg-btn" onclick="abrirModalFeedback()">
-  💬 Sugestões / Reclamações
+<!-- BOTÃO FLUTUANTE EM FORMATO DE BOLINHA DISCRETA NO CANTINHO -->
+<button class="floating-msg-btn" onclick="abrirModalFeedback()" title="Enviar Sugestão ou Reclamação">
+  💬
 </button>
 
 <!-- MODAL DE PROGRESSO DE ATUALIZAÇÃO (5 SEGUNDOS) -->
@@ -611,8 +612,8 @@ tbody tr:last-child td{border-bottom:0}
 <script>
 "use strict";
 // VERSÃO DO CÓDIGO ATUALIZADA
-const CURRENT_CODE_VERSION = "25.7";
-const RELEASE_NOTES = `• Integração com Painel Admin centralizado;\n• Ícone flutuante de envio de sugestões e reclamações;\n• Tema Natalino ativável via painel mestre.`;
+const CURRENT_CODE_VERSION = "25.8";
+const RELEASE_NOTES = `• Botão flutuante transformado em bolinha discreta no canto;\n• Tema Natalino sincronizado automaticamente com a nuvem para todos os usuários;\n• Melhorias gerais de estabilidade.`;
 const TITLES = {
   dashboard: "Visão geral",
   estoque: "Estoque (Barracão)",
@@ -638,7 +639,7 @@ const fmtDate = s => { const d = new Date(s); return isNaN(d) ? "-" : d.toLocale
 
 const freshDB = () => ({
   products: [], orders: [], folhetos: [], fuelFolhetos: [], history: [],
-  fuelHistory: [], machines: [], fuelStock: 5000,
+  fuelHistory: [], machines: [], fuelStock: 5000, temaNatal: false,
   pins: { Escritório: "1234", Depósito: "1234" }, systemVersion: CURRENT_CODE_VERSION
 });
 
@@ -672,22 +673,12 @@ async function saveWithBackup() {
   
   if (window.cloudSave) {
     await window.cloudSave(db);
-    try {
-      const getFirestoreInstance = () => { try { return getFirestore(); } catch(e){ return null; } };
-      await setDoc(doc(getFirestoreInstance(), "sistema", "backup_emergencia_karoline"), {
-        dataBackup: new Date().toISOString(),
-        snapshot: db
-      });
-    } catch (e) {
-      console.error("Backup de emergência ignorado:", e);
-    }
   }
 }
 
-// CHECAR TEMA NATALINO VINDO DO ADMIN
-function verificarTemaNatalinoAdmin() {
-  const temaAtivo = localStorage.getItem('karoline_tema_natal') === 'true';
-  if (temaAtivo) {
+// SINCRONIZAR TEMA NATALINO VINDO DA NUVEM PARA TODOS OS USUÁRIOS
+function verificarTemaNatalinoNuvem() {
+  if (db.temaNatal) {
     document.body.classList.add('tema-natal');
   } else {
     document.body.classList.remove('tema-natal');
@@ -803,7 +794,6 @@ function checkDeviceVersionOnLoad() {
 }
 
 async function initCloudSync() {
-  verificarTemaNatalinoAdmin();
   if (window.cloudLoad) {
     const cloudData = await window.cloudLoad();
     if (cloudData && Array.isArray(cloudData.products)) {
@@ -818,6 +808,7 @@ async function initCloudSync() {
       }
       db = cloudData;
       if (db.fuelStock === undefined) db.fuelStock = 5000;
+      if (db.temaNatal === undefined) db.temaNatal = false;
       if (!db.pins) db.pins = { Escritório: "1234", Depósito: "1234" };
       if (!Array.isArray(db.fuelHistory)) db.fuelHistory = [];
       if (!Array.isArray(db.fuelFolhetos)) db.fuelFolhetos = [];
@@ -831,6 +822,7 @@ async function initCloudSync() {
         if (!Array.isArray(p.lots)) p.lots = [];
       });
       localStorage.setItem("agroestoque_db_backup", JSON.stringify(db));
+      verificarTemaNatalinoNuvem();
       renderActiveView();
       checkDepositoAlert();
     }
