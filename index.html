@@ -255,7 +255,7 @@ tbody tr:last-child td{border-bottom:0}
   <nav class="nav">
     <button class="nav-btn menu-admin-only" data-target="usuarios"><span class="nav-icon">🔒</span>Perfis e Segurança (PIN)</button>
   </nav>
-  <div class="sidefoot"><strong>Fazenda Karoline</strong><br>Versão <span id="lblSysVersion">25.5</span></div>
+  <div class="sidefoot"><strong>Fazenda Karoline</strong><br>Versão <span id="lblSysVersion">25.6</span></div>
 </aside>
 
 <div class="overlay" id="overlay"></div>
@@ -408,10 +408,10 @@ tbody tr:last-child td{border-bottom:0}
       </div>
     </section>
 
-    <!-- ESCRITÓRIO: FOLHETOS DE SEPARATION (PRODUTOS) -->
+    <!-- ESCRITÓRIO: FOLHETOS DE SEPARAÇÃO (PRODUTOS) -->
     <section id="view-escritorio_folhetos" class="view-section">
       <div class="pagehead">
-        <div><div class="eyebrow">PAINEL DO ESCRITÓRIO</div><h1>Folhetos Pendentes de Produtos</h1><p>Acompanhe os folhetos gerados pelo sistema ou enviados por foto. Após a baixa, possuem temporizador visível e são apagados automaticamente em 24h.</p></div>
+        <div><div class="eyebrow">PAINEL DO ESCRITÓRIO</div><h1>Folhetos Pendentes de Produtos</h1><p>Acompanhe os folhetos gerados pelo sistema ou enviados por foto. A contagem das 24h para ser apagado só inicia após o escritório dar a baixa.</p></div>
       </div>
       <div class="panel">
         <div id="escritorioFolhetosContainer"></div>
@@ -562,8 +562,8 @@ tbody tr:last-child td{border-bottom:0}
 <script>
 "use strict";
 // VERSÃO DO CÓDIGO ATUALIZADA
-const CURRENT_CODE_VERSION = "25.5";
-const RELEASE_NOTES = `• Visualização detalhada do maquinário ao clicar nos registros/folhetos de Diesel;\n• Temporizador regressivo em tempo real para auto-exclusão de folhetos (24h);\n• Blindagem total com salvamento e busca direta no documento 'dados_fazenda' no Firebase sem perda de dados ao atualizar.`;
+const CURRENT_CODE_VERSION = "25.6";
+const RELEASE_NOTES = `• O temporizador de 24h dos folhetos agora só inicia após a baixa feita pelo escritório;\n• Botão Voltar do celular agora direciona para a Visão Geral antes de fechar o aplicativo.`;
 const TITLES = {
   dashboard: "Visão geral",
   estoque: "Estoque (Barracão)",
@@ -621,7 +621,6 @@ function loadLocalCache() {
 async function saveWithBackup() {
   localStorage.setItem("agroestoque_role_rem_v24", role);
   db.systemVersion = CURRENT_CODE_VERSION;
-  // Blindagem local
   localStorage.setItem("agroestoque_db_backup", JSON.stringify(db));
   
   if (window.cloudSave) {
@@ -638,12 +637,14 @@ async function saveWithBackup() {
   }
 }
 
-// TEMPORIZADOR DE EXCLUSÃO DE FOLHETOS DE 24 HORAS
+// TEMPORIZADOR DE EXCLUSÃO DE FOLHETOS DE 24 HORAS (INICIA SOMENTE APÓS A BAIXA)
 function calcularTempoRestanteFormatado(f) {
+  if (!f.baixadoEscritorio || !f.baixadoEm) {
+    return { texto: "Aguardando baixa do escritório", expirado: false };
+  }
   const agora = Date.now();
-  const tempoBase = f.baixadoEm ? f.baixadoEm : f.date;
   const vinteQuatroHoras = 24 * 60 * 60 * 1000;
-  const expiraEm = tempoBase + vinteQuatroHoras;
+  const expiraEm = f.baixadoEm + vinteQuatroHoras;
   const diff = expiraEm - agora;
 
   if (diff <= 0) return { texto: "Expirado", expirado: true };
@@ -664,14 +665,11 @@ function limparFolhetosExpirados() {
   const vinteQuatroHoras = 24 * 60 * 60 * 1000;
   const originalLen = db.folhetos.length;
   db.folhetos = db.folhetos.filter(f => {
+    // SÓ apaga se tiver sido baixado E se passaram 24 horas da baixa
     if (f.baixadoEscritorio && f.baixadoEm) {
       return (agora - f.baixadoEm) < vinteQuatroHoras;
     }
-    if (f.isFoto) {
-      const baseTime = f.baixadoEm || f.date;
-      return (agora - baseTime) < vinteQuatroHoras;
-    }
-    return true;
+    return true; // Mantém todos os folhetos que ainda não deram baixa
   });
   if (db.folhetos.length !== originalLen) {
     saveWithBackup();
@@ -737,7 +735,6 @@ async function initCloudSync() {
         if (!p.activeIngredient) p.activeIngredient = "";
         if (!Array.isArray(p.lots)) p.lots = [];
       });
-      // Atualiza o cache local blindado
       localStorage.setItem("agroestoque_db_backup", JSON.stringify(db));
       renderActiveView();
       checkDepositoAlert();
@@ -803,8 +800,12 @@ function parseRecipeLine(line) {
   return { name, dose, typedUnit };
 }
 
-function navigateTo(target) {
+// NAVEGAÇÃO DE TELAS COM REGISTRO NO HISTÓRICO DO NAVEGADOR (BOTÃO VOLTAR DO CELULAR)
+function navigateTo(target, pushHist = true) {
   if (!TITLES[target]) return;
+  if (pushHist && target !== currentView) {
+    history.pushState({ view: target }, "", "#" + target);
+  }
   currentView = target;
   document.querySelectorAll(".view-section").forEach(sec => sec.classList.remove("active"));
   const targetSec = $(`view-${target}`);
@@ -1513,13 +1514,13 @@ async function estornarHistorico(historyId) {
   toast("Lançamento apagado e estoque estornado com sucesso!");
 }
 
-// ESCRITÓRIO: FOLHETOS DE PRODUTOS COM TEMPORIZADOR REGRESSIVO DE 24H
+// ESCRITÓRIO: FOLHETOS DE PRODUTOS COM TEMPORIZADOR INICIADO APENAS APÓS A BAIXA
 function renderEscritorioFolhetos() {
   limparFolhetosExpirados();
   const folhetos = db.folhetos || [];
   $("escritorioFolhetosContainer").innerHTML = folhetos.length ? folhetos.map(f => {
     const timer = calcularTempoRestanteFormatado(f);
-    const exibeTimer = f.isFoto || f.baixadoEscritorio;
+    const exibeTimer = f.baixadoEscritorio && f.baixadoEm;
 
     return `
       <div class="folheto-card" style="${f.baixadoEscritorio ? 'background:#f8fafc; opacity:0.8;' : 'border-left:4px solid var(--green);'}">
@@ -1533,7 +1534,7 @@ function renderEscritorioFolhetos() {
                   ⏱️ Apaga em: ${timer.texto}
                 </span>
               </div>
-            ` : ''}
+            ` : '<div style="margin-top:6px;"><span class="badge neutral">⏳ Aguardando baixa do escritório</span></div>'}
           </div>
           <div style="margin-top:6px;">
             ${f.baixadoEscritorio ? '<span class="badge delivered">✓ Baixado</span>' : `<button class="btn green smallbtn" onclick="confirmarBaixaEscritorio('${f.id}')">✓ Confirmar Baixa no Sistema</button>`}
@@ -1587,7 +1588,7 @@ async function confirmarBaixaEscritorio(id) {
   await saveWithBackup();
   renderEscritorioFolhetos();
   renderActiveView();
-  toast("Baixa confirmada! O folheto será apagado automaticamente em 24 horas.");
+  toast("Baixa confirmada! O temporizador de 24 horas foi iniciado para remoção automática.");
 }
 
 // ESCRITÓRIO: FOLHETOS DE DIESEL COM CLIQUE PARA VER MAQUINÁRIO
@@ -1787,6 +1788,17 @@ function dispararAtualizacao5Segundos() {
 document.addEventListener("DOMContentLoaded", () => {
   loadLocalCache();
   checkDeviceVersionOnLoad();
+
+  // INICIALIZA O ESTADO INICIAL DO NAVEGADOR PARA O BOTÃO VOLTAR DO CELULAR
+  history.replaceState({ view: "dashboard" }, "", "#dashboard");
+
+  // CAPTURA O BOTÃO VOLTAR DO CELULAR PARA REDIRECIONAR À VISÃO GERAL
+  window.addEventListener("popstate", (e) => {
+    if (currentView !== "dashboard") {
+      navigateTo("dashboard", false);
+      history.pushState({ view: "dashboard" }, "", "#dashboard");
+    }
+  });
 
   document.querySelectorAll("[data-target]").forEach(btn => btn.onclick = () => {
     const target = btn.dataset.target;
