@@ -61,6 +61,27 @@
 
 <style>
 :root{--navy:#102b46;--blue:#2864e8;--green:#159568;--bg:#f3f6fa;--text:#1e293b;--muted:#758195;--line:#e3e9f0;--red:#d94343;--orange:#b86b08;--wa:#25d366}
+
+/* ==========================================
+   TEMA NATALINO ATIVADO VIA ADMIN
+   ========================================== */
+body.tema-natal {
+  --navy: #0b2918;   /* Verde pinheiro escuro */
+  --blue: #c41c1c;   /* Vermelho natalino forte */
+  --green: #1b8a3d;  /* Verde folha festivo */
+}
+body.tema-natal::before {
+  content: "🎄 Boas Festas — Fazenda Karoline 🎅";
+  display: block;
+  background: var(--blue);
+  color: white;
+  text-align: center;
+  font-size: 12px;
+  font-weight: bold;
+  padding: 6px;
+  letter-spacing: 0.5px;
+}
+
 *{box-sizing:border-box; touch-action:manipulation; -webkit-tap-highlight-color:transparent;}
 html, body{margin:0; background:var(--bg); color:var(--text); font:14px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; -webkit-text-size-adjust:100%;}
 button, input, select, textarea{font:inherit; touch-action:manipulation;}
@@ -176,6 +197,28 @@ tbody tr:last-child td{border-bottom:0}
 .overlay{display:none; position:fixed; inset:0; background:#0c1e367a; z-index:30}
 .overlay.show{display:block}
 
+/* ÍCONE FLUTUANTE DE MENSAGENS / SUGESTÕES NO CANTO INFERIOR DIREITO */
+.floating-msg-btn {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: var(--green);
+  color: white;
+  border: none;
+  border-radius: 50px;
+  padding: 12px 18px;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+  z-index: 999;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: transform 0.2s;
+}
+.floating-msg-btn:active { transform: scale(0.95); }
+
 .folheto-card { background:#fff; border:1px solid var(--line); border-radius:12px; padding:16px; margin-bottom:15px; box-shadow:0 2px 5px rgba(0,0,0,0.02); }
 .folheto-head { display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--line); padding-bottom:10px; margin-bottom:12px; gap:8px; }
 
@@ -254,6 +297,7 @@ tbody tr:last-child td{border-bottom:0}
   <div class="nav-label menu-admin-only">GESTÃO</div>
   <nav class="nav">
     <button class="nav-btn menu-admin-only" data-target="usuarios"><span class="nav-icon">🔒</span>Perfis e Segurança (PIN)</button>
+    <button class="nav-btn" onclick="abrirAdminComPin()"><span class="nav-icon">🛡️</span>Painel Admin</button>
   </nav>
   <div class="sidefoot"><strong>Fazenda Karoline</strong><br>Versão <span id="lblSysVersion">25.7</span></div>
 </aside>
@@ -490,6 +534,11 @@ tbody tr:last-child td{border-bottom:0}
   </div>
 </main>
 
+<!-- BOTÃO FLUTUANTE DE MENSAGENS / RECLAMAÇÕES -->
+<button class="floating-msg-btn" onclick="abrirModalFeedback()">
+  💬 Sugestões / Reclamações
+</button>
+
 <!-- MODAL DE PROGRESSO DE ATUALIZAÇÃO (5 SEGUNDOS) -->
 <div class="modalback" id="updateModalBack">
   <div class="modal" style="width:min(450px, 100%); text-align:center;">
@@ -563,7 +612,7 @@ tbody tr:last-child td{border-bottom:0}
 "use strict";
 // VERSÃO DO CÓDIGO ATUALIZADA
 const CURRENT_CODE_VERSION = "25.7";
-const RELEASE_NOTES = `• Opção de apagar máquinas da frota com confirmação (Confirmar / Cancelar);\n• Correção do seletor de máquinas que desmarcava sozinho durante o abastecimento.`;
+const RELEASE_NOTES = `• Integração com Painel Admin centralizado;\n• Ícone flutuante de envio de sugestões e reclamações;\n• Tema Natalino ativável via painel mestre.`;
 const TITLES = {
   dashboard: "Visão geral",
   estoque: "Estoque (Barracão)",
@@ -602,7 +651,6 @@ let pendingTargetRole = "";
 let currentDraftOrder = null;
 let fotoFolhetoBase64 = "";
 
-// CARREGAMENTO INICIAL DO CACHE LOCAL PARA BLINDAGEM CONTRA TELA EM BRANCO
 function loadLocalCache() {
   try {
     const cached = localStorage.getItem("agroestoque_db_backup");
@@ -617,7 +665,6 @@ function loadLocalCache() {
   }
 }
 
-// FUNÇÃO DE SALVAMENTO COM BLINDAGEM EM 'dados_fazenda' E CACHE LOCAL
 async function saveWithBackup() {
   localStorage.setItem("agroestoque_role_rem_v24", role);
   db.systemVersion = CURRENT_CODE_VERSION;
@@ -637,7 +684,67 @@ async function saveWithBackup() {
   }
 }
 
-// TEMPORIZADOR DE EXCLUSÃO DE FOLHETOS DE 24 HORAS (INICIA SOMENTE APÓS A BAIXA)
+// CHECAR TEMA NATALINO VINDO DO ADMIN
+function verificarTemaNatalinoAdmin() {
+  const temaAtivo = localStorage.getItem('karoline_tema_natal') === 'true';
+  if (temaAtivo) {
+    document.body.classList.add('tema-natal');
+  } else {
+    document.body.classList.remove('tema-natal');
+  }
+}
+
+// ABRIR PAINEL ADMIN COM A SENHA 260619
+window.abrirAdminComPin = function() {
+  openModal("🔒 Acesso Restrito — Painel Admin", `
+    <div class="field">
+      <label>Digite a Senha Mestre de Administrador:</label>
+      <input id="adminSenhaInput" type="password" placeholder="Senha mestre" style="font-size:20px !important; letter-spacing:4px; text-align:center;" autofocus>
+    </div>
+  `, [
+    { text: "Cancelar", fn: closeModal },
+    { text: "Entrar no Admin", cls: "primary", fn: () => {
+      const senha = $("adminSenhaInput").value.trim();
+      if (senha === "260619") {
+        closeModal();
+        window.location.href = "admin.html";
+      } else {
+        toast("❌ Senha de Administrador incorreta!");
+      }
+    }}
+  ]);
+};
+
+// ENVIAR SUGESTÃO / RECLAMAÇÃO PARA O ADMIN
+window.abrirModalFeedback = function() {
+  openModal("💬 Enviar Mensagem / Reclamação", `
+    <div class="field">
+      <label>Seu Nome e Setor:</label>
+      <input id="fbNome" placeholder="Ex: João (Depósito)">
+    </div>
+    <div class="field" style="margin-top:12px;">
+      <label>Sua Sugestão, Opinião ou Reclamação:</label>
+      <textarea id="fbTexto" placeholder="Descreva aqui o que acha que pode melhorar ou a reclamação..."></textarea>
+    </div>
+  `, [
+    { text: "Cancelar", fn: closeModal },
+    { text: "Enviar para Administração", cls: "green", fn: async () => {
+      const nome = $("fbNome").value.trim();
+      const texto = $("fbTexto").value.trim();
+      if (!nome || !texto) return toast("Preencha seu nome e a mensagem.");
+
+      let mensagens = JSON.parse(localStorage.getItem('karoline_mensagens') || '[]');
+      mensagens.push({
+        texto: `(${nome}): ${texto}`,
+        data: new Date().toLocaleDateString() + ' ' + new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+      });
+      localStorage.setItem('karoline_mensagens', JSON.stringify(mensagens));
+      closeModal();
+      toast("Mensagem enviada com sucesso para o painel administrativo!");
+    }}
+  ]);
+};
+
 function calcularTempoRestanteFormatado(f) {
   if (!f.baixadoEscritorio || !f.baixadoEm) {
     return { texto: "Aguardando baixa do escritório", expirado: false };
@@ -692,22 +799,11 @@ function checkDeviceVersionOnLoad() {
   const lastInstalledVersion = localStorage.getItem("agroestoque_installed_version");
   if (lastInstalledVersion !== CURRENT_CODE_VERSION) {
     localStorage.setItem("agroestoque_installed_version", CURRENT_CODE_VERSION);
-    setTimeout(() => {
-      openModal(`Sistema Atualizado! (v${CURRENT_CODE_VERSION})`, `
-        <div style="line-height:1.6;">
-          <p>O aplicativo da <strong>Fazenda Karoline</strong> foi atualizado com sucesso!</p>
-          <div class="notice" style="background:#edf5ff; border-left:4px solid var(--blue); color:#102b46; padding:12px; margin:12px 0;">
-            <strong>Novidades desta versão:</strong><br>
-            ${RELEASE_NOTES.replace(/\n/g, '<br>')}
-          </div>
-        </div>
-      `, [{ text: "Entendi e Continuar", cls: "primary", fn: closeModal }]);
-    }, 600);
   }
 }
 
-// SINCRONIZAÇÃO COM BLINDAGEM E BUSCA CONTINUA NO FIREBASE ('dados_fazenda')
 async function initCloudSync() {
+  verificarTemaNatalinoAdmin();
   if (window.cloudLoad) {
     const cloudData = await window.cloudLoad();
     if (cloudData && Array.isArray(cloudData.products)) {
@@ -799,7 +895,6 @@ function parseRecipeLine(line) {
   return { name, dose, typedUnit };
 }
 
-// NAVEGAÇÃO DE TELAS COM REGISTRO NO HISTÓRICO DO NAVEGADOR (BOTÃO VOLTAR DO CELULAR)
 function navigateTo(target, pushHist = true) {
   if (!TITLES[target]) return;
   if (pushHist && target !== currentView) {
@@ -832,7 +927,6 @@ function openModal(title, html, buttons = []) {
 
 function closeModal() { $("modalback").classList.remove("show"); }
 
-// VISUALIZAÇÃO DETALHADA DO MAQUINÁRIO ABASTECIDO (COMBUSTÍVEL)
 window.verDetalhesDiesel = function(idOrTicket) {
   const f = (db.fuelFolhetos || []).find(x => x.id === idOrTicket || x.ticketNo === idOrTicket) || 
             (db.fuelHistory || []).find(x => x.id === idOrTicket || x.ticketNo === idOrTicket);
@@ -993,11 +1087,10 @@ function showDepositoModal(o) {
   };
 }
 
-// SELETOR DE MÁQUINAS COM PRESERVAÇÃO DA SELEÇÃO ATUAL (CORREÇÃO DO BUG DOS 2 SEGUNDOS)
 function updateFuelMachineSelect() {
   const sel = $("fuelDestSelect");
   if (!sel) return;
-  const currentVal = sel.value; // Preserva a escolha do usuário
+  const currentVal = sel.value;
   const machines = db.machines || [];
   let html = '<option value="">Selecione a máquina / equipamento...</option>';
   machines.forEach(m => {
@@ -1006,7 +1099,7 @@ function updateFuelMachineSelect() {
   html += '<option value="Outro / Gerador / Tanque Externo">Outro / Gerador / Tanque Externo</option>';
   sel.innerHTML = html;
   if (currentVal) {
-    sel.value = currentVal; // Restaura a opção selecionada se ainda for válida
+    sel.value = currentVal;
   }
 }
 
@@ -1518,7 +1611,6 @@ async function estornarHistorico(historyId) {
   toast("Lançamento apagado e estoque estornado com sucesso!");
 }
 
-// ESCRITÓRIO: FOLHETOS DE PRODUTOS COM TEMPORIZADOR INICIADO APENAS APÓS A BAIXA
 function renderEscritorioFolhetos() {
   limparFolhetosExpirados();
   const folhetos = db.folhetos || [];
@@ -1595,7 +1687,6 @@ async function confirmarBaixaEscritorio(id) {
   toast("Baixa confirmada! O temporizador de 24 horas foi iniciado para remoção automática.");
 }
 
-// ESCRITÓRIO: FOLHETOS DE DIESEL COM CLIQUE PARA VER MAQUINÁRIO
 function renderEscritorioCombustivel() {
   const folhetos = db.fuelFolhetos || [];
   $("escritorioCombustivelContainer").innerHTML = folhetos.length ? folhetos.map(f => `
@@ -1640,7 +1731,6 @@ async function confirmarBaixaCombustivel(id) {
   toast("Abastecimento registrado pelo escritório com sucesso!");
 }
 
-// COMBUSTÍVEL: HISTÓRICO COM CLIQUE PARA VER DETALHES DO MAQUINÁRIO
 function renderCombustivel() {
   updateFuelMachineSelect();
   $("fuelTotalVol").textContent = num(db.fuelStock || 0) + " L";
@@ -1700,7 +1790,7 @@ function renderCombustivel() {
     });
     await saveWithBackup();
     $("fuelQtyInput").value = "";
-    $("fuelDestSelect").value = ""; // Limpa a seleção após salvar com sucesso
+    $("fuelDestSelect").value = "";
     $("fuelRespInput").value = "";
     renderCombustivel();
     toast("Abastecimento registrado! Folheto enviado para o escritório.");
@@ -1729,7 +1819,6 @@ function renderCombustivel() {
   };
 }
 
-// MÁQUINAS COM OPÇÃO DE APAGAR E CONFIRMAÇÃO
 function renderMaquinas() {
   const maquinas = db.machines || [];
   $("machinesTableContainer").innerHTML = maquinas.length ? `
@@ -1779,7 +1868,6 @@ function renderMaquinas() {
   };
 }
 
-// FUNÇÃO DE APAGAR MÁQUINA COM CONFIRMAÇÃO
 window.deleteMachine = function(id) {
   const m = (db.machines || []).find(x => x.id === id);
   if (!m) return;
@@ -1811,7 +1899,6 @@ function updateEntryProductSelect() {
   }).join("");
 }
 
-// BARRA DE PROGRESSO DE 5 SEGUNDOS COM LIMPEZA DE CACHE
 function dispararAtualizacao5Segundos() {
   $("updateBanner").classList.remove("show");
   $("updateModalBack").classList.add("show");
@@ -1840,10 +1927,8 @@ document.addEventListener("DOMContentLoaded", () => {
   loadLocalCache();
   checkDeviceVersionOnLoad();
 
-  // INICIALIZA O ESTADO INICIAL DO NAVEGADOR PARA O BOTÃO VOLTAR DO CELULAR
   history.replaceState({ view: "dashboard" }, "", "#dashboard");
 
-  // CAPTURA O BOTÃO VOLTAR DO CELULAR PARA REDIRECIONAR À VISÃO GERAL
   window.addEventListener("popstate", (e) => {
     if (currentView !== "dashboard") {
       navigateTo("dashboard", false);
@@ -2121,11 +2206,9 @@ document.addEventListener("DOMContentLoaded", () => {
     toast("Pedido enviado para o depósito!");
   };
 
-  // RENDERIZAÇÃO INICIAL DA TELA IMEDIATAMENTE
   renderActiveView();
   initCloudSync();
 
-  // ATUALIZAÇÃO CONTÍNUA DO FIREBASE E DOS TEMPORIZADORES
   setInterval(() => {
     initCloudSync();
     if (currentView === "escritorio_folhetos") {
