@@ -31,7 +31,7 @@
 
   window.cloudSave = async function(data) {
     try {
-      await setDoc(doc(dbCloud, "sistema", "dados_fazenda_remodelado_v26"), data);
+      await setDoc(doc(dbCloud, "sistema", "dados_fazenda_remodelado_v24"), data);
     } catch (e) {
       console.error("Erro ao salvar na nuvem:", e);
     }
@@ -39,7 +39,7 @@
 
   window.cloudLoad = async function() {
     try {
-      const docSnap = await getDoc(doc(dbCloud, "sistema", "dados_fazenda_remodelado_v26"));
+      const docSnap = await getDoc(doc(dbCloud, "sistema", "dados_fazenda_remodelado_v24"));
       if (docSnap.exists()) {
         return docSnap.data();
       }
@@ -604,7 +604,7 @@ const fmtDate = s => { const d = new Date(s); return isNaN(d) ? "—" : d.toLoca
 
 const freshDB = () => ({ products: [], orders: [], folhetos: [], fuelFolhetos: [], history: [], fuelHistory: [], machines: [], fuelStock: 5000, pins: { Escritório: "1234", Depósito: "1234" }, systemVersion: CURRENT_CODE_VERSION });
 let db = freshDB();
-let role = localStorage.getItem("agroestoque_role_rem_v26") || "Operador";
+let role = localStorage.getItem("agroestoque_role_rem_v24") || "Operador";
 let currentView = "dashboard";
 let stockSearch = "";
 let importedPdfDraft = [];
@@ -614,7 +614,7 @@ let fotoFolhetoBase64 = "";
 let timerInterval = null;
 
 async function saveWithBackup() {
-  localStorage.setItem("agroestoque_role_rem_v26", role);
+  localStorage.setItem("agroestoque_role_rem_v24", role);
   db.systemVersion = CURRENT_CODE_VERSION;
   if (window.cloudSave) {
     await window.cloudSave(db);
@@ -659,24 +659,6 @@ function isVersionGreater(v1, v2) {
     if (val1 < val2) return false;
   }
   return false;
-}
-
-function checkDeviceVersionOnLoad() {
-  const lastInstalledVersion = localStorage.getItem("agroestoque_installed_version");
-  if (lastInstalledVersion !== CURRENT_CODE_VERSION) {
-    localStorage.setItem("agroestoque_installed_version", CURRENT_CODE_VERSION);
-    setTimeout(() => {
-      openModal(`🎉 Sistema Atualizado! (v${CURRENT_CODE_VERSION})`, `
-        <div style="line-height:1.6;">
-          <p>O aplicativo da <strong>Fazenda Karoline</strong> foi atualizado com sucesso!</p>
-          <div class="notice" style="background:#edf5ff; border-left:4px solid var(--blue); color:#102b46; padding:12px; margin:12px 0;">
-            <strong>Novidades desta versão:</strong><br>
-            ${RELEASE_NOTES.replace(/\n/g, '<br>')}
-          </div>
-        </div>
-      `, [{ text: "Entendi e Continuar", cls: "primary", fn: closeModal }]);
-    }, 600);
-  }
 }
 
 async function initCloudSync() {
