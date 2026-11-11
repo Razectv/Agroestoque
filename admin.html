@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin - Painel Mestre Fazenda Karoline</title>
+  <style>
+    :root {
+      --navy: #102b46;
+      --blue: #2864e8;
+      --green: #159568;
+      --bg-app: #f4f6f9;
+      --card-bg: #ffffff;
+      --text-main: #333333;
+      --text-muted: #666666;
+      --border-color: #e2e8f0;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background-color: var(--bg-app); color: var(--text-main); padding: 20px; }
+    .container { max-width: 800px; margin: 0 auto; }
+    header { background: var(--navy); color: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; }
+    header h1 { font-size: 20px; }
+    header p { font-size: 13px; opacity: 0.8; }
+    .card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+    .card h2 { font-size: 16px; color: var(--navy); margin-bottom: 15px; border-bottom: 2px solid var(--bg-app); padding-bottom: 8px; }
+    .metricas-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 15px; }
+    .metrica-box { background: var(--bg-app); padding: 15px; border-radius: 8px; text-align: center; }
+    .metrica-num { font-size: 24px; font-weight: bold; color: var(--blue); }
+    .metrica-label { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+    .acao-linha { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border-color); }
+    .btn { padding: 8px 16px; border-radius: 6px; border: none; font-weight: 600; cursor: pointer; font-size: 13px; }
+    .btn-ativar { background-color: var(--green); color: white; }
+    .btn-desativar { background-color: #dc2626; color: white; }
+    .mensagem-item { background: var(--bg-app); padding: 12px; border-radius: 8px; margin-bottom: 10px; font-size: 13px; border-left: 4px solid var(--blue); }
+    .mensagem-data { font-size: 11px; color: var(--text-muted); display: block; margin-top: 4px; }
+    .sem-mensagens { color: var(--text-muted); font-size: 13px; font-style: italic; text-align: center; padding: 10px; }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <header>
+      <h1>Painel Master — Fazenda Karoline</h1>
+      <p>Gerenciamento de Temas, Tráfego e Feedback dos Operadores</p>
+    </header>
+
+    <!-- TRÁFEGO E MÉTRICAS -->
+    <div class="card">
+      <h2>Tráfego e Acessos em Tempo Real</h2>
+      <div class="metricas-grid">
+        <div class="metrica-box">
+          <div class="metrica-num" id="usuariosOnline">1</div>
+          <div class="metrica-label">Pessoas no Site Agora</div>
+        </div>
+        <div class="metrica-box">
+          <div class="metrica-num" id="totalAcessos">14</div>
+          <div class="metrica-label">Acessos Hoje</div>
+        </div>
+        <div class="metrica-box">
+          <div class="metrica-num">Escritório / Dep.</div>
+          <div class="metrica-label">Setores Ativos</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONTROLE DE TEMAS -->
+    <div class="card">
+      <h2>Controle de Temas Sazonais</h2>
+      <div class="acao-linha">
+        <div>
+          <strong>🎄 Tema Natalino</strong>
+          <p style="font-size: 12px; color: var(--text-muted);">Aplica visual festivo (Verde e Vermelho) no AgroEstoque.</p>
+        </div>
+        <button id="btnTemaMaster" class="btn btn-ativar" onclick="alternarTemaMaster()">Ativar Tema</button>
+      </div>
+    </div>
+
+    <!-- CAIXA DE MENSAGENS E OPINIÕES -->
+    <div class="card">
+      <h2>Mensagens e Reclamações dos Usuários</h2>
+      <div id="listaMensagens">
+        <div class="sem-mensagens">Nenhuma mensagem ou reclamação recebida no momento.</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    window.addEventListener('DOMContentLoaded', () => {
+      atualizarEstadoBotaoMaster();
+      
+      // Tráfego
+      let acessos = localStorage.getItem('karoline_acessos') || 14;
+      document.getElementById('totalAcessos').textContent = acessos;
+
+      // Carregar mensagens reais
+      carregarMensagens();
+    });
+
+    function alternarTemaMaster() {
+      const statusAtual = localStorage.getItem('karoline_tema_natal') === 'true';
+      const novoStatus = !statusAtual;
+      
+      localStorage.setItem('karoline_tema_natal', novoStatus);
+      atualizarEstadoBotaoMaster();
+      
+      alert(novoStatus ? "Tema Natalino ativado com sucesso para todos os usuários!" : "Tema Natalino desativado.");
+    }
+
+    function atualizarEstadoBotaoMaster() {
+      const ativo = localStorage.getItem('karoline_tema_natal') === 'true';
+      const btn = document.getElementById('btnTemaMaster');
+      if (ativo) {
+        btn.textContent = "Desativar Tema";
+        btn.className = "btn btn-desativar";
+      } else {
+        btn.textContent = "Ativar Tema";
+        btn.className = "btn btn-ativar";
+      }
+    }
+
+    function carregarMensagens() {
+      const container = document.getElementById('listaMensagens');
+      const mensagens = JSON.parse(localStorage.getItem('karoline_mensagens') || '[]');
+
+      if (mensagens.length === 0) {
+        container.innerHTML = '<div class="sem-mensagens">Nenhuma mensagem ou reclamação recebida no momento.</div>';
+        return;
+      }
+
+      container.innerHTML = '';
+      mensagens.forEach((msg) => {
+        const div = document.createElement('div');
+        div.className = 'mensagem-item';
+        div.innerHTML = `
+          <div>${msg.texto}</div>
+          <span class="mensagem-data">Enviado em: ${msg.data}</span>
+        `;
+        container.appendChild(div);
+      });
+    }
+  </script>
+</body>
+</html>
