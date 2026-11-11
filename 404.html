@@ -211,7 +211,7 @@ tbody tr:last-child td{border-bottom:0}
   font-size: 20px;
   cursor: pointer;
   box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-  z-index: 10; /* Bem abaixo dos modais (que usam z-index 80) para nunca atrapalhar */
+  z-index: 10;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -540,7 +540,7 @@ tbody tr:last-child td{border-bottom:0}
   💬
 </button>
 
-<!-- MODAL DE PROGRESSO DE ATUALIZAÇÃO (5 SEGUNDOS) -->
+<!-- MODAL DE PROGRESSO DE ATUALIZAÇÃO -->
 <div class="modalback" id="updateModalBack">
   <div class="modal" style="width:min(450px, 100%); text-align:center;">
     <div class="modal-head" style="justify-content:center;">
@@ -601,7 +601,10 @@ tbody tr:last-child td{border-bottom:0}
 <!-- MODAL GERAL -->
 <div class="modalback" id="modalback">
   <div class="modal" style="width:min(900px, 100%);">
-    <div class="modal-head"><h2 id="modalTitle">Detalhes</h2><button class="close" id="modalCloseBtn">×</button></div>
+    <div class="modal-head">
+      <h2 id="modalTitle">Detalhes</h2>
+      <button class="close" id="modalCloseBtn">×</button>
+    </div>
     <div id="modalBody"></div>
     <div class="modal-foot" id="modalFoot"></div>
   </div>
@@ -1900,24 +1903,48 @@ function dispararAtualizacao5Segundos() {
   const txt = $("updateProgressText");
 
   const interval = setInterval(() => {
-    progress += 2;
+    progress += 5;
     if (progress > 100) progress = 100;
     bar.style.width = progress + "%";
     txt.textContent = `Carregando novo código... ${progress}%`;
 
     if (progress >= 100) {
       clearInterval(interval);
+
+      // Limpar todos os caches locais para evitar congelamento do PWA
+      if ('caches' in window) {
+        caches.keys().then((names) => {
+          names.forEach((name) => {
+            caches.delete(name);
+          });
+        });
+      }
+
+      // Remover service worker travado
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then((registrations) => {
+          for(let registration of registrations) {
+            registration.unregister();
+          }
+        });
+      }
+
       setTimeout(() => {
         const cleanUrl = window.location.href.split('?')[0];
         window.location.href = cleanUrl + '?nocache=' + Date.now();
-      }, 300);
+      }, 500);
     }
-  }, 100);
+  }, 80);
 }
 
 document.addEventListener("DOMContentLoaded", () => {
   loadLocalCache();
   checkDeviceVersionOnLoad();
+
+  // ATRELAR A FUNÇÃO DE FECHAR AO BOTÃO 'X' DOS MODAIS
+  if ($("modalCloseBtn")) {
+    $("modalCloseBtn").onclick = closeModal;
+  }
 
   history.replaceState({ view: "dashboard" }, "", "#dashboard");
 
