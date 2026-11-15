@@ -405,7 +405,7 @@ tbody tr:last-child td{border-bottom:0}
     <section id="view-combustivel" class="view-section">
       <div class="pagehead">
         <div><div class="eyebrow">CONTROLE DE TANQUE</div><h1>Combustível (Diesel)</h1><p>Registre abastecimentos digitando os litros ou enviando a foto do visor. Clique em qualquer registro da tabela para ver o maquinário detalhado.</p></div>
-        <button class="btn outline" id="btnCalibrateFuel">⚙️ Calibrar Tanque</button>
+        <button class="btn outline" id="btnCalibrateFuel" style="display:none;">⚙️ Calibrar Tanque</button>
       </div>
       <div class="stats" style="grid-template-columns:repeat(2,minmax(0,1fr));">
         <div class="stat"><div class="stat-top"><span class="stat-label">Volume Atual</span><span class="stat-icon">⛽</span></div><strong id="fuelTotalVol">0 L</strong><small>No tanque</small></div>
@@ -1822,6 +1822,10 @@ async function confirmarBaixaCombustivel(id) {
 }
 
 function renderCombustivel() {
+  const podeCalibrar = (role === "Escritório" || role === "Depósito");
+  if ($("btnCalibrateFuel")) {
+    $("btnCalibrateFuel").style.display = podeCalibrar ? "inline-flex" : "none";
+  }
   updateFuelMachineSelect();
   $("fuelTotalVol").textContent = num(db.fuelStock || 0) + " L";
   const fHist = db.fuelHistory || [];
@@ -1900,6 +1904,7 @@ function renderCombustivel() {
   };
 
   $("btnCalibrateFuel").onclick = () => {
+    if (role !== "Escritório" && role !== "Depósito") return toast("Sem permissão para calibrar o tanque.");
     openModal("⚙️ Calibrar / Ajustar Tanque de Diesel", `
       <div class="field">
         <label>Volume atual exato no tanque (Litros) *</label>
