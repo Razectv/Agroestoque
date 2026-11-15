@@ -419,8 +419,13 @@ tbody tr:last-child td{border-bottom:0}
           <div class="field"><label>Responsável (Opcional)</label><input id="fuelRespInput" placeholder="Nome do motorista / operador (opcional)"></div>
           <div class="field full">
             <label>📷 Foto do Visor / Bomba de Diesel (Opcional)</label>
-            <input type="file" id="fuelFotoFile" accept="image/*">
-            <small>Toque acima para tirar uma foto na hora ou escolher da galeria. Se anexar foto, o escritório lerá os litros e dará baixa no tanque.</small>
+            <div style="display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:10px;">
+              <button type="button" class="btn primary" id="btnOpenFuelCamera">📸 Tirar Foto (Câmera)</button>
+              <button type="button" class="btn outline" id="btnOpenFuelGallery">🖼️ Escolher da Galeria</button>
+            </div>
+            <input type="file" id="fuelFotoCamera" accept="image/*" capture="environment" style="display:none;">
+            <input type="file" id="fuelFotoGallery" accept="image/*" style="display:none;">
+            <small>Use <strong>Tirar Foto (Câmera)</strong> para fotografar o visor na hora sem ocupar memória da galeria, ou <strong>Escolher da Galeria</strong> se já tiver a imagem salva.</small>
           </div>
         </div>
         <div id="fuelFotoPreviewContainer" style="margin-top:15px; text-align:center;"></div>
@@ -1887,7 +1892,8 @@ function renderCombustivel() {
     $("fuelQtyInput").value = "";
     $("fuelDestSelect").value = "";
     $("fuelRespInput").value = "";
-    if ($("fuelFotoFile")) $("fuelFotoFile").value = "";
+    if ($("fuelFotoCamera")) $("fuelFotoCamera").value = "";
+    if ($("fuelFotoGallery")) $("fuelFotoGallery").value = "";
     if ($("fuelFotoPreviewContainer")) $("fuelFotoPreviewContainer").innerHTML = "";
     renderCombustivel();
     toast(q > 0 ? "Abastecimento registrado! Folheto enviado para o escritório." : "Foto do abastecimento enviada ao escritório para leitura e baixa!");
@@ -2112,51 +2118,57 @@ document.addEventListener("DOMContentLoaded", () => {
     };
   }
 
-  const fuelFotoInput = $("fuelFotoFile");
-  if (fuelFotoInput) {
-    fuelFotoInput.onchange = e => {
-      const file = e.target.files[0];
-      if (!file) return;
-      const objectUrl = URL.createObjectURL(file);
-      $("fuelFotoPreviewContainer").innerHTML = `
-        <p style="color:var(--green); font-weight:bold; margin-bottom:6px;">📷 Foto do visor anexada com sucesso!</p>
-        <img src="${objectUrl}" alt="Prévia da Foto do Diesel" style="max-width:100%; max-height:240px; border-radius:8px; border:1px solid var(--line);">
-        <div style="margin-top:8px;">
-          <button type="button" class="btn danger smallbtn" id="btnRemoverFuelFoto">🗑️ Remover Foto</button>
-        </div>
-      `;
-      if ($("btnRemoverFuelFoto")) {
-        $("btnRemoverFuelFoto").onclick = () => {
-          fuelFotoBase64 = "";
-          $("fuelFotoFile").value = "";
-          $("fuelFotoPreviewContainer").innerHTML = "";
-        };
-      }
-      const reader = new FileReader();
-      reader.onload = event => {
-        const img = new Image();
-        img.onload = () => {
-          const canvas = document.createElement('canvas');
-          let width = img.width;
-          let height = img.height;
-          const maxDim = 1200;
-          if (width > height && width > maxDim) {
-            height = Math.round((height * maxDim) / width);
-            width = maxDim;
-          } else if (height > maxDim) {
-            width = Math.round((width * maxDim) / height);
-            height = maxDim;
-          }
-          canvas.width = width;
-          canvas.height = height;
-          const ctx = canvas.getContext('2d');
-          ctx.drawImage(img, 0, 0, width, height);
-          fuelFotoBase64 = canvas.toDataURL('image/jpeg', 0.82);
-        };
-        img.src = event.target.result;
+  function handleFuelPhotoSelection(file) {
+    if (!file) return;
+    const objectUrl = URL.createObjectURL(file);
+    $("fuelFotoPreviewContainer").innerHTML = `
+      <p style="color:var(--green); font-weight:bold; margin-bottom:6px;">📷 Foto do visor anexada com sucesso!</p>
+      <img src="${objectUrl}" alt="Prévia da Foto do Diesel" style="max-width:100%; max-height:240px; border-radius:8px; border:1px solid var(--line);">
+      <div style="margin-top:8px;">
+        <button type="button" class="btn danger smallbtn" id="btnRemoverFuelFoto">🗑️ Remover Foto</button>
+      </div>
+    `;
+    if ($("btnRemoverFuelFoto")) {
+      $("btnRemoverFuelFoto").onclick = () => {
+        fuelFotoBase64 = "";
+        if ($("fuelFotoCamera")) $("fuelFotoCamera").value = "";
+        if ($("fuelFotoGallery")) $("fuelFotoGallery").value = "";
+        $("fuelFotoPreviewContainer").innerHTML = "";
       };
-      reader.readAsDataURL(file);
+    }
+    const reader = new FileReader();
+    reader.onload = event => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+        const maxDim = 1200;
+        if (width > height && width > maxDim) {
+          height = Math.round((height * maxDim) / width);
+          width = maxDim;
+        } else if (height > maxDim) {
+          width = Math.round((width * maxDim) / height);
+          height = maxDim;
+        }
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        fuelFotoBase64 = canvas.toDataURL('image/jpeg', 0.82);
+      };
+      img.src = event.target.result;
     };
+    reader.readAsDataURL(file);
+  }
+
+  if ($("btnOpenFuelCamera") && $("fuelFotoCamera")) {
+    $("btnOpenFuelCamera").onclick = () => $("fuelFotoCamera").click();
+    $("fuelFotoCamera").onchange = e => handleFuelPhotoSelection(e.target.files[0]);
+  }
+  if ($("btnOpenFuelGallery") && $("fuelFotoGallery")) {
+    $("btnOpenFuelGallery").onclick = () => $("fuelFotoGallery").click();
+    $("fuelFotoGallery").onchange = e => handleFuelPhotoSelection(e.target.files[0]);
   }
 
   const btnEnviarFoto = $("btnEnviarFotoFolheto");
