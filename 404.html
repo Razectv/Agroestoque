@@ -404,7 +404,7 @@ tbody tr:last-child td{border-bottom:0}
     <!-- COMBUSTÍVEL -->
     <section id="view-combustivel" class="view-section">
       <div class="pagehead">
-        <div><div class="eyebrow">CONTROLE DE TANQUE</div><h1>Combustível (Diesel)</h1><p>Registre abastecimentos. Clique em qualquer registro da tabela para ver o maquinário detalhado.</p></div>
+        <div><div class="eyebrow">CONTROLE DE TANQUE</div><h1>Combustível (Diesel)</h1><p>Registre abastecimentos digitando os litros ou enviando a foto do visor. Clique em qualquer registro da tabela para ver o maquinário detalhado.</p></div>
         <button class="btn outline" id="btnCalibrateFuel">⚙️ Calibrar Tanque</button>
       </div>
       <div class="stats" style="grid-template-columns:repeat(2,minmax(0,1fr));">
@@ -414,10 +414,16 @@ tbody tr:last-child td{border-bottom:0}
       <div class="panel">
         <div class="formgrid">
           <div class="field"><label>Tipo *</label><select id="fuelOpType"><option value="Saída (Abastecimento)">Saída (Abastecimento)</option><option value="Entrada">Entrada</option></select></div>
-          <div class="field"><label>Litros *</label><input id="fuelQtyInput" type="number" min="0.1" step="any" placeholder="Ex: 500"></div>
+          <div class="field"><label>Litros (Opcional se enviar foto)</label><input id="fuelQtyInput" type="number" min="0.1" step="any" placeholder="Ex: 500 (ou deixe em branco se anexar foto)"></div>
           <div class="field"><label>Selecione a Máquina / Equipamento *</label><select id="fuelDestSelect"><option value="">Selecione...</option></select></div>
           <div class="field"><label>Responsável (Opcional)</label><input id="fuelRespInput" placeholder="Nome do motorista / operador (opcional)"></div>
+          <div class="field full">
+            <label>📷 Foto do Visor / Bomba de Diesel (Opcional)</label>
+            <input type="file" id="fuelFotoFile" accept="image/*">
+            <small>Toque acima para tirar uma foto na hora ou escolher da galeria. Se anexar foto, o escritório lerá os litros e dará baixa no tanque.</small>
+          </div>
         </div>
+        <div id="fuelFotoPreviewContainer" style="margin-top:15px; text-align:center;"></div>
         <div class="formactions"><button class="btn green" id="btnConfirmFuel">Registrar e Enviar Folheto ao Escritório</button></div>
       </div>
       <div class="panel"><div class="panel-head"><h2>Histórico de Diesel (Clique para ver detalhes do maquinário)</h2></div><div id="fuelHistoryContainer"></div></div>
@@ -466,7 +472,7 @@ tbody tr:last-child td{border-bottom:0}
     <!-- ESCRITÓRIO: FOLHETOS DE DIESEL / COMBUSTÍVEL -->
     <section id="view-escritorio_combustivel" class="view-section">
       <div class="pagehead">
-        <div><div class="eyebrow">PAINEL DO ESCRITÓRIO</div><h1>Folhetos Pendentes de Diesel</h1><p>Confirme os abastecimentos realizados pelo depósito e clique para conferir o maquinário abastecido.</p></div>
+        <div><div class="eyebrow">PAINEL DO ESCRITÓRIO</div><h1>Folhetos Pendentes de Diesel</h1><p>Confirme os abastecimentos realizados pelo depósito, leia os litros pela foto e dê baixa. A imagem é apagada automaticamente 24h após a baixa.</p></div>
       </div>
       <div class="panel">
         <div id="escritorioCombustivelContainer"></div>
@@ -654,6 +660,7 @@ let importedPdfDraft = [];
 let pendingTargetRole = "";
 let currentDraftOrder = null;
 let fotoFolhetoBase64 = "";
+let fuelFotoBase64 = "";
 
 function loadLocalCache() {
   try {
@@ -761,17 +768,33 @@ function calcularTempoRestanteFormatado(f) {
 }
 
 function limparFolhetosExpirados() {
-  if (!Array.isArray(db.folhetos)) return;
   const agora = Date.now();
   const vinteQuatroHoras = 24 * 60 * 60 * 1000;
-  const originalLen = db.folhetos.length;
-  db.folhetos = db.folhetos.filter(f => {
-    if (f.baixadoEscritorio && f.baixadoEm) {
-      return (agora - f.baixadoEm) < vinteQuatroHoras;
-    }
-    return true;
-  });
-  if (db.folhetos.length !== originalLen) {
+  let changed = false;
+
+  if (Array.isArray(db.folhetos)) {
+    const originalLen = db.folhetos.length;
+    db.folhetos = db.folhetos.filter(f => {
+      if (f.baixadoEscritorio && f.baixadoEm) {
+        return (agora - f.baixadoEm) < vinteQuatroHoras;
+      }
+      return true;
+    });
+    if (db.folhetos.length !== originalLen) changed = true;
+  }
+
+  if (Array.isArray(db.fuelFolhetos)) {
+    const originalFuelLen = db.fuelFolhetos.length;
+    db.fuelFolhetos = db.fuelFolhetos.filter(f => {
+      if (f.baixadoEscritorio && f.baixadoEm) {
+        return (agora - f.baixadoEm) < vinteQuatroHoras;
+      }
+      return true;
+    });
+    if (db.fuelFolhetos.length !== originalFuelLen) changed = true;
+  }
+
+  if (changed) {
     saveWithBackup();
   }
 }
@@ -928,6 +951,8 @@ window.verDetalhesDiesel = function(idOrTicket) {
 
   if (!f) return toast("Registro de abastecimento não encontrado.");
 
+  const hasQty = f.q && Number(f.q) > 0;
+
   openModal("🚜 Detalhes do Abastecimento / Maquinário", `
     <div style="line-height:1.8; font-size:14px;">
       <div style="background:#edf5ff; padding:14px; border-radius:10px; margin-bottom:15px; border-left:4px solid var(--blue);">
@@ -937,7 +962,7 @@ window.verDetalhesDiesel = function(idOrTicket) {
       <div class="formgrid">
         <div class="field">
           <label>Volume Abastecido:</label>
-          <strong style="font-size:16px; color:var(--green);">${num(f.q)} Litros</strong>
+          ${hasQty ? `<strong style="font-size:16px; color:var(--green);">${num(f.q)} Litros</strong>` : `<span class="badge pending">📷 Aguardando leitura da foto</span>`}
         </div>
         <div class="field">
           <label>Tipo de Operação:</label>
@@ -959,6 +984,15 @@ window.verDetalhesDiesel = function(idOrTicket) {
           <label>Status no Escritório:</label>
           <span>${f.baixadoEscritorio ? '<span class="badge delivered">✓ Registrado no Escritório</span>' : '<span class="badge pending">⏳ Pendente de Registro</span>'}</span>
         </div>
+        ${f.fotoUrl ? `
+        <div class="field full" style="margin-top:8px;">
+          <label>📷 Foto do Visor / Bomba:</label>
+          <div style="text-align:center;">
+            <img src="${f.fotoUrl}" alt="Foto do Abastecimento" style="max-height:220px; border-radius:8px; border:1px solid var(--line); cursor:pointer;" onclick="abrirFotoGrande('${f.fotoUrl}')">
+            <small style="display:block; color:var(--blue); cursor:pointer; margin-top:4px;" onclick="abrirFotoGrande('${f.fotoUrl}')">🔍 Clique na imagem para ampliar</small>
+          </div>
+        </div>
+        ` : ''}
       </div>
     </div>
   `, [
@@ -1683,47 +1717,103 @@ async function confirmarBaixaEscritorio(id) {
 }
 
 function renderEscritorioCombustivel() {
+  limparFolhetosExpirados();
   const folhetos = db.fuelFolhetos || [];
-  $("escritorioCombustivelContainer").innerHTML = folhetos.length ? folhetos.map(f => `
-    <div class="folheto-card" style="${f.baixadoEscritorio ? 'background:#f8fafc; opacity:0.8;' : 'border-left:4px solid var(--orange);'}">
-      <div class="folheto-head">
-        <div>
-          <strong style="cursor:pointer; color:var(--blue);" onclick="verDetalhesDiesel('${f.id}')">🚜 Folheto Abastecimento #${esc(f.ticketNo || f.id.slice(-6))}</strong>
-          <small style="display:block; color:var(--muted);">Destino / Máquina: <strong>${esc(f.dest)}</strong> | Responsável: ${esc(f.resp || 'Não informado')} | Data: ${fmtDate(f.date)}</small>
+  $("escritorioCombustivelContainer").innerHTML = folhetos.length ? folhetos.map(f => {
+    const timer = calcularTempoRestanteFormatado(f);
+    const exibeTimer = f.baixadoEscritorio && f.baixadoEm;
+    const precisaLerFoto = !f.baixadoEscritorio && (!f.q || Number(f.q) <= 0);
+
+    return `
+      <div class="folheto-card" style="${f.baixadoEscritorio ? 'background:#f8fafc; opacity:0.8;' : 'border-left:4px solid var(--orange);'}">
+        <div class="folheto-head">
+          <div>
+            <strong style="cursor:pointer; color:var(--blue);" onclick="verDetalhesDiesel('${f.id}')">${f.isFoto ? '📷' : '🚜'} Folheto Abastecimento #${esc(f.ticketNo || f.id.slice(-6))}</strong>
+            <small style="display:block; color:var(--muted);">Destino / Máquina: <strong>${esc(f.dest)}</strong> | Responsável: ${esc(f.resp || 'Não informado')} | Data: ${fmtDate(f.date)}</small>
+            ${exibeTimer ? `
+              <div style="margin-top:6px;">
+                <span class="badge pending" style="background:#fff3cd; color:#856404; font-weight:bold; border:1px solid #ffeeba;">
+                  ⏱️ Apaga em: ${timer.texto}
+                </span>
+              </div>
+            ` : '<div style="margin-top:6px;"><span class="badge neutral">⏳ Aguardando baixa do escritório</span></div>'}
+          </div>
+          <div style="display:flex; gap:6px; flex-wrap:wrap; align-items:center;">
+            <button class="btn outline smallbtn" onclick="verDetalhesDiesel('${f.id}')">🚜 Ver Maquinário</button>
+            ${f.baixadoEscritorio
+              ? '<span class="badge delivered">✓ Registrado</span>'
+              : (precisaLerFoto
+                  ? '<span class="badge pending">📷 Ler foto abaixo</span>'
+                  : `<button class="btn green smallbtn" onclick="confirmarBaixaCombustivel('${f.id}')">✓ Confirmar Registro</button>`)}
+          </div>
         </div>
-        <div style="display:flex; gap:6px; flex-wrap:wrap; align-items:center;">
-          <button class="btn outline smallbtn" onclick="verDetalhesDiesel('${f.id}')">🚜 Ver Maquinário</button>
-          ${f.baixadoEscritorio ? '<span class="badge delivered">✓ Registrado</span>' : `<button class="btn green smallbtn" onclick="confirmarBaixaCombustivel('${f.id}')">✓ Confirmar Registro</button>`}
-        </div>
+        ${f.isFoto && f.fotoUrl ? `
+          <div style="margin:10px 0;">
+            <img src="${f.fotoUrl}" alt="Foto do Visor de Diesel" style="max-height:180px; border-radius:8px; border:1px solid var(--line); cursor:pointer;" onclick="abrirFotoGrande('${f.fotoUrl}')">
+            <p style="margin:4px 0 8px;"><small style="color:var(--blue); cursor:pointer;" onclick="abrirFotoGrande('${f.fotoUrl}')">🔍 Clique na imagem para ampliar e conferir os números</small></p>
+          </div>
+        ` : ''}
+        ${precisaLerFoto ? `
+          <div style="background:#edf5ff; padding:12px; border-radius:9px; margin:10px 0; border:1px solid #c5d7ff;">
+            <label style="display:block; font-size:12px; font-weight:750; color:var(--navy); margin-bottom:6px;">
+              ⛽ Digite os Litros lidos na imagem acima para dar baixa no estoque de diesel *
+            </label>
+            <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+              <input type="number" id="inputLitrosFoto_${f.id}" min="0.1" step="any" placeholder="Ex: 350" style="flex:1; min-width:140px;">
+              <button class="btn green" onclick="confirmarBaixaCombustivel('${f.id}')">✓ Salvar Litros e Dar Baixa</button>
+            </div>
+          </div>
+        ` : `
+          <div class="tablewrap" style="cursor:pointer;" onclick="verDetalhesDiesel('${f.id}')">
+            <table class="compact-table">
+              <thead>
+                <tr>
+                  <th style="width:60%;">Tipo de Operação</th>
+                  <th style="width:40%; text-align:right;">Volume (Litros)</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>${esc(f.type || 'Abastecimento')}</strong></td>
+                  <td style="text-align:right;"><strong style="color:var(--blue); font-size:14px;">${num(f.q)} L</strong></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        `}
       </div>
-      <div class="tablewrap" style="cursor:pointer;" onclick="verDetalhesDiesel('${f.id}')">
-        <table class="compact-table">
-          <thead>
-            <tr>
-              <th style="width:60%;">Tipo de Operação</th>
-              <th style="width:40%; text-align:right;">Volume (Litros)</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><strong>${esc(f.type || 'Abastecimento')}</strong></td>
-              <td style="text-align:right;"><strong style="color:var(--blue); font-size:14px;">${num(f.q)} L</strong></td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  `).join("") : `<div class="empty">Nenhum folheto de combustível pendente no momento.</div>`;
+    `;
+  }).join("") : `<div class="empty">Nenhum folheto de combustível pendente no momento.</div>`;
 }
 
 async function confirmarBaixaCombustivel(id) {
   const f = (db.fuelFolhetos || []).find(x => x.id === id);
   if (!f) return;
+
+  if (!f.q || Number(f.q) <= 0) {
+    const inp = $("inputLitrosFoto_" + id);
+    const litrosLidos = inp ? Number(inp.value) : 0;
+    if (!litrosLidos || litrosLidos <= 0) {
+      return toast("Informe a quantidade de litros lida na imagem antes de dar baixa.");
+    }
+    f.q = litrosLidos;
+    if (f.type && f.type.includes("Entrada")) {
+      db.fuelStock = (Number(db.fuelStock) || 0) + litrosLidos;
+    } else {
+      db.fuelStock = (Number(db.fuelStock) || 0) - litrosLidos;
+    }
+    const histItem = (db.fuelHistory || []).find(h => h.id === f.id);
+    if (histItem) {
+      histItem.q = litrosLidos;
+    }
+  }
+
   f.baixadoEscritorio = true;
+  f.baixadoEm = Date.now();
   await saveWithBackup();
   renderEscritorioCombustivel();
   renderActiveView();
-  toast("Abastecimento registrado pelo escritório com sucesso!");
+  toast("Abastecimento registrado! A foto será apagada automaticamente em 24 horas.");
 }
 
 function renderCombustivel() {
@@ -1744,18 +1834,20 @@ function renderCombustivel() {
           </tr>
         </thead>
         <tbody>
-          ${fHist.map(h => `
+          ${fHist.map(h => {
+            const hasQty = h.q && Number(h.q) > 0;
+            return `
             <tr class="clickable-row" onclick="verDetalhesDiesel('${h.id}')">
               <td>${fmtDate(h.date)}</td>
               <td><span class="badge ${h.type.includes('Entrada') ? 'delivered' : 'refused'}">${esc(h.type)}</span></td>
-              <td><strong>${num(h.q)} L</strong></td>
+              <td>${hasQty ? `<strong>${num(h.q)} L</strong>` : `<span class="badge pending">📷 Via Foto</span>`}</td>
               <td><strong style="color:var(--blue);">🚜 ${esc(h.dest)}</strong></td>
               <td>${esc(h.resp || 'Não informado')}</td>
               <td style="text-align:right;">
                 <button class="btn light smallbtn" onclick="event.stopPropagation(); verDetalhesDiesel('${h.id}');">🔍 Ver Maquinário</button>
               </td>
             </tr>
-          `).join("")}
+          `;}).join("")}
         </tbody>
       </table>
     </div>
@@ -1763,14 +1855,19 @@ function renderCombustivel() {
 
   $("btnConfirmFuel").onclick = async () => {
     const type = $("fuelOpType").value;
-    const q = Number($("fuelQtyInput").value);
+    const q = Number($("fuelQtyInput").value) || 0;
     const dest = $("fuelDestSelect").value.trim();
     let resp = $("fuelRespInput").value.trim();
-    if (!q || !dest) return toast("Informe a quantidade em litros e selecione a máquina de destino.");
+    if (!dest) return toast("Selecione a máquina de destino.");
+    if (!q && !fuelFotoBase64) return toast("Informe a quantidade em litros ou anexe uma foto do visor.");
     if (!resp) resp = "Não informado";
 
-    if (type.includes("Entrada")) db.fuelStock += q; else db.fuelStock -= q;
-    const fuelItem = { id: uid(), ticketNo: String(Date.now()).slice(-7), type, q, dest, resp, date: new Date().toISOString() };
+    if (q > 0) {
+      if (type.includes("Entrada")) db.fuelStock += q; else db.fuelStock -= q;
+    }
+
+    const hasFoto = Boolean(fuelFotoBase64);
+    const fuelItem = { id: uid(), ticketNo: String(Date.now()).slice(-7), type, q, dest, resp, hasFoto, date: new Date().toISOString() };
     db.fuelHistory.unshift(fuelItem);
     if (!Array.isArray(db.fuelFolhetos)) db.fuelFolhetos = [];
     db.fuelFolhetos.unshift({
@@ -1780,15 +1877,20 @@ function renderCombustivel() {
       q,
       dest,
       resp,
+      isFoto: hasFoto,
+      fotoUrl: fuelFotoBase64 || "",
       date: Date.now(),
       baixadoEscritorio: false
     });
     await saveWithBackup();
+    fuelFotoBase64 = "";
     $("fuelQtyInput").value = "";
     $("fuelDestSelect").value = "";
     $("fuelRespInput").value = "";
+    if ($("fuelFotoFile")) $("fuelFotoFile").value = "";
+    if ($("fuelFotoPreviewContainer")) $("fuelFotoPreviewContainer").innerHTML = "";
     renderCombustivel();
-    toast("Abastecimento registrado! Folheto enviado para o escritório.");
+    toast(q > 0 ? "Abastecimento registrado! Folheto enviado para o escritório." : "Foto do abastecimento enviada ao escritório para leitura e baixa!");
   };
 
   $("btnCalibrateFuel").onclick = () => {
@@ -2003,6 +2105,53 @@ document.addEventListener("DOMContentLoaded", () => {
           const ctx = canvas.getContext('2d');
           ctx.drawImage(img, 0, 0, width, height);
           fotoFolhetoBase64 = canvas.toDataURL('image/jpeg', 0.82);
+        };
+        img.src = event.target.result;
+      };
+      reader.readAsDataURL(file);
+    };
+  }
+
+  const fuelFotoInput = $("fuelFotoFile");
+  if (fuelFotoInput) {
+    fuelFotoInput.onchange = e => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const objectUrl = URL.createObjectURL(file);
+      $("fuelFotoPreviewContainer").innerHTML = `
+        <p style="color:var(--green); font-weight:bold; margin-bottom:6px;">📷 Foto do visor anexada com sucesso!</p>
+        <img src="${objectUrl}" alt="Prévia da Foto do Diesel" style="max-width:100%; max-height:240px; border-radius:8px; border:1px solid var(--line);">
+        <div style="margin-top:8px;">
+          <button type="button" class="btn danger smallbtn" id="btnRemoverFuelFoto">🗑️ Remover Foto</button>
+        </div>
+      `;
+      if ($("btnRemoverFuelFoto")) {
+        $("btnRemoverFuelFoto").onclick = () => {
+          fuelFotoBase64 = "";
+          $("fuelFotoFile").value = "";
+          $("fuelFotoPreviewContainer").innerHTML = "";
+        };
+      }
+      const reader = new FileReader();
+      reader.onload = event => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          const maxDim = 1200;
+          if (width > height && width > maxDim) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          } else if (height > maxDim) {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          fuelFotoBase64 = canvas.toDataURL('image/jpeg', 0.82);
         };
         img.src = event.target.result;
       };
@@ -2232,6 +2381,9 @@ document.addEventListener("DOMContentLoaded", () => {
     initCloudSync();
     if (currentView === "escritorio_folhetos") {
       renderEscritorioFolhetos();
+    }
+    if (currentView === "escritorio_combustivel") {
+      renderEscritorioCombustivel();
     }
   }, 3000);
 });
